@@ -284,6 +284,9 @@
             "us-east-2": {
                 "WS2016FULLBASE": "ami-36241f53"
             },
+			"us-gov-west-1": {
+			    "WS2016FULLBASE": "ami-59c25238"
+			},
             "us-west-1": {
                 "WS2016FULLBASE": "ami-d12ecdb2"
             },
