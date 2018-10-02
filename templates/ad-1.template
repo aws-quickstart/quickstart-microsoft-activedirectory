@@ -14,9 +14,11 @@
                         "PrivateSubnet1CIDR",
                         "PrivateSubnet1ID",
                         "PrivateSubnet2CIDR",
+                        "PrivateSubnet3CIDR",
                         "PrivateSubnet2ID",
                         "PublicSubnet1CIDR",
-                        "PublicSubnet2CIDR"
+                        "PublicSubnet2CIDR",
+                        "PublicSubnet3CIDR"
                     ]
                 },
                 {
@@ -101,11 +103,17 @@
                 "PrivateSubnet2ID": {
                     "default": "Private Subnet 2 ID"
                 },
+                "PrivateSubnet3CIDR": {
+                    "default": "(Optional) Private Subnet 3 CIDR"
+                },
                 "PublicSubnet1CIDR": {
                     "default": "Public Subnet 1 CIDR"
                 },
                 "PublicSubnet2CIDR": {
                     "default": "Public Subnet 2 CIDR"
+                },
+                "PublicSubnet3CIDR": {
+                    "default": "(Optional) Public Subnet 3 CIDR"
                 },
                 "QSS3BucketName": {
                     "default": "Quick Start S3 Bucket Name"
@@ -244,6 +252,13 @@
             "Description": "ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)",
             "Type": "AWS::EC2::Subnet::Id"
         },
+        "PrivateSubnet3CIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.0.64.0/19",
+            "Description": "CIDR block for private subnet 3 located in Availability Zone 3.",
+            "Type": "String"
+        },
         "PublicSubnet1CIDR": {
             "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
@@ -256,6 +271,13 @@
             "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
             "Default": "10.0.144.0/20",
             "Description": "CIDR Block for the public DMZ subnet 2 located in Availability Zone 2",
+            "Type": "String"
+        },
+        "PublicSubnet3CIDR": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/16-28",
+            "Default": "10.0.160.0/20",
+            "Description": "CIDR Block for the public DMZ subnet 3 located in Availability Zone 3",
             "Type": "String"
         },
         "QSS3BucketName": {
@@ -1072,6 +1094,10 @@
                                             {
                                                 "Ref": "PublicSubnet2CIDR"
                                             },
+                                            " -PublicSubnet3CIDR ",
+                                            {
+                                                "Ref": "PublicSubnet3CIDR"
+                                            },
                                             " -PrivateSubnet1CIDR ",
                                             {
                                                 "Ref": "PrivateSubnet1CIDR"
@@ -1079,6 +1105,10 @@
                                             " -PrivateSubnet2CIDR ",
                                             {
                                                 "Ref": "PrivateSubnet2CIDR"
+                                            },
+                                            " -PrivateSubnet3CIDR ",
+                                            {
+                                                "Ref": "PrivateSubnet3CIDR"
                                             },
                                             " -Server ",
                                             {
