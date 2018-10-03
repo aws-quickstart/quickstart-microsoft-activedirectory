@@ -6,11 +6,17 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$PublicSubnet2CIDR,
 
+    [Parameter(Mandatory=$false)]
+    [string]$PublicSubnet3CIDR,
+
     [Parameter(Mandatory=$true)]
     [string]$PrivateSubnet1CIDR,
 
     [Parameter(Mandatory=$true)]
     [string]$PrivateSubnet2CIDR,
+
+    [Parameter(Mandatory=$false)]
+    [string]$PrivateSubnet3CIDR,
 
     [Parameter(Mandatory=$true)]
     [string]$Server   
@@ -37,6 +43,11 @@ try {
                 New-ADReplicationSubnet -Name $PublicSubnet2CIDR -Site AZ2
                 New-ADReplicationSubnet -Name $PrivateSubnet1CIDR -Site AZ1
                 New-ADReplicationSubnet -Name $PrivateSubnet2CIDR -Site AZ2
+
+                # AZ3 scenarios only; add 3rd AZ subnets to site1 
+                New-ADReplicationSubnet -Name $PublicSubnet3CIDR -Site AZ1
+                New-ADReplicationSubnet -Name $PrivateSubnet3CIDR -Site AZ1
+
                 Get-ADReplicationSiteLink -Filter * | Set-ADReplicationSiteLink -SitesIncluded @{add='AZ2'} -ReplicationFrequencyInMinutes 15
                 echo "Successfully Configured the AD Sites..."
                 break
