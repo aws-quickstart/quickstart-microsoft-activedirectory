@@ -1,7 +1,7 @@
 global:
   marketplace-ami: false
   owner: quickstart-eng@amazon.com
-  qsname: quickstart-microsoft-sql
+  qsname: quickstart-microsoft-activedirectory
   regions:
     - ap-northeast-1
     - ap-northeast-2
@@ -19,89 +19,31 @@ global:
     - us-west-2
   reporting: true
 tests:
-  ds-defaults:
-    parameter_input: sql-master-ds-defaults.json
+  master1-ad:
+    parameter_input: ad-master-1.json
     regions:
-      - eu-west-1
-    template_file: sql-master.template
-  ds-3rdaz-witness:
-    parameter_input: sql-master-ds-3rdaz-witness.json
-    regions:
-      - us-west-2
-    template_file: sql-master.template
-  ds-3rdaz-full:
-    parameter_input: sql-master-ds-3rdaz-full.json
-    regions:
-      - us-east-1
-    template_file: sql-master.template
-  ec2-defaults:
-    parameter_input: sql-master-ec2-defaults.json
-    regions:
-      - ap-northeast-1
-      - ap-southeast-1
-      - eu-central-1
-      - us-east-1
-    template_file: sql-master.template
-  ec2-sql-2017:
-    parameter_input: sql-master-ec2-sql-2017.json
-    regions:
-      - ap-northeast-2
-      - ap-southeast-2
-      - eu-west-1
-      - us-east-2
-    template_file: sql-master.template
-  ec2-ebs-io1:
-    parameter_input: sql-master-ec2-ebs-io1.json
-    regions:
-      - ap-south-1
-      - ca-central-1
-      - sa-east-1
-      - us-west-1
-    template_file: sql-master.template
-  ec2-3rdaz-witness:
-    parameter_input: sql-master-ec2-3rdaz-witness.json
-    regions:
-      - ap-southeast-2
-      - eu-west-1
-      - us-east-1
-      - us-west-2
-    template_file: sql-master.template
-  ec2-3rdaz-full:
-    parameter_input: sql-master-ec2-3rdaz-full.json
-    regions:
-      - ap-southeast-2
-      - eu-west-1
-      - us-east-1
-      - us-west-2
-    template_file: sql-master.template
-  ec2-li-2017:
-    parameter_input: sql-master-ec2-license-included-2017.json
-    regions:
-      - us-west-2
-    template_file: sql-master.template
-#  ec2-li-2014:
-#    parameter_input: sql-master-ec2-license-included-2014.json
-#    regions:
+#      - ap-northeast-2
+#      - ap-southeast-1
+#      - ca-central-1
 #      - eu-west-1
-#    template_file: sql-master.template
-#  ec2-li-2016:
-#    parameter_input: sql-master-ec2-license-included-2016.json
-#    regions:
-#      - us-east-1
-#    template_file: sql-master.template
-#  master-old:
-#    parameter_input: SQL_AlwaysOn_Master.json
+#      - eu-west-3
+      - us-east-2
+#      - us-west-2
+    template_file: ad-master-1.template
+#  master2-extendad:
+#    parameter_input: ad-master-2.json
 #    regions:
 #      - ap-northeast-1
-#      - ap-northeast-2
 #      - ap-south-1
-#      - ap-southeast-1
 #      - ap-southeast-2
 #      - eu-central-1
-#      - eu-west-1
-#      # - sa-east-1 Unsupported only in CI due to GetAZs on ref acct
+#      - eu-west-2
 #      - us-east-1
-#      - us-east-2
 #      - us-west-1
-#      - us-west-2
-#    template_file: SQL_AlwaysOn_Master.template
+#    template_file: ad-master-2.template
+#  master3-mad:
+#    parameter_input: ad-master-3.json
+#    regions:
+#      - us-east-1
+#    template_file: ad-master-3.template
+
