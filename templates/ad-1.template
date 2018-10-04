@@ -591,7 +591,6 @@
                             "setup",
                             "rename",
                             "installADDS",
-                            "configureSites",
                             "installADCS",
                             "finalize"
                         ]
@@ -1049,44 +1048,6 @@
                                             "powershell.exe -ExecutionPolicy RemoteSigned -Command c:\\cfn\\scripts\\ConvertTo-EnterpriseAdmin.ps1 -Members ",
                                             {
                                                 "Ref": "DomainAdminUser"
-                                            }
-                                        ]
-                                    ]
-                                },
-                                "waitAfterCompletion": "0"
-                            }
-                        }
-                    },
-                    "configureSites": {
-                        "commands": {
-                            "a-rename-default-site": {
-                                "command": {
-                                    "Fn::Join": [
-                                        "",
-                                        [
-                                            "powershell.exe -Command c:\\cfn\\scripts\\Configure-Sites.ps1 -PublicSubnet1CIDR ",
-                                            {
-                                                "Ref": "PublicSubnet1CIDR"
-                                            },
-                                            " -PublicSubnet2CIDR ",
-                                            {
-                                                "Ref": "PublicSubnet2CIDR"
-                                            },
-                                            " -PrivateSubnet1CIDR ",
-                                            {
-                                                "Ref": "PrivateSubnet1CIDR"
-                                            },
-                                            " -PrivateSubnet2CIDR ",
-                                            {
-                                                "Ref": "PrivateSubnet2CIDR"
-                                            },
-                                            " -Server ",
-                                            {
-                                                "Ref": "ADServer1NetBIOSName"
-                                            },
-                                            ".",
-                                            {
-                                                "Ref": "DomainDNSName"
                                             }
                                         ]
                                     ]
