@@ -75,7 +75,7 @@ Configuration ConfigDC1 {
     
     # Importing DSC Modules needed for Configuration
     Import-Module -Name PSDesiredStateConfiguration
-    Import-Module -Name ActiveDirectoryDsc
+    Import-Module -Name xActiveDirectory
     Import-Module -Name NetworkingDsc
     Import-Module -Name ActiveDirectoryCSDsc
     Import-Module -Name ComputerManagementDsc
@@ -84,7 +84,7 @@ Configuration ConfigDC1 {
     # Importing All DSC Resources needed for Configuration
     Import-DscResource -Module PSDesiredStateConfiguration
     Import-DscResource -Module NetworkingDsc
-    Import-DscResource -Module ActiveDirectoryDsc
+    Import-DscResource -Module xActiveDirectory
     Import-DscResource -Module ActiveDirectoryCSDsc
     Import-DscResource -Module ComputerManagementDsc
     Import-DscResource -Module xDnsServer
@@ -186,7 +186,7 @@ Configuration ConfigDC1 {
         WindowsFeature ADCS-Cert-Authority { 
             Ensure = 'Present' 
             Name = 'ADCS-Cert-Authority'
-            DependsOn = '[ADDomain]PrimaryDC' 
+            DependsOn = '[xADDomain]PrimaryDC' 
         }
          
         ADCSCertificationAuthority ADCS { 
@@ -215,72 +215,25 @@ Configuration ConfigDC1 {
             DependsOn = '[WindowsFeature]ADCS-Cert-Authority' 
         } 
         
-        # Creating Primary DC in new AD Forest
-        ADDomain PrimaryDC {
+        # Promoting Node as Secondary DC
+        ADDomainController SecondaryDC {
             DomainName = $DomainDnsName
-            DomainNetBIOSName = $DomainNetBIOSName
-            Credential = $Credentials
-            SafemodeAdministratorPassword = $RestoreCredentials
-            DependsOn = "[WindowsFeature]AD-Domain-Services"
+            DomainAdministratorCredential = $Credentials
+            SafemodeAdministratorPassword = $Credentials
+            DependsOn = @("[WindowsFeature]AD-Domain-Services","[Computer]JoinDomain")
         }
 
         # Renaming Default AD Site to Region Name
         ADReplicationSite RegionSite {
             Name = $SiteName
-            RenameDefaultFirstSiteName = $true
-            DependsOn = "[ADDomain]PrimaryDC"
+            DependsOn = "[xADDomain]PrimaryDC"
         }
 
         # Adding AZ Subnets to AD Site
         ADReplicationSubnet VPCCIDR {
             Name = $VPCCIDR
             Site = $SiteName
-            DependsOn = "[ADReplicationSite]RegionSite"
-        }
-        
-        # Creating Alternative AD Admin User
-        ADUser AlternateAdminUser {
-            DomainName = $DomainDnsName
-            UserName = $AltUserPassword.UserName
-            Password = $AltCredentials # Uses just the password
-            DisplayName = $AltUserPassword.UserName
-            PasswordAuthentication = 'Negotiate'
-            Credential = $Credentials
-            Ensure = 'Present'
-            DependsOn = "[ADDomain]PrimaryDC"
-        }
-        
-        # Ensuring Alternative User is added to Domain Admins Group
-        ADGroup AddAdminToDomainAdminsGroup {
-            GroupName = "Domain Admins"
-            GroupScope = 'Global'
-            Category = 'Security'
-            MembersToInclude = @($AltUserPassword.UserName, "Administrator")
-            Ensure = 'Present'
-            Credential = $Credentials
-            DependsOn = "[ADUser]AlternateAdminUser"
-        }
-        
-        # Ensuring Alternative User is added to Enterprise Admins Group
-        ADGroup AddAdminToEnterpriseAdminsGroup {
-            GroupName = "Enterprise Admins"
-            GroupScope = 'Universal'
-            Category = 'Security'
-            MembersToInclude = @($AltUserPassword.UserName, "Administrator")
-            Ensure = 'Present'
-            Credential = $Credentials
-            DependsOn = "[ADUser]AlternateAdminUser"
-        }
-
-        # Ensuring Alternative User is added to Schema Admins Group
-        ADGroup AddAdminToSchemaAdminsGroup {
-            GroupName = "Schema Admins"
-            GroupScope = 'Universal'
-            Category = 'Security'
-            MembersToInclude = @($AltUserPassword.UserName, "Administrator")
-            Ensure = 'Present'
-            Credential = $Credentials
-            DependsOn = "[ADUser]AlternateAdminUser"
+            DependsOn = "[xADReplicationSite]RegionSite"
         }
 
         # Setting VPC DNS as a forwarder for AD DNS
@@ -288,13 +241,6 @@ Configuration ConfigDC1 {
             IsSingleInstance = 'Yes'
             IPAddresses = $VPCDNS
         }
-
-        ADCSWebEnrollment CertSrv { 
-            Ensure = 'Present' 
-            IsSingleInstance = 'Yes'
-            Credential = $Credentials
-            DependsOn = '[WindowsFeature]ADCS-Web-Enrollment','[ADCSCertificationAuthority]ADCS'
-        } 
     }
 }
 

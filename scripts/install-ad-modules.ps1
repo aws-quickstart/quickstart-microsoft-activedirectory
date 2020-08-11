@@ -10,11 +10,11 @@ Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5 -Force
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 
 "Installing the needed Powershell DSC modules for this Quick Start"
-Install-Module NetworkingDsc
-Install-Module -Name "xActiveDirectory"
-Install-Module ComputerManagementDsc
-Install-Module -Name "xDnsServer"
-Install-Module -Name "ActiveDirectoryCSDsc"
+Install-Module -Name NetworkingDsc -RequiredVersion 8.0.0
+Install-Module -Name ActiveDirectoryDsc -RequiredVersion 6.0.1
+Install-Module -Name ComputerManagementDsc -RequiredVersion 8.4.0
+Install-Module -Name xDnsServer -RequiredVersion 1.16.0.0
+Install-Module -Name ActiveDirectoryCSDsc -RequiredVersion 5.0.0
 
 "Disabling Windows Firewall"
 Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled False

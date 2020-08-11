@@ -2,7 +2,7 @@
 # Incoming Parameters for Script, CloudFormation\SSM Parameters being passed in
 param(
     [Parameter(Mandatory=$true)]
-    [string]$ADServer2NetBIOSName,
+    [string]$ADServerNetBIOSName,
 
     [Parameter(Mandatory=$true)]
     [string]$DomainNetBIOSName,
@@ -11,7 +11,13 @@ param(
     [string]$DomainDNSName,
 
     [Parameter(Mandatory=$true)]
-    [string]$ADServer1PrivateIP,
+    [string]$ADServerPrivateIP,
+
+    [Parameter(Mandatory=$true)]
+    [string]$DNSServer1,
+
+    [Parameter(Mandatory=$true)]
+    [string]$DNSServer2,
 
     [Parameter(Mandatory=$true)]
     [string]$ADAdminSecParam
@@ -48,7 +54,7 @@ $ConfigurationData = @{
 }
 
 # PowerShell DSC Configuration Block for Domain Controller 2
-Configuration ConfigDC2 {
+Configuration ConfigDC {
     # Credential Objects being passed in
     param
     (
@@ -59,7 +65,6 @@ Configuration ConfigDC2 {
     Import-Module -Name PSDesiredStateConfiguration
     Import-Module -Name ActiveDirectoryDsc
     Import-Module -Name NetworkingDsc
-    Import-Module -Name ActiveDirectoryCSDsc
     Import-Module -Name ComputerManagementDsc
     Import-Module -Name xDnsServer
     
@@ -67,7 +72,6 @@ Configuration ConfigDC2 {
     Import-DscResource -Module PSDesiredStateConfiguration
     Import-DscResource -Module NetworkingDsc
     Import-DscResource -Module ActiveDirectoryDsc
-    Import-DscResource -Module ActiveDirectoryCSDsc
     Import-DscResource -Module ComputerManagementDsc
     Import-DscResource -Module xDnsServer
     
@@ -106,7 +110,7 @@ Configuration ConfigDC2 {
 
         # Setting DNS Server on Primary Interface to point to DC1
         DnsServerAddress DnsServerAddress {
-            Address = $ADServer1PrivateIP
+            Address = $ADServerPrivateIP
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
             DependsOn = '[NetAdapterName]RenameNetAdapterPrimary'
@@ -115,16 +119,16 @@ Configuration ConfigDC2 {
         # Wait for AD Domain to be up and running
         WaitForADDomain WaitForPrimaryDC {
             DomainName = $DomainDnsName
-            WaitTimeout = 600
+            Credential = $Credentials
             DependsOn = '[DnsServerAddress]DnsServerAddress'
         }
         
         # Rename Computer and Join Domain
         Computer JoinDomain {
-            Name = $ADServer2NetBIOSName
+            Name = $ADServerNetBIOSName
             DomainName = $DomainDnsName
             Credential = $Credentials
-            DependsOn = "[WaitForADDomain]WaitForPrimaryDC"
+            DependsOn = "[xWaitForADDomain]WaitForPrimaryDC"
         }
         
         # Adding Needed Windows Features
@@ -150,6 +154,12 @@ Configuration ConfigDC2 {
             Ensure = 'Present'
             DependsOn = "[WindowsFeature]AD-Domain-Services"
         }
+
+        WindowsFeature RSAT-AD-PowerShell {
+            Name = 'RSAT-AD-PowerShell'
+            Ensure = 'Present'
+            DependsOn = "[WindowsFeature]AD-Domain-Services"
+        }
         
         WindowsFeature RSAT-ADDS {
             Ensure = "Present"
@@ -169,54 +179,15 @@ Configuration ConfigDC2 {
             DependsOn = "[WindowsFeature]AD-Domain-Services"
         }
 
-        WindowsFeature ADCS-Cert-Authority { 
-               Ensure = 'Present' 
-               Name = 'ADCS-Cert-Authority'
-               DependsOn = '[ADDomainController]SecondaryDC' 
-        }
-
-        ADCSCertificationAuthority ADCS { 
-            Ensure = 'Present'
-            IsSingleInstance = 'Yes' 
-            Credential = $Credentials
-            CAType = 'EnterpriseRootCA' 
-            DependsOn = '[WindowsFeature]ADCS-Cert-Authority'               
-        }
-
-        WindowsFeature ADCS-Web-Enrollment { 
-            Ensure = 'Present' 
-            Name = 'ADCS-Web-Enrollment' 
-            DependsOn = '[WindowsFeature]ADCS-Cert-Authority' 
-        } 
-
-        WindowsFeature RSAT-ADCS { 
-            Ensure = 'Present' 
-            Name = 'RSAT-ADCS' 
-            DependsOn = '[WindowsFeature]ADCS-Cert-Authority' 
-        } 
-        
-        WindowsFeature RSAT-ADCS-Mgmt { 
-            Ensure = 'Present' 
-            Name = 'RSAT-ADCS-Mgmt' 
-            DependsOn = '[WindowsFeature]ADCS-Cert-Authority' 
-        }
-
         # Promoting Node as Secondary DC
         ADDomainController SecondaryDC {
             DomainName = $DomainDnsName
-            Credential = $Credentials
+            DomainAdministratorCredential = $Credentials
             SafemodeAdministratorPassword = $Credentials
             DependsOn = @("[WindowsFeature]AD-Domain-Services","[Computer]JoinDomain")
         }
-
-        ADCSWebEnrollment CertSrv { 
-            Ensure = 'Present' 
-            IsSingleInstance = 'Yes'
-            Credential = $Credentials
-            DependsOn = '[WindowsFeature]ADCS-Web-Enrollment','[ADCSCertificationAuthority]ADCS'
-        }  
     }
 }
 
 # Generating MOF File
-ConfigDC2 -OutputPath 'C:\AWSQuickstart\ConfigDC2' -Credentials $Credentials -ConfigurationData $ConfigurationData
+ConfigDC -OutputPath 'C:\AWSQuickstart\ConfigDC' -Credentials $Credentials -ConfigurationData $ConfigurationData

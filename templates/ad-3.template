@@ -189,11 +189,6 @@ Rules:
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Resources:
-  QuickStartLogs:
-    Type: AWS::Logs::LogGroup
-    Properties: 
-      LogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
-      RetentionInDays: 30
   DHCPOptions:
     Type: AWS::EC2::DHCPOptions
     DependsOn: 
@@ -535,7 +530,7 @@ Resources:
               - "{{getInstanceId.InstanceId}}"
             CloudWatchOutputConfig:
               CloudWatchOutputEnabled: "true"
-              CloudWatchLogGroupName: !Ref 'QuickStartLogs'
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
             Parameters:
               sourceType: "S3"
               sourceInfo: 
