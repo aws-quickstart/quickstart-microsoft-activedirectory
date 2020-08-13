@@ -1121,6 +1121,9 @@ Outputs:
   DomainMemberSGID:
     Value: !Ref 'DomainMembersSG'
     Description: Domain Member Security Group ID
+  DomainControllersSGID:
+      Value: !Ref 'DomainControllersSG'
+      Description: Domain Controllers Security Group ID
   ADSecretsArn:
     Value: !Ref 'ADAltUserSecrets'
     Description: Alternate AD User Secrets ARN
