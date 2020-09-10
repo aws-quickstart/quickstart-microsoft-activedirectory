@@ -1,12 +1,12 @@
 [submodule "submodules/quickstart-aws-vpc"]
 	path = submodules/quickstart-aws-vpc
 	url = ../../aws-quickstart/quickstart-aws-vpc.git
-	branch = master
+	branch = main
 [submodule "submodules/quickstart-microsoft-utilities"]
 	path = submodules/quickstart-microsoft-utilities
 	url = ../../aws-quickstart/quickstart-microsoft-utilities.git
-	branch = master
+	branch = main
 [submodule "submodules/quickstart-microsoft-rdgateway"]
 	path = submodules/quickstart-microsoft-rdgateway
 	url = ../../aws-quickstart/quickstart-microsoft-rdgateway.git
-	branch = master
+	branch = main
