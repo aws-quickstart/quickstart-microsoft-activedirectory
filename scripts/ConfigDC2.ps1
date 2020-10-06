@@ -162,6 +162,12 @@ Configuration ConfigDC2 {
             Ensure = 'Present'
             DependsOn = "[WindowsFeature]RSAT-ADDS"
         }
+
+        WindowsFeature RSAT-AD-PowerShell {
+            Name = 'RSAT-AD-PowerShell'
+            Ensure = 'Present'
+            DependsOn = "[WindowsFeature]RSAT-ADDS"
+        }
         
         WindowsFeature RSAT-AD-AdminCenter {
             Name = 'RSAT-AD-AdminCenter'
