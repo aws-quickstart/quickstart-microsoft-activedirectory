@@ -180,7 +180,7 @@ Configuration ConfigDC1 {
         WindowsFeature RSAT-AD-PowerShell {
             Name = 'RSAT-AD-PowerShell'
             Ensure = 'Present'
-            DependsOn = "[WindowsFeature]RSAT-ADDS"
+            DependsOn = "[WindowsFeature]AD-Domain-Services"
         }
         
         WindowsFeature RSAT-AD-AdminCenter {
@@ -219,7 +219,14 @@ Configuration ConfigDC1 {
             Ensure = 'Present' 
             Name = 'RSAT-ADCS-Mgmt' 
             DependsOn = '[WindowsFeature]ADCS-Cert-Authority' 
-        } 
+        }
+        
+        Service ActiveDirectoryWebServices {
+            Name        = "ADWS"
+            StartupType = "Automatic"
+            State       = "Running"
+            DependsOn = "[WindowsFeature]AD-Domain-Services"
+        }
         
         # Creating Primary DC in new AD Forest
         ADDomain PrimaryDC {
@@ -227,14 +234,14 @@ Configuration ConfigDC1 {
             DomainNetBIOSName = $DomainNetBIOSName
             Credential = $Credentials
             SafemodeAdministratorPassword = $RestoreCredentials
-            DependsOn = "[WindowsFeature]AD-Domain-Services"
+            DependsOn = "[WindowsFeature]AD-Domain-Services", "[WindowsFeature]RSAT-AD-PowerShell"
         }
 
         # Renaming Default AD Site to Region Name
         ADReplicationSite RegionSite {
             Name = $SiteName
             RenameDefaultFirstSiteName = $true
-            DependsOn = "[ADDomain]PrimaryDC"
+            DependsOn = "[ADDomain]PrimaryDC", "[Service]ActiveDirectoryWebServices"
         }
 
         # Adding AZ Subnets to AD Site

@@ -181,6 +181,13 @@ Configuration ConfigDC2 {
                DependsOn = '[ADDomainController]SecondaryDC' 
         }
 
+        Service ActiveDirectoryWebServices {
+            Name        = "ADWS"
+            StartupType = "Automatic"
+            State       = "Running"
+            DependsOn = "[WindowsFeature]AD-Domain-Services"
+        }
+
         ADCSCertificationAuthority ADCS { 
             Ensure = 'Present'
             IsSingleInstance = 'Yes' 
@@ -212,7 +219,7 @@ Configuration ConfigDC2 {
             DomainName = $DomainDnsName
             Credential = $Credentials
             SafemodeAdministratorPassword = $Credentials
-            DependsOn = @("[WindowsFeature]AD-Domain-Services","[Computer]JoinDomain")
+            DependsOn = @("[WindowsFeature]AD-Domain-Services","[Computer]JoinDomain", "[Service]ActiveDirectoryWebServices")
         }
 
         ADCSWebEnrollment CertSrv { 
