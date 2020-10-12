@@ -237,11 +237,18 @@ Configuration ConfigDC1 {
             DependsOn = "[WindowsFeature]AD-Domain-Services", "[WindowsFeature]RSAT-AD-PowerShell"
         }
 
+        # Wait for AD Domain to be up and running
+        WaitForADDomain WaitForPrimaryDC {
+            DomainName = $DomainDnsName
+            WaitTimeout = 600
+            DependsOn = "[ADDomain]PrimaryDC"
+        }
+
         # Renaming Default AD Site to Region Name
         ADReplicationSite RegionSite {
             Name = $SiteName
             RenameDefaultFirstSiteName = $true
-            DependsOn = "[ADDomain]PrimaryDC", "[Service]ActiveDirectoryWebServices"
+            DependsOn = "[WaitForADDomain]WaitForPrimaryDC", "[Service]ActiveDirectoryWebServices"
         }
 
         # Adding AZ Subnets to AD Site
