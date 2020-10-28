@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template creates a VPC infrastructure for a multi-AZ, multi-tier
   deployment of a Windows based Application infrastructure. It installs 2 Windows
-  2016 Active Directory Domain Controllers into private subnets in separate Availability
+  2019 Active Directory Domain Controllers into private subnets in separate Availability
   Zones inside a VPC, as well as Remote Desktop Gateway instances and managed NAT
   gateways into the public subnet for each Availability Zone. The default Domain Administrator
   password will be the one retrieved from the instance.  For adding members to the
@@ -38,14 +38,26 @@ Metadata:
           - ADServer2InstanceType
           - ADServer2NetBIOSName
           - ADServer2PrivateIP
+          - DataDriveSizeGiB
           - RDGWInstanceType
       - Label:
-          default: Microsoft Active Directory Configuration
+          default: Microsoft Active Directory Domain Services Configuration
         Parameters:
           - DomainDNSName
           - DomainNetBIOSName
           - DomainAdminUser
           - DomainAdminPassword
+      - Label:
+          default: Microsoft Active Directory Certificate Services Configuration
+        Parameters:
+          - PKI
+          - EntCaServerIP
+          - EntCaServerInstanceType
+          - EntCaDataDriveSizeGiB
+          - EntCaServerNetBIOSName
+          - EntCaKeyLength
+          - EntCaHashAlgorithm
+          - EntCaValidityPeriodUnits
       - Label:
           default: Microsoft Remote Desktop Gateway Configuration
         Parameters:
@@ -69,6 +81,8 @@ Metadata:
         default: Domain Controller 2 NetBIOS Name
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
+      DataDriveSizeGiB:
+        default: Size of Data Drive that contains SYSVOL and NTDS
       AvailabilityZones:
         default: Availability Zones
       DomainAdminPassword:
@@ -79,6 +93,22 @@ Metadata:
         default: Domain DNS Name
       DomainNetBIOSName:
         default: Domain NetBIOS Name
+      PKI:
+        default: Deploy PKI Infrastructure
+      EntCaServerIP:
+        default: Enterprise Root CA IP Address
+      EntCaServerInstanceType:
+        default: Enterprise Root CA Instance Type
+      EntCaDataDriveSizeGiB:
+        default: Size of the Data Drive in GiB
+      EntCaServerNetBIOSName:
+        default: Enterprise Root CA NetBIOS Name
+      EntCaKeyLength:
+        default: Enterprise Root CA Key Length
+      EntCaHashAlgorithm:
+        default: Enterprise Root CA Hash Algorithm
+      EntCaValidityPeriodUnits:
+        default: Enterprise Root CA Certificate Validity Period in Years
       KeyPairName:
         default: Key Pair Name
       NumberOfRDGWHosts:
@@ -122,7 +152,7 @@ Parameters:
       - m5.xlarge
       - m5.2xlarge
       - m5.4xlarge
-    Default: m5.xlarge
+    Default: m5.large
     Description: Amazon EC2 instance type for the first Active Directory instance
     Type: String
   ADServer1NetBIOSName:
@@ -150,7 +180,7 @@ Parameters:
       - m5.xlarge
       - m5.2xlarge
       - m5.4xlarge
-    Default: m5.xlarge
+    Default: m5.large
     Description: Amazon EC2 instance type for the second Active Directory instance
     Type: String
   ADServer2NetBIOSName:
@@ -166,6 +196,10 @@ Parameters:
     Description: Fixed private IP for the second Active Directory server located in
       Availability Zone 2
     Type: String
+  DataDriveSizeGiB:
+    Type: 'Number'
+    Default: '10'
+    Description: Size of Data Drive that contains SYSVOL and NTDS
   AvailabilityZones:
     Description: 'List of Availability Zones to use for the subnets in the VPC. Note:
       The logical order is preserved and only 2 AZs are used for this deployment.'
@@ -209,6 +243,59 @@ Parameters:
       versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
+    Type: String
+  PKI:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Description: Do you want to deploy a Single Tier PKI Enterpise CA
+    Type: String
+  EntCaServerIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Description: Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet
+    Type: String
+    Default: 10.0.0.11
+  EntCaServerInstanceType:
+    AllowedValues:
+      - t2.small
+      - t3.small
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+    Default: t3.medium
+    Description: Amazon EC2 instance type for the Enterprise Root CA instance
+    Type: String
+  EntCaDataDriveSizeGiB:
+    Type: 'Number'
+    Default: '2'
+    Description: Size of the Data Drive in GiB
+  EntCaServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the Enterprise Root CA server (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+    Default: CA1
+  EntCaKeyLength:
+    Description: Enterprise Root CA Key Length
+    AllowedValues:
+      - '2048'
+      - '4096'
+    Default: '2048'
+    Type: String
+  EntCaHashAlgorithm:
+    Description: Enterprise Root CA Hash Algorithm
+    AllowedValues:
+      - 'SHA256'
+      - 'SHA384'
+      - 'SHA512'
+    Default: 'SHA256'
+    Type: String
+  EntCaValidityPeriodUnits:
+    Description: Enterprise Root CA Certificate Validity Period in Years
+    Default: '5'
     Type: String
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance
@@ -364,6 +451,7 @@ Resources:
         DomainAdminUser: !Ref 'DomainAdminUser'
         DomainDNSName: !Ref 'DomainDNSName'
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        DataDriveSizeGiB : !Ref 'DataDriveSizeGiB'
         KeyPairName: !Ref 'KeyPairName'
         PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
         PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
@@ -372,6 +460,15 @@ Resources:
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        PKI: !Ref 'PKI'
+        EntCaServerSubnet: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
+        EntCaServerIP : !Ref 'EntCaServerIP'
+        EntCaServerInstanceType : !Ref 'EntCaServerInstanceType'
+        EntCaDataDriveSizeGiB : !Ref 'EntCaDataDriveSizeGiB'
+        EntCaServerNetBIOSName : !Ref 'EntCaServerNetBIOSName'
+        EntCaKeyLength : !Ref 'EntCaKeyLength'
+        EntCaHashAlgorithm : !Ref 'EntCaHashAlgorithm'
+        EntCaValidityPeriodUnits : !Ref 'EntCaValidityPeriodUnits'
   RDGWStack:
     DependsOn: ADStack
     Type: AWS::CloudFormation::Stack
