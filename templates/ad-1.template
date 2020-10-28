@@ -141,7 +141,7 @@ Parameters:
     Type: String
   ADServer1PrivateIP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Default: 10.255.0.205
+    Default: 10.0.0.10
     Description: Fixed private IP for the first Active Directory server located in
       Availability Zone 1
     Type: String
@@ -169,7 +169,7 @@ Parameters:
     Type: String
   ADServer2PrivateIP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Default: 10.255.0.206
+    Default: 10.0.32.10
     Description: Fixed private IP for the second Active Directory server located in
       Availability Zone 2
     Type: String
@@ -223,7 +223,7 @@ Parameters:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
     Description: Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet
     Type: String
-    Default: 10.255.0.207
+    Default: 10.0.0.11
   EntCaAmi:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Description: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
@@ -284,20 +284,20 @@ Parameters:
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
       letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
-    Default: quickstart-girvenj
+    Default: aws-quickstart
     Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
       can include numbers, lowercase letters, uppercase letters, and hyphens (-).
       It cannot start or end with a hyphen (-).
     Type: String
   QSS3BucketRegion:
-    Default: us-west-2
+    Default: us-east-1
     Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
     Type: String
   QSS3KeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
       uppercase letters, hyphens (-), and forward slash (/).
-    Default: prefix/
+    Default: quickstart-microsoft-activedirectory/
     Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
@@ -305,7 +305,7 @@ Parameters:
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.255.0.0/24
+    Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
   VPCID:
