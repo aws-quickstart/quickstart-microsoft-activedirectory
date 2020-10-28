@@ -1,0 +1,580 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template creates 1 Windows 2019 Server Active Directory Ceritificate Services
+  Enterpsie CA into a private subnet inside a VPC. **WARNING** This template creates Amazon
+  EC2 Windows instance and related resources. You will be billed for the AWS resources
+  used if you create a stack from this template. (qs-1qup6rae5)
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Network Configuration
+        Parameters:
+          - VPCCIDR
+          - VPCID
+          - EntCaServerSubnet
+          - DomainMembersSG
+      - Label:
+          default: Amazon EC2 Configuration
+        Parameters:
+          - EntCaServerIP
+          - EntCaServerInstanceType
+          - EntCaDataDriveSizeGiB
+          - Ec2RoleName
+          - SsmRoleName
+          - KeyPairName
+          - EntCaAmi
+          - AdministratorSecret
+      - Label:
+          default: Microsoft Active Directory Certificate Services Configuration
+        Parameters:
+          - EntCaServerNetBIOSName
+          - DomainController1IP
+          - DomainController2IP
+          - DomainDNSName
+          - DomainNetBIOSName
+          - EntCaKeyLength
+          - EntCaHashAlgorithm
+          - EntCaValidityPeriodUnits
+      - Label:
+          default: AWS Quick Start Configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+          - QSS3BucketRegion
+    ParameterLabels:
+      VPCCIDR:
+        default: VPC CIDR
+      VPCID:
+        default: VPC ID
+      EntCaServerSubnet:
+        default: Enterprise Root CA Subnet ID
+      DomainMembersSG:
+        default: Security Group ID for Domain Members Security Group.  
+      EntCaServerIP:
+        default: Enterprise Root CA IP Address
+      EntCaServerInstanceType:
+        default: Enterprise Root CA Instance Type
+      EntCaDataDriveSizeGiB:
+        default: Size of the Data Drive in GiB
+      Ec2RoleName:
+        default: ""
+      SsmRoleName:
+        default: ""
+      KeyPairName:
+        default: Public/private key pairs allow you to securely connect to your instance
+      EntCaAmi:
+        default: AMI ID passed in from parent stack
+      AdministratorSecret:
+        default: The arn for the Secret containing the Administrator Credentials
+      EntCaServerNetBIOSName:
+        default: Enterprise Root CA NetBIOS Name
+      DomainController1IP:
+        default: IP For Domain Controller that Enterprise Root CA Instance will use for DNS
+      DomainController2IP:
+        default: IP For Domain Controller that Enterprise Root CA Instance will use for DNS
+      DomainDNSName:
+        default: Domain DNS Name
+      DomainNetBIOSName:
+        default: Domain NetBIOS Name
+      EntCaKeyLength:
+        default: Enterprise Root CA Key Length
+      EntCaHashAlgorithm:
+        default: Enterprise Root CA Hash Algorithm
+      EntCaValidityPeriodUnits:
+        default: Enterprise Root CA Certificate Validity Period in Years
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+      QSS3BucketRegion:
+        default: Quick Start S3 Bucket Region
+Parameters:
+  VPCCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Description: CIDR Block for the VPC
+    Type: String
+  VPCID:
+    Description: ID of the VPC (e.g., vpc-0343606e)
+    Type: AWS::EC2::VPC::Id
+  EntCaServerSubnet:
+    Description: ID of the Enterprise Root CA subnet (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
+  DomainMembersSG:
+    Description: Security Group ID for Domain Members Security Group.  
+    Type: String
+  EntCaServerIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Description: Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet
+    Type: String
+  EntCaServerInstanceType:
+    AllowedValues:
+      - t2.small
+      - t3.small
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+    Default: t3.medium
+    Description: Amazon EC2 instance type for the Enterprise Root CA instance
+    Type: String
+  EntCaDataDriveSizeGiB:
+    Type: 'Number'
+    Default: '2'
+    Description: Size of the Data Drive in GiB
+  Ec2RoleName:
+    Type: String
+  SsmRoleName:
+    Type: String
+  KeyPairName:
+    Description: Public/private key pairs allow you to securely connect to your instance
+      after it launches
+    Type: AWS::EC2::KeyPair::KeyName
+  EntCaAmi:
+    Description: AMI ID passed in from parent stack
+    Type: 'AWS::EC2::Image::Id'
+  AdministratorSecret:
+    Description: The arn for the Secret containing the Administrator Credentials
+    Type: String
+  EntCaServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the Enterprise Root CA server (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  DomainController1IP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Description: IP For Domain Controller that Enterprise Root CA Instance will use for DNS
+    Type: String
+  DomainController2IP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Description: IP For Domain Controller that Enterprise Root CA Instance will use for DNS
+    Type: String
+  DomainDNSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+\..+'
+    Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
+    MaxLength: '255'
+    MinLength: '2'
+    Type: String
+  DomainNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  EntCaKeyLength:
+    Description: Enterprise Root CA Key Length
+    AllowedValues:
+      - '2048'
+      - '4096'
+    Default: '2048'
+    Type: String
+  EntCaHashAlgorithm:
+    Description: Enterprise Root CA Hash Algorithm
+    AllowedValues:
+      - 'SHA256'
+      - 'SHA384'
+      - 'SHA512'
+    Default: 'SHA256'
+    Type: String
+  EntCaValidityPeriodUnits:
+    Description: Enterprise Root CA Certificate Validity Period in Years
+    Default: '5'
+    Type: String
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: quickstart-girvenj
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
+      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-).
+    Type: String
+  QSS3BucketRegion:
+    Default: us-west-2
+    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/).
+    Default: prefix/
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/).
+    Type: String
+Rules:
+  SubnetsInVPC:
+    Assertions:
+      - Assert: !EachMemberIn
+          - !ValueOfAll
+            - AWS::EC2::Subnet::Id
+            - VpcId
+          - !RefAll 'AWS::EC2::VPC::Id'
+        AssertDescription: All subnets must in the VPC
+Conditions:
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+Resources:
+  AWSQuickstartECA:
+    Type: AWS::SSM::Document
+    Properties:
+      DocumentType: Automation
+      Content:
+        schemaVersion: "0.3"
+        description: "Deploy AD with SSM Automation"
+        # Role that is utilized to perform the steps within the Automation Document. In this case to be able to Signal CFN and Describe Instances. 
+        assumeRole: "{{AutomationAssumeRole}}"
+        # Gathering parameters needed to configure DCs in the Quick Start
+        parameters: 
+          VPCCIDR:
+            default: '10.0.0.0/16'
+            description: "CIDR block for private subnet 1 located in Availability Zone 1."
+            type: "String"
+          EntCaServerNetBIOSName:
+            description: "NetBIOS name of the Enterprise Root CA server (up to 15 characters)"
+            type: "String"
+          DomainController1IP:
+            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            type: "String"
+          DomainController2IP:
+            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            type: "String"
+          AdministratorSecret:
+            description: "AWS Secrets Parameter Name that has Password and User namer for the domain administrator."
+            type: "String"
+          DomainDNSName: 
+            description: "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com"
+            type: "String"
+          DomainNetBIOSName: 
+            description: "NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE"
+            type: "String"
+          EntCaKeyLength:
+            description: Enterprise Root CA Key Length
+            type: String
+          EntCaHashAlgorithm:
+            description: Enterprise Root CA Hash Algorithm
+            type: String
+          EntCaValidityPeriodUnits:
+            description: Enterprise Root CA Certificate Validity Period in Years
+            type: String
+          QSS3BucketName:
+            default: "aws-quickstart"
+            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+            type: "String"
+          QSS3BucketRegion:
+            default: "us-east-1"
+            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
+            type: "String"
+          QSS3KeyPrefix:
+            default: "quickstart-microsoft-activedirectory/"
+            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+            type: "String"
+          StackName:
+            default: ""
+            description: "Stack Name Input for cfn resource signal"
+            type: "String"
+          URLSuffix:
+            default: "amazonaws.com"
+            description: "AWS URL suffix"
+            type: "String"
+          AutomationAssumeRole:
+            default: ""
+            description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
+            type: "String"
+        mainSteps:
+        # This step grabs the Instance IDs for both nodes that will be configured as DCs in the Quick Start and Instance IDs for the for next steps.
+        - name: "entCAInstanceId"
+          action: aws:executeAwsApi
+          onFailure: "step:signalfailure"
+          nextStep: "dcsInstallDscModules"
+          inputs:
+            Service: ec2
+            Api: DescribeInstances
+            Filters:  
+            - Name: "tag:Name"
+              Values: [ "{{EntCaServerNetBIOSName}}" ]
+            - Name: "tag:aws:cloudformation:stack-name"
+              Values: ["{{StackName}}"]
+            - Name: "instance-state-name"
+              Values: [ "running" ]
+          outputs:
+          - Name: InstanceId
+            Selector: "$.Reservations[0].Instances[0].InstanceId"
+            Type: "String"
+        # Installs needed Powershell DSC Modules and components on both nodes.
+        - name: "dcsInstallDscModules"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dcsLCMConfig"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{entCAInstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/install-ad-modules.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./install-ad-modules.ps1"
+        # Configures Local Configuration Manager on each of the nodes.
+        - name: "dcsLCMConfig"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "createEntCAMof"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{entCAInstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/LCM-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./LCM-Config.ps1"
+        # Generates MOF file on second DC Node to be processed by LCM.
+        - name: "createEntCAMof"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "configEntCA"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{entCAInstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnteriseCaPreConfig.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./Invoke-EnteriseCaPreConfig.ps1  -EntCaNetBIOSName {{EntCaServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam {{AdministratorSecret}}"
+        # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
+        - name: "configEntCA"
+          action: aws:runCommand
+          onFailure: "step:signalfailure"
+          nextStep: "finalConfigEntCA"
+          inputs:
+            DocumentName: AWS-RunPowerShellScript
+            InstanceIds: 
+              - "{{entCAInstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              commands: 
+                - |     
+                   function DscStatusCheck () {
+                       $LCMState = (Get-DscLocalConfigurationManager).LCMState
+                       if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
+                           'returning 3010, should continue after reboot'
+                           exit 3010
+                       } else {
+                           'Completed'
+                       }
+                   }
+                   
+                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigEntCa' -Wait -Verbose -Force
+                   
+                   DscStatusCheck
+        # Ensure that AD servers point to themselves for DNS
+        - name: "finalConfigEntCA"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+              - "{{entCAInstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: S3
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnteriseCaConfig.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./Invoke-EnteriseCaConfig.ps1 -EntCaCommonName {{EntCaServerNetBIOSName}} -EntCaKeyLength {{EntCaKeyLength}} -EntCaHashAlgorithm {{EntCaHashAlgorithm}} -EntCaValidityPeriodUnits {{EntCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}}"
+        # Determines if CFN Needs to be Signaled or if Work flow should just end
+        - name: CFNSignalEnd
+          action: aws:branch
+          inputs:
+            Choices:
+            - NextStep: signalsuccess
+              Not: 
+                Variable: "{{StackName}}"
+                StringEquals: ""
+            - NextStep: sleepend
+              Variable: "{{StackName}}"
+              StringEquals: ""
+        # If all steps complete successfully signals CFN of Success
+        - name: "signalsuccess"
+          action: "aws:executeAwsApi"
+          isEnd: True
+          inputs:
+            Service: cloudformation
+            Api: SignalResource
+            LogicalResourceId: "EntRootCA"
+            StackName: "{{StackName}}"
+            Status: SUCCESS
+            UniqueId: "{{entCAInstanceId.InstanceId}}"
+        # If CFN Signl Not Needed this sleep ends work flow
+        - name: "sleepend"
+          action: "aws:sleep"
+          isEnd: True
+          inputs:
+            Duration: PT1S
+        # If any steps fails signals CFN of Failure
+        - name: "signalfailure"
+          action: "aws:executeAwsApi"
+          inputs:
+            Service: cloudformation
+            Api: SignalResource
+            LogicalResourceId: "EntRootCA"
+            StackName: "{{StackName}}"
+            Status: FAILURE
+            UniqueId: "{{entCAInstanceId.InstanceId}}"
+  ADDCSsmPassRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AD-SSM-PassRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - cloudformation:SignalResource
+            Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
+      Roles:
+        - !Ref 'SsmRoleName'
+  EntRootCA:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT30M
+        Count: 1
+    Properties:
+      ImageId: !Ref 'EntCaAmi'
+      IamInstanceProfile: !Ref 'Ec2RoleName'
+      InstanceType: !Ref 'EntCaServerInstanceType'
+      SubnetId: !Ref 'EntCaServerSubnet'
+      Tags:
+        - Key: Name
+          Value: !Ref 'EntCaServerNetBIOSName'
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 60
+            VolumeType: gp2
+        - DeviceName: /dev/xvdf
+          Ebs:
+            VolumeSize: !Ref 'EntCaDataDriveSizeGiB'
+            VolumeType: gp2
+      SecurityGroupIds:
+        - !Ref 'CaSG'
+        - !Ref 'DomainMembersSG'
+      PrivateIpAddress: !Ref 'EntCaServerIP'
+      KeyName: !Ref 'KeyPairName'
+      UserData: !Base64
+        Fn::Join:
+          - ''
+          - - "<powershell>\n"
+            - 'Start-SSMAutomationExecution -DocumentName '
+            - !Sub '"${AWSQuickstartECA}"'
+            - ' -Parameter @{'
+            - '"VPCCIDR"='
+            - !Sub '"${VPCCIDR}"'
+            - ';"AdministratorSecret"='
+            - !Sub '"${AdministratorSecret}"'
+            - ';"EntCaServerNetBIOSName"='
+            - !Sub '"${EntCaServerNetBIOSName}"'
+            - ';"DomainController1IP"='
+            - !Sub '"${DomainController1IP}"'
+            - ';"DomainController2IP"='
+            - !Sub '"${DomainController2IP}"'
+            - ';"DomainDNSName"='
+            - !Sub '"${DomainDNSName}"'
+            - ';"DomainNetBIOSName"='
+            - !Sub '"${DomainNetBIOSName}"'
+            - ';"EntCaKeyLength"='
+            - !Sub '"${EntCaKeyLength}"'
+            - ';"EntCaHashAlgorithm"='
+            - !Sub '"${EntCaHashAlgorithm}"'
+            - ';"EntCaValidityPeriodUnits"='
+            - !Sub '"${EntCaValidityPeriodUnits}"'
+            - ';"QSS3BucketName"='
+            - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
+            - ';"QSS3BucketRegion"='
+            - !If [UsingDefaultBucket, !Sub '"${AWS::Region}"', !Sub '"${QSS3BucketRegion}"']
+            - ';"QSS3KeyPrefix"='
+            - !Sub '"${QSS3KeyPrefix}"'
+            - ';"StackName"='
+            - !Sub '"${AWS::StackName}"'
+            - ';"URLSuffix"='
+            - !Sub '"${AWS::URLSuffix}"'
+            - ';"AutomationAssumeRole"='
+            - !Sub '"arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${SsmRoleName}"'
+            - '}'
+            - "\n"
+            - "</powershell>\n"
+  CaSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enterprise CA Security Group
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          Description: Certificate Enrollment
+          FromPort: 135
+          ToPort: 135
+          CidrIp: !Ref VPCCIDR
+        - IpProtocol: tcp
+          Description: Random RPC
+          FromPort: 49152
+          ToPort: 65535
+          CidrIp: !Ref VPCCIDR
+Outputs:
+  EnterpiseCASGID:
+    Value: !Ref 'CaSG'
+    Description: Enterpise CA Security Group ID
+  EntRootCAInstanceId:
+    Value: !Ref 'EntRootCA'
+    Description: EntRootCA instance ID

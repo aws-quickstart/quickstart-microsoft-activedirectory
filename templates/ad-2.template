@@ -864,55 +864,6 @@ Resources:
     Properties:
       GroupDescription: Domain Members
       VpcId: !Ref 'VPCID'
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5985
-          ToPort: 5985
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 5985
-          ToPort: 5985
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref 'PublicSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref 'PublicSubnet2CIDR'
 Outputs:
   DomainMemberSGID:
     Value: !Ref 'DomainMemberSG'
