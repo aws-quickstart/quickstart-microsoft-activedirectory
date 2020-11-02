@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This template creates 2 Windows 2016 Active Directory Domain Controllers
+Description: This template creates 2 Windows 2019 Active Directory Domain Controllers
   into private subnets in separate Availability Zones inside a VPC. The default Domain
   Administrator password will be the one retrieved from the instance.  For adding
   members to the domain, ensure that they are launched into the domain member security
@@ -26,15 +26,29 @@ Metadata:
           - ADServer2InstanceType
           - ADServer2NetBIOSName
           - ADServer2PrivateIP
+          - DataDriveSizeGiB
           - KeyPairName
           - WINFULLBASE
       - Label:
-          default: Microsoft Active Directory Configuration
+          default: Microsoft Active Directory Domain Services Configuration
         Parameters:
           - DomainAdminPassword
           - DomainAdminUser
           - DomainDNSName
           - DomainNetBIOSName
+      - Label:
+          default: Microsoft Active Directory Certificate Services Configuration
+        Parameters:
+          - PKI
+          - EntCaServerSubnet
+          - EntCaServerIP
+          - EntCaServerInstanceType
+          - EntCaAmi
+          - EntCaDataDriveSizeGiB
+          - EntCaServerNetBIOSName
+          - EntCaKeyLength
+          - EntCaHashAlgorithm
+          - EntCaValidityPeriodUnits
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -54,6 +68,8 @@ Metadata:
         default: Domain Controller 2 NetBIOS Name
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
+      DataDriveSizeGiB:
+        default: Size of Data Drive that contains SYSVOL and NTDS
       DomainAdminPassword:
         default: Domain Admin Password
       DomainAdminUser:
@@ -62,6 +78,26 @@ Metadata:
         default: Domain DNS Name
       DomainNetBIOSName:
         default: Domain NetBIOS Name
+      PKI:
+        default: Deploy PKI Infrastructure
+      EntCaServerSubnet:
+        default: Enterprise Root CA Subnet ID
+      EntCaServerIP:
+        default: Enterprise Root CA IP Address
+      EntCaServerInstanceType:
+        default: Enterprise Root CA Instance Type
+      EntCaAmi:
+        default: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
+      EntCaDataDriveSizeGiB:
+        default: Size of the Data Drive in GiB
+      EntCaServerNetBIOSName:
+        default: Enterprise Root CA NetBIOS Name
+      EntCaKeyLength:
+        default: Enterprise Root CA Key Length
+      EntCaHashAlgorithm:
+        default: Enterprise Root CA Hash Algorithm
+      EntCaValidityPeriodUnits:
+        default: Enterprise Root CA Certificate Validity Period in Years
       KeyPairName:
         default: Key Pair Name
       WINFULLBASE:
@@ -93,7 +129,7 @@ Parameters:
       - m5.xlarge
       - m5.2xlarge
       - m5.4xlarge
-    Default: m5.xlarge
+    Default: m5.large
     Description: Amazon EC2 instance type for the first Active Directory instance
     Type: String
   ADServer1NetBIOSName:
@@ -121,7 +157,7 @@ Parameters:
       - m5.xlarge
       - m5.2xlarge
       - m5.4xlarge
-    Default: m5.xlarge
+    Default: m5.large
     Description: Amazon EC2 instance type for the second Active Directory instance
     Type: String
   ADServer2NetBIOSName:
@@ -137,6 +173,10 @@ Parameters:
     Description: Fixed private IP for the second Active Directory server located in
       Availability Zone 2
     Type: String
+  DataDriveSizeGiB:
+    Type: 'Number'
+    Default: '10'
+    Description: Size of Data Drive that contains SYSVOL and NTDS
   DomainAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
     Description: Password for the domain admin user. Must be at least 8 characters
@@ -168,6 +208,66 @@ Parameters:
       versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
+    Type: String
+  PKI:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Description: Do you want to deploy a Single Tier PKI Enterpise CA
+    Type: String
+  EntCaServerSubnet:
+    Description: ID of the private subnet 1 or 2 in Availability Zone 1 or 2  (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
+  EntCaServerIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Description: Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet
+    Type: String
+    Default: 10.0.0.11
+  EntCaAmi:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Description: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+  EntCaServerInstanceType:
+    AllowedValues:
+      - t2.small
+      - t3.small
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+    Default: t3.medium
+    Description: Amazon EC2 instance type for the Enterprise Root CA instance
+    Type: String
+  EntCaDataDriveSizeGiB:
+    Type: 'Number'
+    Default: '2'
+    Description: Size of the Data Drive in GiB
+  EntCaServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the Enterprise Root CA server (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+    Default: CA1
+  EntCaKeyLength:
+    Description: Enterprise Root CA Key Length
+    AllowedValues:
+      - '2048'
+      - '4096'
+    Default: '2048'
+    Type: String
+  EntCaHashAlgorithm:
+    Description: Enterprise Root CA Hash Algorithm
+    AllowedValues:
+      - 'SHA256'
+      - 'SHA384'
+      - 'SHA512'
+    Default: 'SHA256'
+    Type: String
+  EntCaValidityPeriodUnits:
+    Description: Enterprise Root CA Certificate Validity Period in Years
+    Default: '5'
     Type: String
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance
@@ -245,6 +345,7 @@ Rules:
         AssertDescription: M4 instances are not available in the Paris region
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  ShouldCreateResource: !Not [!Equals [!Ref PKI, 'No']]
 Resources:
   DHCPOptions:
     Type: AWS::EC2::DHCPOptions
@@ -525,7 +626,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./ConfigDC2.ps1 -ADServer2NetBIOSName {{ADServer2NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -ADServer1PrivateIP {{ADServer1PrivateIP}} -ADAdminSecParam {{ADAdminSecParamName}}"
+              commandLine: "./ConfigDC2.ps1 -ADServer2NetBIOSName {{ADServer2NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -ADServer1PrivateIP {{ADServer1PrivateIP}} -ADAdminSecParam {{ADAdminSecParamName}} -RestoreModeSecParam {{RestoreModeSecParamName}} "
         # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
         - name: "configDC2"
           action: aws:runCommand
@@ -558,6 +659,7 @@ Resources:
         - name: "DnsConfig"
           action: "aws:runCommand"
           onFailure: "step:signalfailure"
+          nextStep: "PostConfig"
           inputs:
             DocumentName: "AWS-RunRemoteScript"
             InstanceIds:
@@ -579,6 +681,31 @@ Resources:
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
               commandLine: "./Dns-Config.ps1 -ADServer1NetBIOSName {{ADServer1NetBIOSName}} -ADServer2NetBIOSName {{ADServer2NetBIOSName}} -ADServer1PrivateIP {{ADServer1PrivateIP}} -ADServer2PrivateIP {{ADServer2PrivateIP}} -DomainDNSName {{DomainDNSName}} -ADAdminSecParam {{ADAdminSecParamName}}"
+        # Cleanup and finalize setup
+        - name: "PostConfig"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+              - "{{dcsInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: S3
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Post-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./Post-Config.ps1 -S3BucketName {{QSS3BucketName}} -S3KeyPrefix {{QSS3KeyPrefix}} -VPCCIDR {{VPCCIDR}}"
         # Determines if CFN Needs to be Signaled or if Work flow should just end
         - name: CFNSignalEnd
           action: aws:branch
@@ -796,7 +923,11 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 100
+            VolumeSize: 60
+            VolumeType: gp2
+        - DeviceName: /dev/xvdf
+          Ebs:
+            VolumeSize: !Ref 'DataDriveSizeGiB'
             VolumeType: gp2
       SecurityGroupIds:
         - !Ref 'DomainControllersSG'
@@ -820,7 +951,11 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 100
+            VolumeSize: 60
+            VolumeType: gp2
+        - DeviceName: /dev/xvdf
+          Ebs:
+            VolumeSize: !Ref 'DataDriveSizeGiB'
             VolumeType: gp2
       SecurityGroupIds:
         - !Ref 'DomainControllersSG'
@@ -876,231 +1011,115 @@ Resources:
         Ref: VPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 5985
-          ToPort: 5985
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: tcp
-          FromPort: 53 
+          Description: DNS
+          FromPort: 53
           ToPort: 53
-          CidrIp: !Ref VPCCIDR
+          SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: udp
-          FromPort: 53 
+          Description: DNS
+          FromPort: 53
           ToPort: 53
-          CidrIp: !Ref VPCCIDR
+          SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: tcp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: tcp
-          FromPort: 139
-          ToPort: 139
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: icmp
-          FromPort: -1
-          ToPort: -1
-          CidrIp: !Ref VPCCIDR
+          Description: Kerberos
+          FromPort: 88
+          ToPort: 88
+          SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: udp
+          Description: Kerberos
+          FromPort: 88
+          ToPort: 88
+          SourceSecurityGroupId: !Ref DomainMembersSG
+        - IpProtocol: udp
+          Description: Windows Time
           FromPort: 123
           ToPort: 123
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
+          Description: RPC Port
           FromPort: 135
           ToPort: 135
           SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: tcp
-          FromPort: 9389
-          ToPort: 9389
-          SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: udp
+          Description: Netlogon
           FromPort: 138
           ToPort: 138
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
-          FromPort: 445
-          ToPort: 445
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: udp
-          FromPort: 445
-          ToPort: 445
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: udp
-          FromPort: 464
-          ToPort: 464
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: tcp
-          FromPort: 464
-          ToPort: 464
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: tcp
+          Description: LDAP
           FromPort: 389
           ToPort: 389
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: udp
+          Description: LDAP
           FromPort: 389
           ToPort: 389
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
+          Description: SMB
+          FromPort: 445
+          ToPort: 445
+          SourceSecurityGroupId: !Ref DomainMembersSG
+        - IpProtocol: udp
+          Description: SMB
+          FromPort: 445
+          ToPort: 445
+          SourceSecurityGroupId: !Ref DomainMembersSG
+        - IpProtocol: udp
+          Description: Kerberos Set & Change Password
+          FromPort: 464
+          ToPort: 464
+          SourceSecurityGroupId: !Ref DomainMembersSG
+        - IpProtocol: tcp
+          Description: Kerberos Set & Change Password
+          FromPort: 464
+          ToPort: 464
+          SourceSecurityGroupId: !Ref DomainMembersSG
+        - IpProtocol: tcp
+          Description: LDAP over SSL
           FromPort: 636
           ToPort: 636
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
+          Description: LDAP Global Catalog
           FromPort: 3268
           ToPort: 3268
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
+          Description: LDAP Global Catalog over SSL
           FromPort: 3269
           ToPort: 3269
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
+          Description: RDP
+          FromPort: 3389
+          ToPort: 3389
+          SourceSecurityGroupId: !Ref DomainMembersSG
+        - IpProtocol: tcp
+          Description: WinRM
+          FromPort: 5985
+          ToPort: 5985
+          SourceSecurityGroupId: !Ref DomainMembersSG
+        - IpProtocol: tcp
+          Description: SOAP ADWS
           FromPort: 9389
           ToPort: 9389
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
-          FromPort: 88
-          ToPort: 88
+          Description: Random RPC
+          FromPort: 49152
+          ToPort: 65535
           SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: udp
-          FromPort: 88
-          ToPort: 88
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: udp
-          FromPort: 5355
-          ToPort: 5355
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: udp
-          FromPort: 137
-          ToPort: 137
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: tcp
-          FromPort: 139 
-          ToPort: 139
-          SourceSecurityGroupId: !Ref DomainMembersSG 
-        - IpProtocol: tcp
-          FromPort: 5722
-          ToPort: 5722
-          SourceSecurityGroupId: !Ref DomainMembersSG
-        - IpProtocol: icmp
-          FromPort: -1 
-          ToPort: -1 
+          Description: Random RPC
+          FromPort: 49152
+          ToPort: 65535
           SourceSecurityGroupId: !Ref DomainMembersSG
   DomainMembersSG: 
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: Domain Members
       VpcId: !Ref VPCID
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5985
-          ToPort: 5985
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 88
-          ToPort: 88
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 88
-          ToPort: 88
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 88
-          ToPort: 88
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 88
-          ToPort: 88
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 389
-          ToPort: 389
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 389
-          ToPort: 389
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 389
-          ToPort: 389
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: udp
-          FromPort: 389
-          ToPort: 389
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 636
-          ToPort: 636
-          CidrIp: !Sub ${ADServer1PrivateIP}/32
-        - IpProtocol: tcp
-          FromPort: 636
-          ToPort: 636
-          CidrIp: !Sub ${ADServer2PrivateIP}/32
   DCSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -1110,6 +1129,46 @@ Resources:
       FromPort: -1 
       ToPort: -1 
       SourceSecurityGroupId: !Ref DomainControllersSG
+  EntCAStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: DomainController2
+    Condition: ShouldCreateResource
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ca-1.template'
+          - S3Region: !If
+              - UsingDefaultBucket
+              - !Ref AWS::Region
+              - !Ref QSS3BucketRegion
+            S3Bucket: !If
+              - UsingDefaultBucket
+              - !Sub '${QSS3BucketName}-${AWS::Region}'
+              - !Ref QSS3BucketName
+      Parameters:
+        VPCCIDR: !Ref 'VPCCIDR'
+        VPCID: !Ref 'VPCID'
+        EntCaServerSubnet: !Ref 'EntCaServerSubnet'
+        DomainMembersSG: !Ref 'DomainMembersSG'
+        EntCaServerIP : !Ref 'EntCaServerIP'
+        EntCaServerInstanceType : !Ref 'EntCaServerInstanceType'
+        EntCaDataDriveSizeGiB : !Ref 'EntCaDataDriveSizeGiB'
+        Ec2RoleName: !Ref 'ADServerProfile'
+        SsmRoleName: !Ref 'AWSQuickstartADDSRole'
+        KeyPairName: !Ref 'KeyPairName'
+        EntCaAmi: !Ref 'EntCaAmi'
+        AdministratorSecret: !Ref 'ADAdminSecrets'
+        EntCaServerNetBIOSName : !Ref 'EntCaServerNetBIOSName'
+        DomainController1IP: !Ref 'ADServer1PrivateIP'
+        DomainController2IP: !Ref 'ADServer2PrivateIP'
+        DomainDNSName: !Ref 'DomainDNSName'     
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
+        EntCaKeyLength : !Ref 'EntCaKeyLength'
+        EntCaHashAlgorithm : !Ref 'EntCaHashAlgorithm'
+        EntCaValidityPeriodUnits : !Ref 'EntCaValidityPeriodUnits'
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
 Outputs:
   DomainAdmin:
     Value: !Join

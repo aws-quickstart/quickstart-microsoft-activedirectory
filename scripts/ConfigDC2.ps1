@@ -1,44 +1,90 @@
 [CmdletBinding()]
 # Incoming Parameters for Script, CloudFormation\SSM Parameters being passed in
-param(
-    [Parameter(Mandatory=$true)]
-    [string]$ADServer2NetBIOSName,
-
-    [Parameter(Mandatory=$true)]
-    [string]$DomainNetBIOSName,
-
-    [Parameter(Mandatory=$true)]
-    [string]$DomainDNSName,
-
-    [Parameter(Mandatory=$true)]
-    [string]$ADServer1PrivateIP,
-
-    [Parameter(Mandatory=$true)]
-    [string]$ADAdminSecParam
+Param (
+    [Parameter(Mandatory = $true)][string]$ADServer2NetBIOSName,
+    [Parameter(Mandatory = $true)][string]$DomainNetBIOSName,
+    [Parameter(Mandatory = $true)][string]$DomainDNSName,
+    [Parameter(Mandatory = $true)][string]$ADServer1PrivateIP,
+    [Parameter(Mandatory = $true)][string]$ADAdminSecParam,
+    [Parameter(Mandatory = $true)][string]$RestoreModeSecParam
 )
 
+#Requires -Modules PSDesiredStateConfiguration, NetworkingDsc, ComputerManagementDsc, xDnsServer, ActiveDirectoryDsc
+
+# Getting Network Configuration
+Try {
+    $NetIpConfig = Get-NetIPConfiguration
+} Catch [System.Exception] {
+    Write-Output "Failed to set network configuration $_"
+    Exit 1
+}
+
 # Grabbing the Current Gateway Address in order to Static IP Correctly
-$GatewayAddress = (Get-NetIPConfiguration).IPv4DefaultGateway.NextHop
+$GatewayAddress = $NetIpConfig | Select-Object -ExpandProperty 'IPv4DefaultGateway' | Select-Object -ExpandProperty 'NextHop'
+
 # Formatting IP Address in format needed for IPAdress DSC Resource
-$IPADDR = 'IP/CIDR' -replace 'IP',(Get-NetIPConfiguration).IPv4Address.IpAddress -replace 'CIDR',(Get-NetIPConfiguration).IPv4Address.PrefixLength
+$IP = $NetIpConfig | Select-Object -ExpandProperty 'IPv4Address' | Select-Object -ExpandProperty 'IpAddress'
+$Prefix = $NetIpConfig | Select-Object -ExpandProperty 'IPv4Address' | Select-Object -ExpandProperty 'PrefixLength'
+$IPADDR = 'IP/CIDR' -replace 'IP', $IP -replace 'CIDR', $Prefix
+
 # Grabbing Mac Address for Primary Interface to Rename Interface
-$MacAddress = (Get-NetAdapter).MacAddress
-# Getting Secrets Information for Domain Administrator
-$ADAdminPassword = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $ADAdminSecParam).SecretString
-# Formatting AD Admin User to proper format for JoinDomain DSC Resources in this Script
-$DomainAdmin = 'Domain\User' -replace 'Domain',$DomainNetBIOSName -replace 'User',$ADAdminPassword.UserName
-# Creating Credential Object for Domain Admin User
-$Credentials = (New-Object PSCredential($DomainAdmin,(ConvertTo-SecureString $ADAdminPassword.Password -AsPlainText -Force)))
+Try {
+    $MacAddress = Get-NetAdapter | Select-Object -ExpandProperty 'MacAddress'
+} Catch [System.Exception] {
+    Write-Output "Failed to get MAC address $_"
+    Exit 1
+}
+
+# Getting Password from Secrets Manager for AD Admin User
+Try {
+    $AdminSecret = Get-SECSecretValue -SecretId $ADAdminSecParam -ErrorAction Stop | Select-Object -ExpandProperty 'SecretString'
+} Catch [System.Exception] {
+    Write-Output "Failed to get $ADAdminSecParam Secret $_"
+    Exit 1
+}
+
+Try {
+    $ADAdminPassword = ConvertFrom-Json -InputObject $AdminSecret -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed to convert AdminSecret from JSON $_"
+    Exit 1
+}
+
+# Creating Credential Object for Administrator
+$AdminUserName = $ADAdminPassword.UserName
+$AdminUserPW = ConvertTo-SecureString ($ADAdminPassword.Password) -AsPlainText -Force
+$Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ("$DomainNetBIOSName\$AdminUserName", $AdminUserPW)
+
+# Getting Password from Secrets Manager for AD Restore Mode User
+Try {
+    $RestoreModeSecret = Get-SECSecretValue -SecretId $RestoreModeSecParam -ErrorAction Stop | Select-Object -ExpandProperty 'SecretString'
+} Catch [System.Exception] {
+    Write-Output "Failed to get $RestoreModeSecParam Secret $_"
+    Exit 1
+}
+
+Try {
+    $RestoreModePassword = ConvertFrom-Json -InputObject $RestoreModeSecret -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed to convert RestoreModeSecret from JSON $_"
+    Exit 1
+}
+
+# Creating Credential Object for Restore Mode Password
+$RestoreUserName = $RestoreModePassword.UserName
+$RestoreUserPW = ConvertTo-SecureString ($ADAdminPassword.Password) -AsPlainText -Force
+$RestoreCredentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ($RestoreUserName, $RestoreUserPW)
+
 # Getting the DSC Cert Encryption Thumbprint to Secure the MOF File
-$DscCertThumbprint = (get-childitem -path cert:\LocalMachine\My | where { $_.subject -eq "CN=AWSQSDscEncryptCert" }).Thumbprint
+$DscCertThumbprint = Get-ChildItem -Path 'cert:\LocalMachine\My' | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
 
 # Creating Configuration Data Block that has the Certificate Information for DSC Configuration Processing
 $ConfigurationData = @{
     AllNodes = @(
         @{
-            NodeName="*"
-            CertificateFile = "C:\AWSQuickstart\publickeys\AWSQSDscPublicKey.cer"
-            Thumbprint = $DscCertThumbprint
+            NodeName             = '*'
+            CertificateFile      = 'C:\AWSQuickstart\publickeys\AWSQSDscPublicKey.cer'
+            Thumbprint           = $DscCertThumbprint
             PSDscAllowDomainUser = $true
         },
         @{
@@ -50,29 +96,17 @@ $ConfigurationData = @{
 # PowerShell DSC Configuration Block for Domain Controller 2
 Configuration ConfigDC2 {
     # Credential Objects being passed in
-    param
+    Param
     (
-        [PSCredential] $Credentials
+        [Parameter(Mandatory = $true)][PSCredential]$Credentials,
+        [Parameter(Mandatory = $true)][PSCredential]$RestoreCredentials
     )
     
-    # Importing DSC Modules needed for Configuration
-    Import-Module -Name PSDesiredStateConfiguration
-    Import-Module -Name ActiveDirectoryDsc
-    Import-Module -Name NetworkingDsc
-    Import-Module -Name ActiveDirectoryCSDsc
-    Import-Module -Name ComputerManagementDsc
-    Import-Module -Name xDnsServer
-    
     # Importing All DSC Resources needed for Configuration
-    Import-DscResource -Module PSDesiredStateConfiguration
-    Import-DscResource -Module NetworkingDsc
-    Import-DscResource -Module ActiveDirectoryDsc
-    Import-DscResource -Module ActiveDirectoryCSDsc
-    Import-DscResource -Module ComputerManagementDsc
-    Import-DscResource -Module xDnsServer
+    Import-DscResource -ModuleName 'PSDesiredStateConfiguration', 'NetworkingDsc', 'ComputerManagementDsc', 'xDnsServer', 'ActiveDirectoryDsc'
     
     # Node Configuration block, since processing directly on DC using localhost
-    Node 'localhost' {
+    Node LocalHost {
 
         # Renaming Primary Adapter in order to Static the IP for AD installation
         NetAdapterName RenameNetAdapterPrimary {
@@ -85,15 +119,15 @@ Configuration ConfigDC2 {
             Dhcp           = 'Disabled'
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
-            DependsOn = '[NetAdapterName]RenameNetAdapterPrimary'
+            DependsOn      = '[NetAdapterName]RenameNetAdapterPrimary'
         }
 
         # Setting the IP Address on the Primary Interface
         IPAddress SetIP {
-            IPAddress = $IPADDR
+            IPAddress      = $IPADDR
             InterfaceAlias = 'Primary'
-            AddressFamily = 'IPv4'
-            DependsOn = '[NetAdapterName]RenameNetAdapterPrimary'
+            AddressFamily  = 'IPv4'
+            DependsOn      = '[NetAdapterName]RenameNetAdapterPrimary'
         }
 
         # Setting Default Gateway on Primary Interface
@@ -101,84 +135,60 @@ Configuration ConfigDC2 {
             Address        = $GatewayAddress
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
-            DependsOn = '[IPAddress]SetIP'
+            DependsOn      = '[IPAddress]SetIP'
         }
 
         # Setting DNS Server on Primary Interface to point to DC1
         DnsServerAddress DnsServerAddress {
-            Address = $ADServer1PrivateIP
+            Address        = $ADServer1PrivateIP
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
-            DependsOn = '[NetAdapterName]RenameNetAdapterPrimary'
+            DependsOn      = '[NetAdapterName]RenameNetAdapterPrimary'
         }
             
         # Wait for AD Domain to be up and running
         WaitForADDomain WaitForPrimaryDC {
-            DomainName = $DomainDnsName
+            DomainName  = $DomainDnsName
             WaitTimeout = 600
-            DependsOn = '[DnsServerAddress]DnsServerAddress'
+            DependsOn   = '[DnsServerAddress]DnsServerAddress'
         }
         
         # Rename Computer and Join Domain
         Computer JoinDomain {
-            Name = $ADServer2NetBIOSName
+            Name       = $ADServer2NetBIOSName
             DomainName = $DomainDnsName
             Credential = $Credentials
-            DependsOn = "[WaitForADDomain]WaitForPrimaryDC"
+            DependsOn  = '[WaitForADDomain]WaitForPrimaryDC'
         }
         
         # Adding Needed Windows Features
         WindowsFeature DNS {
-            Ensure = "Present"
-            Name = "DNS"
+            Ensure = 'Present'
+            Name   = 'DNS'
         }
         
         WindowsFeature AD-Domain-Services {
-            Ensure = "Present"
-            Name = "AD-Domain-Services"
-            DependsOn = "[WindowsFeature]DNS"
+            Ensure    = 'Present'
+            Name      = 'AD-Domain-Services'
+            DependsOn = '[WindowsFeature]DNS'
         }
         
         WindowsFeature DnsTools {
-            Ensure = "Present"
-            Name = "RSAT-DNS-Server"
-            DependsOn = "[WindowsFeature]DNS"
+            Ensure    = 'Present'
+            Name      = 'RSAT-DNS-Server'
+            DependsOn = '[WindowsFeature]DNS'
         }
         
         WindowsFeature RSAT-AD-Tools {
-            Name = 'RSAT-AD-Tools'
-            Ensure = 'Present'
-            DependsOn = "[WindowsFeature]AD-Domain-Services"
+            Ensure    = 'Present'
+            Name      = 'RSAT-AD-Tools'
+            DependsOn = '[WindowsFeature]AD-Domain-Services'
         }
-        
+
         WindowsFeature RSAT-ADDS {
-            Ensure = "Present"
-            Name = "RSAT-ADDS"
-            DependsOn = "[WindowsFeature]AD-Domain-Services"
-        }
-        
-        WindowsFeature RSAT-ADDS-Tools {
-            Name = 'RSAT-ADDS-Tools'
-            Ensure = 'Present'
-            DependsOn = "[WindowsFeature]RSAT-ADDS"
-        }
-
-        WindowsFeature RSAT-AD-PowerShell {
-            Name = 'RSAT-AD-PowerShell'
-            Ensure = 'Present'
-            DependsOn = "[WindowsFeature]RSAT-ADDS"
-        }
-        
-        WindowsFeature RSAT-AD-AdminCenter {
-            Name = 'RSAT-AD-AdminCenter'
-            Ensure = 'Present'
-            DependsOn = "[WindowsFeature]AD-Domain-Services"
-        }
-
-        WindowsFeature ADCS-Cert-Authority { 
-               Ensure = 'Present' 
-               Name = 'ADCS-Cert-Authority'
-               DependsOn = '[ADDomainController]SecondaryDC' 
+            Ensure    = 'Present'
+            Name      = 'RSAT-ADDS'
+            DependsOn = '[WindowsFeature]AD-Domain-Services'
         }
 
         Service ActiveDirectoryWebServices {
@@ -188,48 +198,24 @@ Configuration ConfigDC2 {
             DependsOn = "[WindowsFeature]AD-Domain-Services"
         }
 
-        ADCSCertificationAuthority ADCS { 
-            Ensure = 'Present'
-            IsSingleInstance = 'Yes' 
-            Credential = $Credentials
-            CAType = 'EnterpriseRootCA' 
-            DependsOn = '[WindowsFeature]ADCS-Cert-Authority'               
-        }
-
-        WindowsFeature ADCS-Web-Enrollment { 
-            Ensure = 'Present' 
-            Name = 'ADCS-Web-Enrollment' 
-            DependsOn = '[WindowsFeature]ADCS-Cert-Authority' 
-        } 
-
-        WindowsFeature RSAT-ADCS { 
-            Ensure = 'Present' 
-            Name = 'RSAT-ADCS' 
-            DependsOn = '[WindowsFeature]ADCS-Cert-Authority' 
-        } 
-        
-        WindowsFeature RSAT-ADCS-Mgmt { 
-            Ensure = 'Present' 
-            Name = 'RSAT-ADCS-Mgmt' 
-            DependsOn = '[WindowsFeature]ADCS-Cert-Authority' 
+        WindowsFeature GPMC {
+            Ensure    = 'Present'
+            Name      = 'GPMC'
+            DependsOn = '[WindowsFeature]AD-Domain-Services'
         }
 
         # Promoting Node as Secondary DC
         ADDomainController SecondaryDC {
-            DomainName = $DomainDnsName
-            Credential = $Credentials
-            SafemodeAdministratorPassword = $Credentials
-            DependsOn = @("[WindowsFeature]AD-Domain-Services","[Computer]JoinDomain", "[Service]ActiveDirectoryWebServices")
+            DomainName                    = $DomainDnsName
+            Credential                    = $Credentials
+            SafemodeAdministratorPassword = $RestoreCredentials
+            DatabasePath                  = 'D:\NTDS'
+            LogPath                       = 'D:\NTDS'
+            SysvolPath                    = 'D:\SYSVOL'
+            DependsOn                     = @('[WindowsFeature]AD-Domain-Services', '[Computer]JoinDomain', '[Service]ActiveDirectoryWebServices')
         }
-
-        ADCSWebEnrollment CertSrv { 
-            Ensure = 'Present' 
-            IsSingleInstance = 'Yes'
-            Credential = $Credentials
-            DependsOn = '[WindowsFeature]ADCS-Web-Enrollment','[ADCSCertificationAuthority]ADCS'
-        }  
     }
 }
 
 # Generating MOF File
-ConfigDC2 -OutputPath 'C:\AWSQuickstart\ConfigDC2' -Credentials $Credentials -ConfigurationData $ConfigurationData
+ConfigDC2 -OutputPath 'C:\AWSQuickstart\ConfigDC2' -Credentials $Credentials -RestoreCredentials $RestoreCredentials -ConfigurationData $ConfigurationData
