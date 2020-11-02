@@ -15,24 +15,15 @@ Metadata:
         Parameters:
           - VPCCIDR
           - VPCID
-          - PrivateSubnet1CIDR
           - PrivateSubnet1ID
-          - PrivateSubnet2CIDR
           - PrivateSubnet2ID
-          - PublicSubnet1CIDR
-          - PublicSubnet2CIDR
       - Label:
-          default: Microsoft Active Directory Configuration
+          default: AWS Managed Microsoft Active Directory Configuration
         Parameters:
           - DomainDNSName
           - DomainNetBIOSName
           - DomainAdminPassword
           - ADEdition
-      - Label:
-          default: AWS Systems Manager AMI configuration
-        Parameters:
-          - WS2019FULLBASE
-          - KeyPairName
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -48,20 +39,10 @@ Metadata:
         default: Domain NetBIOS Name
       ADEdition:
         default: AWS Microsoft AD edition
-      KeyPairName:
-        default: Key pair name
-      PrivateSubnet1CIDR:
-        default: Private Subnet 1 CIDR
       PrivateSubnet1ID:
         default: Private Subnet 1 ID
-      PrivateSubnet2CIDR:
-        default: Private Subnet 2 CIDR
       PrivateSubnet2ID:
         default: Private Subnet 2 ID
-      PublicSubnet1CIDR:
-        default: Public Subnet 1 CIDR
-      PublicSubnet2CIDR:
-        default: Public Subnet 2 CIDR
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3BucketRegion:
@@ -72,8 +53,6 @@ Metadata:
         default: VPC CIDR
       VPCID:
         default: VPC ID
-      WS2019FULLBASE: 
-        default: Windows Server 2019 full base AMI
 Parameters:
   DomainAdminPassword:
     Description: Password for the domain admin user. Must be at least 8 characters
@@ -106,38 +85,12 @@ Parameters:
     Default: Enterprise
     Description: The AWS Microsoft AD edition. Valid values include Standard and Enterprise.
     Type: String
-  PrivateSubnet1CIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.0.0/19
-    Description: CIDR block for private subnet 1 located in Availability Zone 1.
-    Type: String
   PrivateSubnet1ID:
     Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
-  PrivateSubnet2CIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.32.0/19
-    Description: CIDR block for private subnet 2 located in Availability Zone 2.
-    Type: String
   PrivateSubnet2ID:
     Description: ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
-  PublicSubnet1CIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.128.0/20
-    Description: CIDR Block for the public DMZ subnet 1 located in Availability Zone
-      1
-    Type: String
-  PublicSubnet2CIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.144.0/20
-    Description: CIDR Block for the public DMZ subnet 2 located in Availability Zone
-      2
-    Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -161,10 +114,6 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
     Type: String
-  KeyPairName:
-    Description: Public/private key pair, which allows you to securely connect to your instance
-      after it launches.
-    Type: AWS::EC2::KeyPair::KeyName
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
@@ -174,9 +123,6 @@ Parameters:
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
-  WS2019FULLBASE:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
 Rules:
   SubnetsInVPC:
     Assertions:
@@ -228,63 +174,6 @@ Resources:
     Properties:
       GroupDescription: Domain Members
       VpcId: !Ref 'VPCID'
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5985
-          ToPort: 5985
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 5985
-          ToPort: 5985
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref 'PublicSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref 'PublicSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 636
-          ToPort: 636
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: tcp
-          FromPort: 3269
-          ToPort: 3269
-          CidrIp: !Ref VPCCIDR
   SSMAutomationRole:
     Type: AWS::IAM::Role
     Properties:
@@ -410,9 +299,6 @@ Resources:
           AutomationAssumeRole:
             description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
             type: "String"
-          KeyPairName:
-            description: "Key pair to use for the ephemeral instance"
-            type: "String"
           DirectoryID:
             description: "Alias of the directory ID"
             type: "String"
@@ -456,10 +342,6 @@ Resources:
                   Description: "Subnet to deploy the EC2 instnace"
                   Default: "{{PrivateSubnet1ID}}"
                   Type: "String"
-                KeyPairName:
-                  Description: "Key pair name for the ephemeral instance"
-                  Default: "{{KeyPairName}}"
-                  Type: "String"
               Resources:
                 ForwarderRole: 
                   Type : AWS::IAM::Role
@@ -502,7 +384,6 @@ Resources:
                     SecurityGroupIds:
                       - !Ref 'SecurityGroup'
                     SubnetId: !Ref Subnet
-                    KeyName: !Ref KeyPairName
                     Tags:
                     - Key: "Name"
                       Value: "TempDNSForwarder"
@@ -544,7 +425,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./AddDNSForward.ps1 -DirectoryID {{DirectoryID}} -VPCCIDR {{VPCCIDR}} -AWSRegion {{AWSRegion}}"
+              commandLine: "./AddDNSForward.ps1 -DirectoryID {{DirectoryID}} -VPCCIDR {{VPCCIDR}}"
         # Determines if CFN Needs to be Signaled or if Work flow should just end
         - name: CFNSignalEnd
           action: aws:branch
@@ -588,7 +469,7 @@ Resources:
         - name: deleteStack
           action: aws:deleteStack
           isEnd: true
-#          onFailure: Continue
+        # onFailure: Continue
           inputs:
             StackName: "SetDNSForwarder"
   LambdaSSMExecute:
@@ -624,7 +505,6 @@ Resources:
                   qs_bucket_prefix = event['ResourceProperties']['QSS3KeyPrefix']
                   security_group = event['ResourceProperties']['DomainMemberSG']
                   subnet_id = event['ResourceProperties']['PrivateSubnet1ID']
-                  key_name = event['ResourceProperties']['KeyPairName']
                   vpc_cidr = event['ResourceProperties']['VPCCIDR']
                   directory_id = event['ResourceProperties']['DirectoryID']
                   aws_region = event['ResourceProperties']['AWSRegion']
@@ -656,9 +536,6 @@ Resources:
                           ],
                           'PrivateSubnet1ID': [
                               subnet_id
-                          ],
-                          'KeyPairName': [
-                              key_name
                           ],
                           'VPCCIDR': [
                               vpc_cidr
@@ -705,7 +582,6 @@ Resources:
       QSS3KeyPrefix: !Ref QSS3KeyPrefix
       AutomationAssumeRole: !GetAtt SSMAutomationRole.Arn
       PrivateSubnet1ID: !Ref PrivateSubnet1ID
-      KeyPairName: !Ref KeyPairName
       VPCCIDR: !Ref VPCCIDR
       DirectoryID: !GetAtt 'MicrosoftAD.Alias'
       AWSRegion: !Ref 'AWS::Region'
