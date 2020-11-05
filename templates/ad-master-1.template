@@ -397,7 +397,7 @@ Conditions:
   IncludeRDGW: !Not
     - !Equals
       - !Ref NumberOfRDGWHosts
-      - None
+      - '0'
 Rules:
   CheckSupportedInstances:
     RuleCondition: !Or [!Contains [[m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge],

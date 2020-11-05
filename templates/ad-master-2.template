@@ -253,7 +253,7 @@ Conditions:
   IncludeRDGW: !Not
     - !Equals
       - !Ref NumberOfRDGWHosts
-      - None
+      - '0'
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
