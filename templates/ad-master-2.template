@@ -170,6 +170,7 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
   NumberOfRDGWHosts:
     AllowedValues:
+      - '0'
       - '1'
       - '2'
       - '3'
@@ -249,6 +250,10 @@ Parameters:
     Type: String
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  IncludeRDGW: !Not
+    - !Equals
+      - !Ref NumberOfRDGWHosts
+      - None
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -311,6 +316,7 @@ Resources:
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
   RDGWStack:
     DependsOn: VPCStack
+    Condition: IncludeRDGW
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL:

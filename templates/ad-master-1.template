@@ -303,6 +303,7 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
   NumberOfRDGWHosts:
     AllowedValues:
+      - '0'
       - '1'
       - '2'
       - '3'
@@ -393,6 +394,10 @@ Parameters:
     Type: String
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  IncludeRDGW: !Not
+    - !Equals
+      - !Ref NumberOfRDGWHosts
+      - None
 Rules:
   CheckSupportedInstances:
     RuleCondition: !Or [!Contains [[m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge],
@@ -471,6 +476,7 @@ Resources:
         EntCaValidityPeriodUnits : !Ref 'EntCaValidityPeriodUnits'
   RDGWStack:
     DependsOn: ADStack
+    Condition: IncludeRDGW
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL:
