@@ -225,7 +225,7 @@ Parameters:
     Type: String
     Default: 10.0.0.11
   EntCaAmi:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Type: String
     Description: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
   EntCaServerInstanceType:
@@ -1153,8 +1153,6 @@ Resources:
         EntCaServerIP : !Ref 'EntCaServerIP'
         EntCaServerInstanceType : !Ref 'EntCaServerInstanceType'
         EntCaDataDriveSizeGiB : !Ref 'EntCaDataDriveSizeGiB'
-        Ec2RoleName: !Ref 'ADServerProfile'
-        SsmRoleName: !Ref 'AWSQuickstartADDSRole'
         KeyPairName: !Ref 'KeyPairName'
         EntCaAmi: !Ref 'EntCaAmi'
         AdministratorSecret: !Ref 'ADAdminSecrets'

@@ -11,28 +11,24 @@ Metadata:
         Parameters:
           - VPCCIDR
           - VPCID
-          - EntCaServerSubnet
+          - MgmtServerSubnet
           - DomainMembersSG
       - Label:
           default: Amazon EC2 Configuration
         Parameters:
-          - EntCaServerIP
-          - EntCaServerInstanceType
-          - EntCaDataDriveSizeGiB
+          - MgmtServerInstanceType
+          - MgmtDataDriveSizeGiB
           - KeyPairName
-          - EntCaAmi
+          - MgmtAmi
           - AdministratorSecret
       - Label:
           default: Microsoft Active Directory Certificate Services Configuration
         Parameters:
-          - EntCaServerNetBIOSName
+          - MgmtServerNetBIOSName
           - DomainController1IP
           - DomainController2IP
           - DomainDNSName
           - DomainNetBIOSName
-          - EntCaKeyLength
-          - EntCaHashAlgorithm
-          - EntCaValidityPeriodUnits
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -44,38 +40,30 @@ Metadata:
         default: VPC CIDR
       VPCID:
         default: VPC ID
-      EntCaServerSubnet:
-        default: Enterprise Root CA Subnet ID
+      MgmtServerSubnet:
+        default: Management Instance Subnet ID
       DomainMembersSG:
         default: Security Group ID for Domain Members Security Group.  
-      EntCaServerIP:
-        default: Enterprise Root CA IP Address
-      EntCaServerInstanceType:
-        default: Enterprise Root CA Instance Type
-      EntCaDataDriveSizeGiB:
+      MgmtServerInstanceType:
+        default: Management Instance Instance Type
+      MgmtDataDriveSizeGiB:
         default: Size of the Data Drive in GiB
       KeyPairName:
         default: Public/private key pairs allow you to securely connect to your instance
-      EntCaAmi:
+      MgmtAmi:
         default: AMI ID passed in from parent stack
       AdministratorSecret:
         default: The arn for the Secret containing the Administrator Credentials
-      EntCaServerNetBIOSName:
-        default: Enterprise Root CA NetBIOS Name
+      MgmtServerNetBIOSName:
+        default: Management Instance NetBIOS Name
       DomainController1IP:
-        default: IP For Domain Controller that Enterprise Root CA Instance will use for DNS
+        default: IP For Domain Controller that Management Instance Instance will use for DNS
       DomainController2IP:
-        default: IP For Domain Controller that Enterprise Root CA Instance will use for DNS
+        default: IP For Domain Controller that Management Instance Instance will use for DNS
       DomainDNSName:
         default: Domain DNS Name
       DomainNetBIOSName:
         default: Domain NetBIOS Name
-      EntCaKeyLength:
-        default: Enterprise Root CA Key Length
-      EntCaHashAlgorithm:
-        default: Enterprise Root CA Hash Algorithm
-      EntCaValidityPeriodUnits:
-        default: Enterprise Root CA Certificate Validity Period in Years
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
@@ -92,18 +80,13 @@ Parameters:
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
-  EntCaServerSubnet:
-    Description: ID of the Enterprise Root CA subnet (e.g., subnet-a0246dcd)
+  MgmtServerSubnet:
+    Description: ID of the Management Instance subnet (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   DomainMembersSG:
     Description: Security Group ID for Domain Members Security Group.  
     Type: String
-  EntCaServerIP:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Description: Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet
-    Type: String
-    Default: 10.0.0.11
-  EntCaServerInstanceType:
+  MgmtServerInstanceType:
     AllowedValues:
       - t2.small
       - t3.small
@@ -112,9 +95,9 @@ Parameters:
       - t2.large
       - t3.large
     Default: t3.medium
-    Description: Amazon EC2 instance type for the Enterprise Root CA instance
+    Description: Amazon EC2 instance type for the Management Instance instance
     Type: String
-  EntCaDataDriveSizeGiB:
+  MgmtDataDriveSizeGiB:
     Type: 'Number'
     Default: '2'
     Description: Size of the Data Drive in GiB
@@ -122,26 +105,27 @@ Parameters:
     Description: Public/private key pairs allow you to securely connect to your instance
       after it launches
     Type: AWS::EC2::KeyPair::KeyName
-  EntCaAmi:
+  MgmtAmi:
+    Description: AMI ID passed in from parent stack
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Description: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
   AdministratorSecret:
     Description: The arn for the Secret containing the Administrator Credentials
     Type: String
-  EntCaServerNetBIOSName:
+  MgmtServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
-    Description: NetBIOS name of the Enterprise Root CA server (up to 15 characters)
+    Description: NetBIOS name of the Management Instance server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
+    Default: MGMT01
   DomainController1IP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Description: IP For Domain Controller that Enterprise Root CA Instance will use for DNS
+    Description: IP For Domain Controller that Management Instance Instance will use for DNS
     Type: String
   DomainController2IP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Description: IP For Domain Controller that Enterprise Root CA Instance will use for DNS
+    Description: IP For Domain Controller that Management Instance Instance will use for DNS
     Type: String
   DomainDNSName:
     AllowedPattern: '[a-zA-Z0-9\-]+\..+'
@@ -154,25 +138,6 @@ Parameters:
     Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
-    Type: String
-  EntCaKeyLength:
-    Description: Enterprise Root CA Key Length
-    AllowedValues:
-      - '2048'
-      - '4096'
-    Default: '2048'
-    Type: String
-  EntCaHashAlgorithm:
-    Description: Enterprise Root CA Hash Algorithm
-    AllowedValues:
-      - 'SHA256'
-      - 'SHA384'
-      - 'SHA512'
-    Default: 'SHA256'
-    Type: String
-  EntCaValidityPeriodUnits:
-    Description: Enterprise Root CA Certificate Validity Period in Years
-    Default: '5'
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -251,7 +216,7 @@ Resources:
                   - ec2:DescribeInstanceStatus
                   - ssm:*
                 Resource: '*'
-          PolicyName: CA-SSM-Automation
+          PolicyName: Managed-AD-SSM-Automation
       Path: /
       AssumeRolePolicyDocument:
         Statement:
@@ -266,7 +231,7 @@ Resources:
   SsmPassRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: CA-SSM-PassRole
+      PolicyName: Managed-AD-SSM-PassRole
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -318,7 +283,7 @@ Resources:
                 Action:
                   - ssm:StartAutomationExecution
                 Resource: '*'
-          PolicyName: CA-SSM-Secrets
+          PolicyName: Managed-AD-SSM-Secrets
         - PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -326,7 +291,7 @@ Resources:
                 Action:
                   - iam:PassRole
                 Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${SSMRole}'
-          PolicyName: CA-SSM-PassRole
+          PolicyName: Managed-AD-SSM-PassRole
       Path: /
       ManagedPolicyArns:
         - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
@@ -346,7 +311,7 @@ Resources:
       Roles:
         - !Ref 'InstanceRole'
       Path: /
-  AWSQuickstartECA:
+  AWSQuickstartMgmt:
     Type: AWS::SSM::Document
     Properties:
       DocumentType: Automation
@@ -361,8 +326,8 @@ Resources:
             default: '10.0.0.0/16'
             description: "CIDR block for private subnet 1 located in Availability Zone 1."
             type: "String"
-          EntCaServerNetBIOSName:
-            description: "NetBIOS name of the Enterprise Root CA server (up to 15 characters)"
+          MgmtServerNetBIOSName:
+            description: "NetBIOS name of the Management Instance server (up to 15 characters)"
             type: "String"
           DomainController1IP:
             description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
@@ -379,15 +344,6 @@ Resources:
           DomainNetBIOSName: 
             description: "NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE"
             type: "String"
-          EntCaKeyLength:
-            description: Enterprise Root CA Key Length
-            type: String
-          EntCaHashAlgorithm:
-            description: Enterprise Root CA Hash Algorithm
-            type: String
-          EntCaValidityPeriodUnits:
-            description: Enterprise Root CA Certificate Validity Period in Years
-            type: String
           QSS3BucketName:
             default: "aws-quickstart"
             description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
@@ -414,7 +370,7 @@ Resources:
             type: "String"
         mainSteps:
         # This step grabs the Instance IDs for both nodes that will be configured as DCs in the Quick Start and Instance IDs for the for next steps.
-        - name: "entCAInstanceId"
+        - name: "mgmtInstanceId"
           action: aws:executeAwsApi
           onFailure: "step:signalfailure"
           nextStep: "dcsInstallDscModules"
@@ -423,7 +379,7 @@ Resources:
             Api: DescribeInstances
             Filters:  
             - Name: "tag:Name"
-              Values: [ "{{EntCaServerNetBIOSName}}" ]
+              Values: [ "{{MgmtServerNetBIOSName}}" ]
             - Name: "tag:aws:cloudformation:stack-name"
               Values: ["{{StackName}}"]
             - Name: "instance-state-name"
@@ -440,7 +396,7 @@ Resources:
           inputs:
             DocumentName: "AWS-RunRemoteScript"
             InstanceIds:
-            - "{{entCAInstanceId.InstanceId}}"
+            - "{{mgmtInstanceId.InstanceId}}"
             CloudWatchOutputConfig:
               CloudWatchOutputEnabled: "true"
               CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
@@ -462,11 +418,11 @@ Resources:
         - name: "dcsLCMConfig"
           action: "aws:runCommand"
           onFailure: "step:signalfailure"
-          nextStep: "createEntCAMof"
+          nextStep: "createMgmtMof"
           inputs:
             DocumentName: "AWS-RunRemoteScript"
             InstanceIds:
-            - "{{entCAInstanceId.InstanceId}}"
+            - "{{mgmtInstanceId.InstanceId}}"
             CloudWatchOutputConfig:
               CloudWatchOutputEnabled: "true"
               CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
@@ -485,14 +441,14 @@ Resources:
                       - !Ref QSS3BucketRegion
               commandLine: "./LCM-Config.ps1"
         # Generates MOF file on second DC Node to be processed by LCM.
-        - name: "createEntCAMof"
+        - name: "createMgmtMof"
           action: "aws:runCommand"
           onFailure: "step:signalfailure"
-          nextStep: "configEntCA"
+          nextStep: "configMgmt"
           inputs:
             DocumentName: "AWS-RunRemoteScript"
             InstanceIds:
-            - "{{entCAInstanceId.InstanceId}}"
+            - "{{mgmtInstanceId.InstanceId}}"
             CloudWatchOutputConfig:
               CloudWatchOutputEnabled: "true"
               CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
@@ -500,7 +456,7 @@ Resources:
               sourceType: "S3"
               sourceInfo: 
                 !Sub
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnteriseCaPreConfig.ps1"}'
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-MgmtInstanceConfig.ps1"}'
                   - S3Bucket: !If
                       - UsingDefaultBucket
                       - !Sub '${QSS3BucketName}'
@@ -509,16 +465,16 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-EnteriseCaPreConfig.ps1  -EntCaNetBIOSName {{EntCaServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam {{AdministratorSecret}}"
+              commandLine: "./Invoke-MgmtInstanceConfig.ps1  -MgmtNetBIOSName {{MgmtServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam {{AdministratorSecret}}"
         # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
-        - name: "configEntCA"
+        - name: "configMgmt"
           action: aws:runCommand
           onFailure: "step:signalfailure"
-          nextStep: "finalConfigEntCA"
+          nextStep: "finalConfigMgmt"
           inputs:
             DocumentName: AWS-RunPowerShellScript
             InstanceIds: 
-              - "{{entCAInstanceId.InstanceId}}"
+              - "{{mgmtInstanceId.InstanceId}}"
             CloudWatchOutputConfig:
               CloudWatchOutputEnabled: "true"
               CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
@@ -535,17 +491,17 @@ Resources:
                        }
                    }
                    
-                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigEntCa' -Wait -Verbose -Force
+                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigMgmt' -Wait -Verbose -Force
                    
                    DscStatusCheck
         # Ensure that AD servers point to themselves for DNS
-        - name: "finalConfigEntCA"
+        - name: "finalConfigMgmt"
           action: "aws:runCommand"
           onFailure: "step:signalfailure"
           inputs:
             DocumentName: "AWS-RunRemoteScript"
             InstanceIds:
-              - "{{entCAInstanceId.InstanceId}}"
+              - "{{mgmtInstanceId.InstanceId}}"
             CloudWatchOutputConfig:
               CloudWatchOutputEnabled: "true"
               CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
@@ -553,7 +509,7 @@ Resources:
               sourceType: S3
               sourceInfo: 
                 !Sub 
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnteriseCaConfig.ps1"}'
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-MgmtInstancePostConfig.ps1"}'
                   - S3Bucket: !If
                       - UsingDefaultBucket
                       - !Sub '${QSS3BucketName}'
@@ -562,7 +518,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-EnteriseCaConfig.ps1 -EntCaCommonName {{EntCaServerNetBIOSName}} -EntCaKeyLength {{EntCaKeyLength}} -EntCaHashAlgorithm {{EntCaHashAlgorithm}} -EntCaValidityPeriodUnits {{EntCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}}"
+              commandLine: "./Invoke-MgmtInstancePostConfig.ps1"
         # Determines if CFN Needs to be Signaled or if Work flow should just end
         - name: CFNSignalEnd
           action: aws:branch
@@ -582,10 +538,10 @@ Resources:
           inputs:
             Service: cloudformation
             Api: SignalResource
-            LogicalResourceId: "EntRootCA"
+            LogicalResourceId: "MgmtInstance"
             StackName: "{{StackName}}"
             Status: SUCCESS
-            UniqueId: "{{entCAInstanceId.InstanceId}}"
+            UniqueId: "{{mgmtInstanceId.InstanceId}}"
         # If CFN Signl Not Needed this sleep ends work flow
         - name: "sleepend"
           action: "aws:sleep"
@@ -598,24 +554,24 @@ Resources:
           inputs:
             Service: cloudformation
             Api: SignalResource
-            LogicalResourceId: "EntRootCA"
+            LogicalResourceId: "MgmtInstance"
             StackName: "{{StackName}}"
             Status: FAILURE
-            UniqueId: "{{entCAInstanceId.InstanceId}}"
-  EntRootCA:
+            UniqueId: "{{mgmtInstanceId.InstanceId}}"
+  MgmtInstance:
     Type: AWS::EC2::Instance
     CreationPolicy:
       ResourceSignal:
         Timeout: PT30M
         Count: 1
     Properties:
-      ImageId: !Ref 'EntCaAmi'
+      ImageId: !Ref 'MgmtAmi'
       IamInstanceProfile: !Ref 'InstanceProfile'
-      InstanceType: !Ref 'EntCaServerInstanceType'
-      SubnetId: !Ref 'EntCaServerSubnet'
+      InstanceType: !Ref 'MgmtServerInstanceType'
+      SubnetId: !Ref 'MgmtServerSubnet'
       Tags:
         - Key: Name
-          Value: !Ref 'EntCaServerNetBIOSName'
+          Value: !Ref 'MgmtServerNetBIOSName'
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -623,26 +579,24 @@ Resources:
             VolumeType: gp2
         - DeviceName: /dev/xvdf
           Ebs:
-            VolumeSize: !Ref 'EntCaDataDriveSizeGiB'
+            VolumeSize: !Ref 'MgmtDataDriveSizeGiB'
             VolumeType: gp2
       SecurityGroupIds:
-        - !Ref 'CaSG'
         - !Ref 'DomainMembersSG'
-      PrivateIpAddress: !Ref 'EntCaServerIP'
       KeyName: !Ref 'KeyPairName'
       UserData: !Base64
         Fn::Join:
           - ''
           - - "<powershell>\n"
             - 'Start-SSMAutomationExecution -DocumentName '
-            - !Sub '"${AWSQuickstartECA}"'
+            - !Sub '"${AWSQuickstartMgmt}"'
             - ' -Parameter @{'
             - '"VPCCIDR"='
             - !Sub '"${VPCCIDR}"'
             - ';"AdministratorSecret"='
             - !Sub '"${AdministratorSecret}"'
-            - ';"EntCaServerNetBIOSName"='
-            - !Sub '"${EntCaServerNetBIOSName}"'
+            - ';"MgmtServerNetBIOSName"='
+            - !Sub '"${MgmtServerNetBIOSName}"'
             - ';"DomainController1IP"='
             - !Sub '"${DomainController1IP}"'
             - ';"DomainController2IP"='
@@ -651,12 +605,6 @@ Resources:
             - !Sub '"${DomainDNSName}"'
             - ';"DomainNetBIOSName"='
             - !Sub '"${DomainNetBIOSName}"'
-            - ';"EntCaKeyLength"='
-            - !Sub '"${EntCaKeyLength}"'
-            - ';"EntCaHashAlgorithm"='
-            - !Sub '"${EntCaHashAlgorithm}"'
-            - ';"EntCaValidityPeriodUnits"='
-            - !Sub '"${EntCaValidityPeriodUnits}"'
             - ';"QSS3BucketName"='
             - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
             - ';"QSS3BucketRegion"='
@@ -672,26 +620,7 @@ Resources:
             - '}'
             - "\n"
             - "</powershell>\n"
-  CaSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Enterprise CA Security Group
-      VpcId: !Ref VPCID
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          Description: Certificate Enrollment
-          FromPort: 135
-          ToPort: 135
-          CidrIp: !Ref VPCCIDR
-        - IpProtocol: tcp
-          Description: Random RPC
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref VPCCIDR
 Outputs:
-  EnterpiseCASGID:
-    Value: !Ref 'CaSG'
-    Description: Enterpise CA Security Group ID
-  EntRootCAInstanceId:
-    Value: !Ref 'EntRootCA'
-    Description: EntRootCA instance ID
+  MgmtInstanceId:
+    Value: !Ref 'MgmtInstance'
+    Description: MgmtInstance instance ID

@@ -32,7 +32,7 @@ tests:
       DomainDNSName: example.com
       DomainNetBIOSName: example
       KeyPairName: $[taskcat_getkeypair]
-      NumberOfRDGWHosts: '0'
+      NumberOfRDGWHosts: '1'
       PrivateSubnet1CIDR: 10.0.0.0/19
       PrivateSubnet2CIDR: 10.0.32.0/19
       PublicSubnet1CIDR: 10.0.128.0/20
@@ -67,7 +67,7 @@ tests:
       AvailabilityZones: $[taskcat_genaz_2]
       DomainDNSName: example.com
       KeyPairName: $[taskcat_getkeypair]
-      NumberOfRDGWHosts: '0'
+      NumberOfRDGWHosts: '1'
       PrivateSubnet1CIDR: 10.0.0.0/19
       PrivateSubnet2CIDR: 10.0.32.0/19
       PublicSubnet1CIDR: 10.0.128.0/20
@@ -90,7 +90,7 @@ tests:
       DomainNetBIOSName: example
       ADEdition: Standard
       KeyPairName: $[taskcat_getkeypair]
-      NumberOfRDGWHosts: '0'
+      NumberOfRDGWHosts: '1'
       PrivateSubnet1CIDR: 10.0.0.0/19
       PrivateSubnet2CIDR: 10.0.32.0/19
       PublicSubnet1CIDR: 10.0.128.0/20
@@ -100,6 +100,10 @@ tests:
       VPCCIDR: 10.0.0.0/16
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
+      Mgmt: 'Yes'
+      MgMtServerInstanceType: t3.medium
+      MgmtDataDriveSizeGiB: '2'
+      MgmtServerNetBIOSName: 'Mgmt01'
     regions:
     - us-west-1
     - us-west-2

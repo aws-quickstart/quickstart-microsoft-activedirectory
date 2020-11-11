@@ -18,16 +18,22 @@ Metadata:
           - PrivateSubnet1ID
           - PrivateSubnet2ID
       - Label:
-          default: Microsoft Active Directory Configuration
+          default: AWS Managed Microsoft Active Directory Configuration
         Parameters:
           - DomainDNSName
           - DomainNetBIOSName
           - DomainAdminPassword
           - ADEdition
       - Label:
-          default: AWS Systems Manager AMI configuration
+          default: Microsoft Windows Server Management Instance
         Parameters:
-          - KeyPairName
+          - Mgmt
+          - MgmtServerSubnet
+          - MgmtServerInstanceType
+          - MgmtAmi
+          - MgmtDataDriveSizeGiB
+          - MgmtServerNetBIOSName
+          - MgmtKeyPairName
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -35,39 +41,58 @@ Metadata:
           - QSS3KeyPrefix
           - QSS3BucketRegion
     ParameterLabels:
-      DomainAdminPassword:
-        default: Domain Admin Password
-      DomainDNSName:
-        default: Domain DNS Name
-      DomainNetBIOSName:
-        default: Domain NetBIOS Name
-      ADEdition:
-        default: AWS Microsoft AD edition
-      KeyPairName:
-        default: Key pair name
+      VPCCIDR:
+        default: VPC CIDR
+      VPCID:
+        default: VPC ID
       PrivateSubnet1ID:
         default: Private Subnet 1 ID
       PrivateSubnet2ID:
         default: Private Subnet 2 ID
+      DomainDNSName:
+        default: Domain DNS Name
+      DomainNetBIOSName:
+        default: Domain NetBIOS Name
+      DomainAdminPassword:
+        default: Domain Admin Password
+      ADEdition:
+        default: AWS Microsoft AD edition
+      Mgmt:
+        default: Deploy Management Instance
+      MgmtServerSubnet:
+        default: Management Instance Subnet ID
+      MgmtServerInstanceType:
+        default: Management Instance Instance Type
+      MgmtAmi:
+        default: Management Instance SSM Parameter Value to grab the lastest AMI ID
+      MgmtDataDriveSizeGiB:
+        default: Size of the Data Drive in GiB
+      MgmtServerNetBIOSName:
+        default: Management Instance NetBIOS Name
+      MgmtKeyPairName:
+        default: Public/private key pairs allow you to securely connect to your instance
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3BucketRegion:
         default: Quick Start S3 Bucket Region
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
-      VPCCIDR:
-        default: VPC CIDR
-      VPCID:
-        default: VPC ID
 Parameters:
-  DomainAdminPassword:
-    Description: Password for the domain admin user. Must be at least 8 characters
-      containing letters, numbers and symbols
+  VPCCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/16
+    Description: CIDR Block for the VPC
     Type: String
-    MinLength: '8'
-    MaxLength: '32'
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    NoEcho: 'true'
+  VPCID:
+    Description: ID of the VPC (e.g., vpc-0343606e)
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnet1ID:
+    Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
+  PrivateSubnet2ID:
+    Description: ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
   DomainDNSName:
     Description: Fully qualified domain name (FQDN) of the forest root domain e.g.
       example.com
@@ -84,6 +109,14 @@ Parameters:
     MinLength: '1'
     MaxLength: '15'
     AllowedPattern: '[a-zA-Z0-9\-]+'
+  DomainAdminPassword:
+    Description: Password for the domain admin user. Must be at least 8 characters
+      containing letters, numbers and symbols
+    Type: String
+    MinLength: '8'
+    MaxLength: '32'
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    NoEcho: 'true'
   ADEdition:
     AllowedValues:
       - Standard
@@ -91,12 +124,46 @@ Parameters:
     Default: Enterprise
     Description: The AWS Microsoft AD edition. Valid values include Standard and Enterprise.
     Type: String
-  PrivateSubnet1ID:
-    Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+  Mgmt:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Description: Do you want to deploy a Windows Server Management Instance
+    Type: String
+  MgmtServerSubnet:
+    Description: ID of the private subnet 1 or 2 in Availability Zone 1 or 2  (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
-  PrivateSubnet2ID:
-    Description: ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
-    Type: AWS::EC2::Subnet::Id
+  MgmtServerInstanceType:
+    AllowedValues:
+      - t2.small
+      - t3.small
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+    Default: t3.medium
+    Description: Amazon EC2 instance type for the Management Instance
+    Type: String
+  MgmtAmi:
+    Type: String
+    Description: Management Instance SSM Parameter Value to grab the lastest AMI ID
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+  MgmtDataDriveSizeGiB:
+    Type: 'Number'
+    Default: '2'
+    Description: Size of the Data Drive in GiB
+  MgmtServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the Management Instance server (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+    Default: MGMT1
+  MgmtKeyPairName:
+    Description: Public/private key pairs allow you to securely connect to your instance
+      after it launches
+    Type: AWS::EC2::KeyPair::KeyName
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -120,19 +187,6 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
     Type: String
-  KeyPairName:
-    Description: Public/private key pair, which allows you to securely connect to your instance
-      after it launches.
-    Type: AWS::EC2::KeyPair::KeyName
-  VPCCIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.0.0/16
-    Description: CIDR Block for the VPC
-    Type: String
-  VPCID:
-    Description: ID of the VPC (e.g., vpc-0343606e)
-    Type: AWS::EC2::VPC::Id
 Rules:
   SubnetsInVPC:
     Assertions:
@@ -144,6 +198,7 @@ Rules:
         AssertDescription: All subnets must in the VPC
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  ShouldCreateResource: !Not [!Equals [!Ref Mgmt, 'No']]
 Resources:
   DHCPOptions:
     Type: AWS::EC2::DHCPOptions
@@ -309,9 +364,6 @@ Resources:
           AutomationAssumeRole:
             description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
             type: "String"
-          KeyPairName:
-            description: "Key pair to use for the ephemeral instance"
-            type: "String"
           DirectoryID:
             description: "Alias of the directory ID"
             type: "String"
@@ -355,10 +407,6 @@ Resources:
                   Description: "Subnet to deploy the EC2 instnace"
                   Default: "{{PrivateSubnet1ID}}"
                   Type: "String"
-                KeyPairName:
-                  Description: "Key pair name for the ephemeral instance"
-                  Default: "{{KeyPairName}}"
-                  Type: "String"
               Resources:
                 ForwarderRole: 
                   Type : AWS::IAM::Role
@@ -401,7 +449,6 @@ Resources:
                     SecurityGroupIds:
                       - !Ref 'SecurityGroup'
                     SubnetId: !Ref Subnet
-                    KeyName: !Ref KeyPairName
                     Tags:
                     - Key: "Name"
                       Value: "TempDNSForwarder"
@@ -523,7 +570,6 @@ Resources:
                   qs_bucket_prefix = event['ResourceProperties']['QSS3KeyPrefix']
                   security_group = event['ResourceProperties']['DomainMemberSG']
                   subnet_id = event['ResourceProperties']['PrivateSubnet1ID']
-                  key_name = event['ResourceProperties']['KeyPairName']
                   vpc_cidr = event['ResourceProperties']['VPCCIDR']
                   directory_id = event['ResourceProperties']['DirectoryID']
                   aws_region = event['ResourceProperties']['AWSRegion']
@@ -555,9 +601,6 @@ Resources:
                           ],
                           'PrivateSubnet1ID': [
                               subnet_id
-                          ],
-                          'KeyPairName': [
-                              key_name
                           ],
                           'VPCCIDR': [
                               vpc_cidr
@@ -604,7 +647,6 @@ Resources:
       QSS3KeyPrefix: !Ref QSS3KeyPrefix
       AutomationAssumeRole: !GetAtt SSMAutomationRole.Arn
       PrivateSubnet1ID: !Ref PrivateSubnet1ID
-      KeyPairName: !Ref KeyPairName
       VPCCIDR: !Ref VPCCIDR
       DirectoryID: !GetAtt 'MicrosoftAD.Alias'
       AWSRegion: !Ref 'AWS::Region'
@@ -663,7 +705,40 @@ Resources:
                 - ssm.amazonaws.com
             Effect: Allow
         Version: '2012-10-17'
-
+  MgmtStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: DHCPOptions
+    Condition: ShouldCreateResource
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/mgmt-1.template'
+          - S3Region: !If
+              - UsingDefaultBucket
+              - !Ref AWS::Region
+              - !Ref QSS3BucketRegion
+            S3Bucket: !If
+              - UsingDefaultBucket
+              - !Sub '${QSS3BucketName}-${AWS::Region}'
+              - !Ref QSS3BucketName
+      Parameters:
+        VPCCIDR: !Ref 'VPCCIDR'
+        VPCID: !Ref 'VPCID'
+        MgmtServerSubnet: !Ref 'MgmtServerSubnet'
+        DomainMembersSG: !Ref 'DomainMemberSG'
+        MgmtServerInstanceType : !Ref 'MgmtServerInstanceType'
+        MgmtDataDriveSizeGiB : !Ref 'MgmtDataDriveSizeGiB'
+        KeyPairName: !Ref 'MgmtKeyPairName'
+        MgmtAmi: !Ref 'MgmtAmi'
+        AdministratorSecret: !Ref 'ADAdminSecrets'
+        MgmtServerNetBIOSName : !Ref 'MgmtServerNetBIOSName'
+        DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
+        DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
+        DomainDNSName: !Ref 'DomainDNSName'     
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
 Outputs:
   ADServer1PrivateIP:
     Value: !Select
