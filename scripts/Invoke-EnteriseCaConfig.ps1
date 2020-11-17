@@ -1,3 +1,15 @@
+<#
+    .SYNOPSIS
+    Invoke-EnteriseCaConfig.ps1
+
+    .DESCRIPTION
+    This script make the instance an Enterprise CA along with hosting the CRL in IIS.  
+    
+    .EXAMPLE
+    .\Invoke-EnteriseCaConfig -EntCaCommonName 'CA01' -EntCaKeyLength '2048' -EntCaHashAlgorithm 'SHA256' -EntCaValidityPeriodUnits '5' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW'
+
+#>
+
 [CmdletBinding()]
 Param (
     [Parameter(Mandatory = $true)][String]$EntCaCommonName,

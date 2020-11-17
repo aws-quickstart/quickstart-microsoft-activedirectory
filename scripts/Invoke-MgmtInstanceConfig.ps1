@@ -1,12 +1,12 @@
 <#
     .SYNOPSIS
-    Invoke-EnteriseCaPreConfig.ps1
+    Invoke-MgmtInstanceConfig.ps1
 
     .DESCRIPTION
-    This script installs the required Windows features to make the computer an Enterprise CA and joins the computer to the domain specified.
+    This script installs the AD Management tool and joins the computer to the domain specified.
     
     .EXAMPLE
-    .\Invoke-EnteriseCaPreConfig -EntCaNetBIOSName 'CA01' -DomainNetBIOSName 'example' -DomainDNSName 'example.com' -DomainController1IP '10.20.30.40' DomainController2IP '10.20.30.41' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW'
+    .\Invoke-MgmtInstanceConfig -MgmtNetBIOSName 'Mgmt01' -DomainNetBIOSName 'example' -DomainDNSName 'example.com' -DomainController1IP '10.20.30.40' DomainController2IP '10.20.30.41' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW'
 
 #>
 
@@ -14,7 +14,7 @@
 # Incoming Parameters for Script, CloudFormation\SSM Parameters being passed in
 param(
     [Parameter(Mandatory = $true)]
-    [string]$EntCaNetBIOSName,
+    [string]$MgmtNetBIOSName,
 
     [Parameter(Mandatory = $true)]
     [string]$DomainNetBIOSName,
@@ -75,7 +75,7 @@ $ConfigurationData = @{
 }
 
 # PowerShell DSC Configuration Block for Domain Controller 2
-Configuration ConfigEntCa {
+Configuration ConfigMgmt {
     # Credential Objects being passed in
     param
     (
@@ -134,57 +134,35 @@ Configuration ConfigEntCa {
         }
        
         # Adding Required Windows Features
-        WindowsFeature ADCSCA
-        {
-            Name   = 'ADCS-Cert-Authority'
-            Ensure = 'Present'
-            DependsOn = '[DnsServerAddress]DnsServerAddress'
-        }
-
-        WindowsFeature RSAT-ADCS-ManagementTools
-        {
-            Name   = 'RSAT-ADCS'
-            Ensure = 'Present'
-            DependsOn = '[WindowsFeature]ADCSCA'
-        }
-
-        WindowsFeature IIS
-        {
-            Ensure    = 'Present'
-            Name      = 'Web-WebServer'
-            DependsOn = '[WindowsFeature]ADCSCA'
-        }
-
-        WindowsFeature IIS-ManagementTools
-        {
-            Ensure    = 'Present'
-            Name      = 'Web-Mgmt-Console'
-            DependsOn = '[WindowsFeature]ADCSCA'
-        }
-
-        WindowsFeature RSAT-AD-ManagementTools
-        {
-            Ensure    = 'Present'
-            Name      = 'RSAT-AD-Tools'
-            DependsOn = '[WindowsFeature]ADCSCA'
-        }
-
-        WindowsFeature RSAT-DNS-ManagementTools
-        {
+        WindowsFeature DnsTools {
             Ensure    = 'Present'
             Name      = 'RSAT-DNS-Server'
-            DependsOn = '[WindowsFeature]ADCSCA'
+        }
+        
+        WindowsFeature RSAT-AD-Tools {
+            Ensure    = 'Present'
+            Name      = 'RSAT-AD-Tools'
+        }
+
+        WindowsFeature RSAT-ADDS {
+            Ensure    = 'Present'
+            Name      = 'RSAT-ADDS'
+        }
+
+        WindowsFeature GPMC {
+            Ensure    = 'Present'
+            Name      = 'GPMC'
         }
 
         # Rename Computer and Join Domain
         Computer JoinDomain {
-            Name       = $EntCaNetBIOSName
+            Name       = $MgmtNetBIOSName
             DomainName = $DomainDnsName
             Credential = $Credentials
-            DependsOn  = '[WindowsFeature]RSAT-DNS-ManagementTools'
+            DependsOn  = '[WindowsFeature]DnsTools'
         }
     }
 }
 
 # Generating MOF File
-ConfigEntCa -OutputPath 'C:\AWSQuickstart\ConfigEntCa' -Credentials $Credentials -ConfigurationData $ConfigurationData
+ConfigMgmt -OutputPath 'C:\AWSQuickstart\ConfigMgmt' -Credentials $Credentials -ConfigurationData $ConfigurationData
