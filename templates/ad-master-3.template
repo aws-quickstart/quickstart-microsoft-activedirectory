@@ -18,6 +18,7 @@ Metadata:
         Parameters:
           - AvailabilityZones
           - VPCCIDR
+          - DHCPOptionSet
           - PrivateSubnet1CIDR
           - PrivateSubnet2CIDR
           - PublicSubnet1CIDR
@@ -38,7 +39,6 @@ Metadata:
       - Label:
           default: Microsoft Windows Server Management Instance
         Parameters:
-          - Mgmt
           - MgmtServerInstanceType
           - MgmtDataDriveSizeGiB
           - MgmtServerNetBIOSName
@@ -75,8 +75,6 @@ Metadata:
         default: Public Subnet 1 CIDR
       PublicSubnet2CIDR:
         default: Public Subnet 2 CIDR
-      Mgmt:
-        default: Deploy Management Instance
       MgmtServerInstanceType:
         default: Management Instance Instance Type
       MgmtDataDriveSizeGiB:
@@ -95,6 +93,8 @@ Metadata:
         default: Allowed Remote Desktop Gateway External Access CIDR
       VPCCIDR:
         default: VPC CIDR
+      DHCPOptionSet:
+        default: Create a DHCP Options set 
 Parameters:
   AvailabilityZones:
     Description: 'List of Availability Zones to use for the subnets in the VPC. Note:
@@ -215,13 +215,6 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
-  Mgmt:
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-    Default: 'No'
-    Description: Do you want to deploy a Windows Server Management Instance
-    Type: String
   MgmtServerInstanceType:
     AllowedValues:
       - t2.small
@@ -244,6 +237,13 @@ Parameters:
     MinLength: '1'
     Type: String
     Default: MGMT1
+  DHCPOptionSet:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'Yes'
+    Description: Do you want to create and apply a new DHCP Options Set
+    Type: String
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   IncludeRDGW: !Not
@@ -303,7 +303,7 @@ Resources:
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
-        Mgmt: !Ref 'Mgmt'
+        DHCPOptionSet: !Ref 'DHCPOptionSet'
         MgmtServerSubnet: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
         MgmtServerInstanceType : !Ref 'MgmtServerInstanceType'
         MgmtDataDriveSizeGiB : !Ref 'MgmtDataDriveSizeGiB'

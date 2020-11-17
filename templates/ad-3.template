@@ -15,6 +15,7 @@ Metadata:
         Parameters:
           - VPCCIDR
           - VPCID
+          - DHCPOptionSet
           - PrivateSubnet1ID
           - PrivateSubnet2ID
       - Label:
@@ -27,7 +28,6 @@ Metadata:
       - Label:
           default: Microsoft Windows Server Management Instance
         Parameters:
-          - Mgmt
           - MgmtServerSubnet
           - MgmtServerInstanceType
           - MgmtAmi
@@ -45,6 +45,8 @@ Metadata:
         default: VPC CIDR
       VPCID:
         default: VPC ID
+      DHCPOptionSet:
+        default: Create a DHCP Options set 
       PrivateSubnet1ID:
         default: Private Subnet 1 ID
       PrivateSubnet2ID:
@@ -57,8 +59,6 @@ Metadata:
         default: Domain Admin Password
       ADEdition:
         default: AWS Microsoft AD edition
-      Mgmt:
-        default: Deploy Management Instance
       MgmtServerSubnet:
         default: Management Instance Subnet ID
       MgmtServerInstanceType:
@@ -87,6 +87,13 @@ Parameters:
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
+  DHCPOptionSet:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'Yes'
+    Description: Do you want to create a new DHCP Options Set
+    Type: String
   PrivateSubnet1ID:
     Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
@@ -123,13 +130,6 @@ Parameters:
       - Enterprise
     Default: Enterprise
     Description: The AWS Microsoft AD edition. Valid values include Standard and Enterprise.
-    Type: String
-  Mgmt:
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-    Default: 'No'
-    Description: Do you want to deploy a Windows Server Management Instance
     Type: String
   MgmtServerSubnet:
     Description: ID of the private subnet 1 or 2 in Availability Zone 1 or 2  (e.g., subnet-a0246dcd)
@@ -198,13 +198,13 @@ Rules:
         AssertDescription: All subnets must in the VPC
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
-  ShouldCreateResource: !Not [!Equals [!Ref Mgmt, 'No']]
+  ShouldCreateDHCPOption: !Not [!Equals [!Ref DHCPOptionSet, 'No']]
 Resources:
   DHCPOptions:
     Type: AWS::EC2::DHCPOptions
     DependsOn: 
       - MicrosoftAD
-      - SSMWaitCondition
+    Condition: ShouldCreateDHCPOption
     Properties:
       DomainName: !Ref 'DomainDNSName'
       DomainNameServers: !GetAtt 'MicrosoftAD.DnsIpAddresses'
@@ -213,6 +213,7 @@ Resources:
           Value: !Ref 'DomainDNSName'
   VPCDHCPOptionsAssociation:
     Type: AWS::EC2::VPCDHCPOptionsAssociation
+    Condition: ShouldCreateDHCPOption
     Properties:
       VpcId: !Ref 'VPCID'
       DhcpOptionsId: !Ref 'DHCPOptions'
@@ -239,476 +240,9 @@ Resources:
     Properties:
       GroupDescription: Domain Members
       VpcId: !Ref 'VPCID'
-  SSMAutomationRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
-                  - s3:GetObject
-                Resource: "*"
-                Effect: Allow
-          PolicyName: aws-quick-start-s3-policy
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - cloudformation:SignalResource
-                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
-          PolicyName: aws-quick-start-cfn-signal-policy
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - iam:CreateRole
-                  - iam:PutRolePolicy
-                  - iam:getRolePolicy
-                  - iam:DetachRolePolicy
-                  - iam:AttachRolePolicy
-                  - iam:DeleteRolePolicy
-                  - iam:CreateInstanceProfile
-                  - iam:DeleteRole
-                  - iam:RemoveRoleFromInstanceProfile
-                  - iam:AddRoleToInstanceProfile
-                  - iam:DeleteInstanceProfile
-                  - iam:PassRole
-                Resource: '*'
-          PolicyName: aws-quick-start-create-role-policy
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - secretsmanager:GetSecretValue
-                  - secretsmanager:DescribeSecret
-                Resource: 
-                  - !Ref 'ADAdminSecrets'
-              - Effect: Allow
-                Action:
-                  - ssm:StartAutomationExecution
-                Resource: '*'
-          PolicyName: AD-SSM-Secrets
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: 
-                - ssm.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMFullAccess'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AWSCloudFormationFullAccess'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEC2FullAccess'
-  LambdaSSMRole:
-    DependsOn: MicrosoftAD
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-        - PolicyDocument:
-           Version: '2012-10-17'
-           Statement:
-             - Effect: Allow
-               Action:
-                 - iam:PassRole
-               Resource: !GetAtt SSMAutomationRole.Arn
-          PolicyName: QS-SSM-PassRole
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: 
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonSSMAutomationRole'
-  DNSForwarderSetup:
-    Type: AWS::SSM::Document
-    Properties:
-      DocumentType: Automation
-      Content:
-        schemaVersion: "0.3"
-        description: Setup DNS Forwarder for AWS Managed AD to VPC DNS
-        assumeRole: "{{AutomationAssumeRole}}"
-        parameters:
-          StackName:
-            description: "Stack Name Input for cfn resource signal"
-            type: "String"
-          DomainMemberSG:
-            description: Security group ID that can communicate with domain controllers
-            type: "String"
-          VPCCIDR:
-            description: VPC CIDR
-            type: "String"
-          QSS3BucketName:
-            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
-            type: "String"
-          QSS3BucketRegion:
-            default: "us-east-1"
-            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
-            type: "String"
-          QSS3KeyPrefix:
-            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
-            type: "String"
-          PrivateSubnet1ID:
-            description: "Private Subnet 1 ID"
-            type: "String"
-          AutomationAssumeRole:
-            description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
-            type: "String"
-          DirectoryID:
-            description: "Alias of the directory ID"
-            type: "String"
-          AWSRegion:
-            description: "Region"
-            type: "String"
-          URLSuffix:
-            default: "amazonaws.com"
-            description: "AWS URL suffix"
-            type: "String"
-        mainSteps:
-        - name:  CreateStack
-          action: aws:createStack
-          onFailure: "step:CFNSignalEnd"
-          inputs:
-            StackName: "SetDNSForwarder"
-            Capabilities: [ "CAPABILITY_IAM" ]
-            TemplateBody: |
-              Description: "Deploy Instance to create DNS forwarder on AWS Managed AD"
-              Parameters:
-                WINFULLBASE:
-                  Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-                  Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
-                QSS3BucketName:
-                  Type: "String"
-                  Default: "{{QSS3BucketName}}"
-                  Description: "Name of Target S3 Bucket"
-                QSS3BucketRegion:
-                  Default: "us-east-1"
-                  Description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
-                  Type: "String"
-                QSS3KeyPrefix:
-                  Type: "String"
-                  Default: "{{QSS3KeyPrefix}}"
-                  Description: "Name of Target S3 Prefix"
-                SecurityGroup:
-                  Description: Security Group to be able to talk Domain Controllers
-                  Default: "{{DomainMemberSG}}"
-                  Type: "String"
-                Subnet:
-                  Description: "Subnet to deploy the EC2 instnace"
-                  Default: "{{PrivateSubnet1ID}}"
-                  Type: "String"
-              Resources:
-                ForwarderRole: 
-                  Type : AWS::IAM::Role
-                  Properties:
-                    Policies:
-                      - PolicyDocument:
-                          Version: '2012-10-17'
-                          Statement:
-                            - Action:
-                                - s3:GetObject
-                                - s3:ListBucket
-                              Resource: "*"
-                              Effect: Allow
-                        PolicyName: s3-instance-bucket-policy
-                    Path: /
-                    ManagedPolicyArns:
-                      - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
-                      - !Sub 'arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy'
-                      - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AWSDirectoryServiceFullAccess'
-                    AssumeRolePolicyDocument:
-                      Version: "2012-10-17"
-                      Statement:
-                      - Effect: "Allow"
-                        Principal:
-                          Service:
-                          - "ec2.amazonaws.com"
-                          - "ssm.amazonaws.com"
-                        Action: "sts:AssumeRole"
-                IamInstanceProfile:
-                  Type: "AWS::IAM::InstanceProfile"
-                  Properties:
-                    Roles:
-                    - !Ref ForwarderRole
-                EC2Instance:
-                  Type: "AWS::EC2::Instance"
-                  Properties:
-                    ImageId: !Ref WINFULLBASE
-                    InstanceType: "t3.medium"
-                    IamInstanceProfile: !Ref IamInstanceProfile
-                    SecurityGroupIds:
-                      - !Ref 'SecurityGroup'
-                    SubnetId: !Ref Subnet
-                    Tags:
-                    - Key: "Name"
-                      Value: "TempDNSForwarder"
-        - name: "getInstanceId"
-          action: aws:executeAwsApi
-          onFailure: "step:CFNSignalEnd"
-          inputs:
-            Service: ec2
-            Api: DescribeInstances
-            Filters:  
-            - Name: "tag:Name"
-              Values: [ "TempDNSForwarder" ]
-            - Name: "instance-state-name"
-              Values: [ "running" ]
-          outputs:
-          - Name: InstanceId
-            Selector: "$.Reservations[0].Instances[0].InstanceId"
-            Type: String
-        - name: "CreateDNSForward"
-          action: "aws:runCommand"
-          onFailure: "step:signalfailure"
-          inputs:
-            DocumentName: "AWS-RunRemoteScript"
-            InstanceIds:
-              - "{{getInstanceId.InstanceId}}"
-            CloudWatchOutputConfig:
-              CloudWatchOutputEnabled: "true"
-              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
-            Parameters:
-              sourceType: "S3"
-              sourceInfo: 
-                !Sub 
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AddDNSForward.ps1"}'
-                  - S3Bucket: !If
-                      - UsingDefaultBucket
-                      - !Sub '${QSS3BucketName}-${AWS::Region}'
-                      - !Ref QSS3BucketName
-                    S3Region: !If 
-                      - UsingDefaultBucket
-                      - !Ref AWS::Region
-                      - !Ref QSS3BucketRegion
-              commandLine: "./AddDNSForward.ps1 -DirectoryID {{DirectoryID}} -VPCCIDR {{VPCCIDR}}"
-        # Determines if CFN Needs to be Signaled or if Work flow should just end
-        - name: CFNSignalEnd
-          action: aws:branch
-          inputs:
-            Choices:
-            - NextStep: signalsuccess
-              Not: 
-                Variable: "{{StackName}}"
-                StringEquals: ""
-            - NextStep: sleepend
-              Variable: "{{StackName}}"
-              StringEquals: ""
-        # If all steps complete successfully signals CFN of Success
-        - name: "signalsuccess"
-          action: "aws:executeAwsApi"
-          nextStep: "deleteStack"
-          inputs:
-            Service: cloudformation
-            Api: SignalResource
-            LogicalResourceId: "SSMWaitCondition"
-            StackName: "{{StackName}}"
-            Status: SUCCESS
-            UniqueId: "{{getInstanceId.InstanceId}}"
-        # If CFN Signl Not Needed this sleep ends work flow
-        - name: "sleepend"
-          action: "aws:sleep"
-          nextStep: "deleteStack"
-          inputs:
-            Duration: PT1S
-        # If any steps fails signals CFN of Failure
-        - name: "signalfailure"
-          action: "aws:executeAwsApi"
-          nextStep: "deleteStack"
-          inputs:
-            Service: cloudformation
-            Api: SignalResource
-            LogicalResourceId: "SSMWaitCondition"
-            StackName: "{{StackName}}"
-            Status: FAILURE
-            UniqueId: "{{getInstanceId.InstanceId}}"
-        - name: deleteStack
-          action: aws:deleteStack
-          isEnd: true
-        # onFailure: Continue
-          inputs:
-            StackName: "SetDNSForwarder"
-  LambdaSSMExecute:
-    DependsOn: LambdaSSMRole
-    Type: AWS::Lambda::Function
-    Properties:
-      Description: Executes SSM Automation Documents
-      Handler: index.handler
-      Runtime: python3.7
-      Role: !GetAtt LambdaSSMRole.Arn
-      Timeout: 900
-      Code:
-        ZipFile: |
-          def handler(event, context):
-              import cfnresponse
-              import boto3, os, json
-              from botocore.vendored import requests
-          
-              ssm_cl = boto3.client('ssm')
-              ecr_cl = boto3.client('ecr')
-              req_type = event['RequestType']
-              print(event)
-          
-              SUCCESS = "SUCCESS"
-              FAILED = "FAILED"
-          
-              def start_ssmautomation(event):
-                  doc_name = event['ResourceProperties']['DocumentName']
-                  stack_name = event['ResourceProperties']['StackName']
-                  ssm_role = event['ResourceProperties']['AutomationAssumeRole']
-                  qs_bucket = event['ResourceProperties']['QSS3BucketName']
-                  qs_region = event['ResourceProperties']['QSS3BucketRegion']
-                  qs_bucket_prefix = event['ResourceProperties']['QSS3KeyPrefix']
-                  security_group = event['ResourceProperties']['DomainMemberSG']
-                  subnet_id = event['ResourceProperties']['PrivateSubnet1ID']
-                  vpc_cidr = event['ResourceProperties']['VPCCIDR']
-                  directory_id = event['ResourceProperties']['DirectoryID']
-                  aws_region = event['ResourceProperties']['AWSRegion']
-                  url_suffix = event['ResourceProperties']['URLSuffix']
-
-                  if qs_bucket == "aws-quickstart":
-                    qs_bucket = "aws-quickstart-" + qs_region
-          
-                  start_automation = ssm_cl.start_automation_execution(
-                      DocumentName= doc_name,
-                      Parameters={
-                          'StackName': [
-                              stack_name
-                          ],
-                          'AutomationAssumeRole': [
-                              ssm_role
-                          ],
-                          'QSS3BucketName': [
-                              qs_bucket
-                          ],
-                          'QSS3BucketRegion': [
-                              qs_region
-                          ],
-                          'QSS3KeyPrefix': [
-                              qs_bucket_prefix
-                          ],
-                          'DomainMemberSG': [
-                              security_group
-                          ],
-                          'PrivateSubnet1ID': [
-                              subnet_id
-                          ],
-                          'VPCCIDR': [
-                              vpc_cidr
-                          ],
-                          'DirectoryID': [
-                              directory_id
-                          ],
-                          'AWSRegion': [
-                              aws_region
-                          ],
-                          'URLSuffix': [
-                              url_suffix
-                          ]
-                      },
-                  )
-          
-                  cfnresponse.send(event, context, SUCCESS, start_automation, start_automation['AutomationExecutionId'])
-              
-              def delete_image(event):
-                  cfnresponse.send(event, context, SUCCESS, event, "Deleted")
-
-              actions = {
-                  'Create': start_ssmautomation,
-                  'Delete': delete_image,
-                  'Update': start_ssmautomation
-              }
-          
-              try:
-                  actions.get(req_type)(event)    
-              except Exception as exc:
-                  error_msg = {'Error': '{}'.format(exc)}
-                  print(error_msg)
-                  cfnresponse.send(event, context, FAILED, error_msg)
-  ExecuteSSMAutomation:
-    DependsOn: LambdaSSMExecute
-    Type: Custom::ExecuteSSMAutomation
-    Properties: 
-      ServiceToken: !GetAtt LambdaSSMExecute.Arn
-      DocumentName: !Ref DNSForwarderSetup
-      DomainMemberSG: !Ref DomainMemberSG
-      StackName: !Ref AWS::StackName
-      QSS3BucketName: !Ref QSS3BucketName
-      QSS3BucketRegion: !Ref QSS3BucketRegion
-      QSS3KeyPrefix: !Ref QSS3KeyPrefix
-      AutomationAssumeRole: !GetAtt SSMAutomationRole.Arn
-      PrivateSubnet1ID: !Ref PrivateSubnet1ID
-      VPCCIDR: !Ref VPCCIDR
-      DirectoryID: !GetAtt 'MicrosoftAD.Alias'
-      AWSRegion: !Ref 'AWS::Region'
-      URLSuffix: !Ref 'AWS::URLSuffix'
-  SSMWaitHandle: 
-    Type: AWS::CloudFormation::WaitConditionHandle
-  SSMWaitCondition: 
-    Type: AWS::CloudFormation::WaitCondition
-    CreationPolicy:
-      ResourceSignal:
-        Timeout: PT60M
-        Count: 1
-    DependsOn: 
-      - ExecuteSSMAutomation
-      - SSMWaitHandle
-    Properties: 
-      Handle: 
-        Ref: "SSMWaitHandle"
-      Timeout: "3600"
-      Count: 1
-  AWSQuickstartADRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
-                  - s3:GetObject
-                  - s3:ListBucket
-                Resource: "*"
-                Effect: Allow
-          PolicyName: aws-quick-start-s3-policy
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - cloudformation:SignalResource
-                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
-              - Effect: Allow
-                Action:
-                  - ec2:DescribeInstances
-                  - ec2:DescribeInstanceStatus
-                  - ssm:*
-                Resource: '*'
-          PolicyName: AD-SSM-AutomationExecution
-      Path: /
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action:
-              - sts:AssumeRole
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-                - ssm.amazonaws.com
-            Effect: Allow
-        Version: '2012-10-17'
   MgmtStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: DHCPOptions
-    Condition: ShouldCreateResource
+    DependsOn: MicrosoftAD
     Properties:
       TemplateURL:
         Fn::Sub:
@@ -732,6 +266,7 @@ Resources:
         MgmtAmi: !Ref 'MgmtAmi'
         AdministratorSecret: !Ref 'ADAdminSecrets'
         MgmtServerNetBIOSName : !Ref 'MgmtServerNetBIOSName'
+        DirectoryID: !Ref 'MicrosoftAD'
         DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainDNSName: !Ref 'DomainDNSName'     

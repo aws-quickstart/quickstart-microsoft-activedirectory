@@ -209,73 +209,6 @@ Rules:
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Resources:
-  SSMRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
-                  - s3:GetObject
-                  - s3:ListBucket
-                Resource:
-                  - !Sub ['arn:${AWS::Partition}:s3:::${S3Bucket}/${QSS3KeyPrefix}*', S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]]
-                  - !Sub ['arn:${AWS::Partition}:s3:::${S3Bucket}', S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]]
-                Effect: Allow
-          PolicyName: aws-quick-start-s3-policy
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
-                  - s3:GetObject
-                Resource: 
-                  - !Sub 'arn:aws:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*'
-                Effect: Allow
-          PolicyName: ssm-custom-s3-policy
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - cloudformation:SignalResource
-                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
-              - Effect: Allow
-                Action:
-                  - ec2:DescribeInstances
-                  - ec2:DescribeInstanceStatus
-                  - ssm:*
-                Resource: '*'
-          PolicyName: CA-SSM-Automation
-      Path: /
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action:
-              - sts:AssumeRole
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-                - ssm.amazonaws.com
-            Effect: Allow
-        Version: '2012-10-17'
-  SsmPassRolePolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: CA-SSM-PassRole
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action:
-              - iam:PassRole
-            Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${SSMRole}'
-      Roles:
-        - !Ref 'SSMRole'
   InstanceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -284,27 +217,29 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Action:
-                  - s3:GetObject
                   - s3:ListBucket
-                Resource:
-                  - !Sub ['arn:${AWS::Partition}:s3:::${S3Bucket}/${QSS3KeyPrefix}*', S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]]
+                Resource: 
                   - !Sub ['arn:${AWS::Partition}:s3:::${S3Bucket}', S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]]
                 Effect: Allow
-          PolicyName: aws-quick-start-s3-policy
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
               - Action:
                   - s3:GetObject
                 Resource: 
-                  - !Sub 'arn:aws:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*'
+                  - !Sub ['arn:${AWS::Partition}:s3:::${S3Bucket}/${QSS3KeyPrefix}*', S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]]
                 Effect: Allow
-          PolicyName: ssm-custom-s3-policy
+              - Action:
+                  - ec2:DescribeInstances
+                  - ssm:DescribeInstanceInformation
+                  - ssm:ListCommands
+                  - ssm:ListCommandInvocations
+                  - ssm:SendCommand
+                  - ssm:StartAutomationExecution
+                Resource: '*'
+                Effect: Allow
+              - Action:
+                  - cloudformation:SignalResource
+                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
+                Effect: Allow
+          PolicyName: AWS-Mgmt-Quick-Start-Policy
         - PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -314,19 +249,7 @@ Resources:
                   - secretsmanager:DescribeSecret
                 Resource: 
                   - !Ref 'AdministratorSecret'
-              - Effect: Allow
-                Action:
-                  - ssm:StartAutomationExecution
-                Resource: '*'
-          PolicyName: CA-SSM-Secrets
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - iam:PassRole
-                Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${SSMRole}'
-          PolicyName: CA-SSM-PassRole
+          PolicyName: AWS-Mgd-AD-Secret-Policy
       Path: /
       ManagedPolicyArns:
         - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
@@ -353,8 +276,6 @@ Resources:
       Content:
         schemaVersion: "0.3"
         description: "Deploy AD with SSM Automation"
-        # Role that is utilized to perform the steps within the Automation Document. In this case to be able to Signal CFN and Describe Instances. 
-        assumeRole: "{{AutomationAssumeRole}}"
         # Gathering parameters needed to configure DCs in the Quick Start
         parameters: 
           VPCCIDR:
@@ -407,10 +328,6 @@ Resources:
           URLSuffix:
             default: "amazonaws.com"
             description: "AWS URL suffix"
-            type: "String"
-          AutomationAssumeRole:
-            default: ""
-            description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
             type: "String"
         mainSteps:
         # This step grabs the Instance IDs for both nodes that will be configured as DCs in the Quick Start and Instance IDs for the for next steps.
@@ -667,8 +584,6 @@ Resources:
             - !Sub '"${AWS::StackName}"'
             - ';"URLSuffix"='
             - !Sub '"${AWS::URLSuffix}"'
-            - ';"AutomationAssumeRole"='
-            - !Sub '"arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${SSMRole}"'
             - '}'
             - "\n"
             - "</powershell>\n"
