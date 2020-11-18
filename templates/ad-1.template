@@ -377,6 +377,7 @@ Resources:
     Properties:
       VpcId: !Ref 'VPCID'
       DhcpOptionsId: !Ref 'DHCPOptions'
+    Condition: ShouldCreateDHCPOption
   AWSQuickstartActiveDirectoryDS:
     Type: AWS::SSM::Document
     Properties:

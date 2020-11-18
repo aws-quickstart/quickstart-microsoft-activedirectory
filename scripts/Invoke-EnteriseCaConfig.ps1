@@ -330,3 +330,24 @@ $DomainControllers = Get-ADComputer -SearchBase "OU=Domain Controllers,$BaseDn" 
 Foreach ($DomainController in $DomainControllers) {
     Invoke-Command -ComputerName $DomainController -Credential $Credentials -ScriptBlock { Invoke-GPUpdate -RandomDelayInMinutes '0' -Force }
 }
+
+Write-Output 'Creating Update CRL Scheduled Task'
+Try {
+    $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument '& certutil.exe -crl; Copy-Item -Path C:\Windows\System32\CertSrv\CertEnroll\*.cr* -Destination D:\Pki\'
+    $ScheduledTaskTrigger = New-ScheduledTaskTrigger -Daily -DaysInterval '5' -At '12am' -ErrorAction Stop
+    $ScheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType 'ServiceAccount' -RunLevel 'Highest' -ErrorAction Stop
+    $ScheduledTaskSettingsSet = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -Compatibility 'Win8' -ExecutionTimeLimit (New-TimeSpan -Hours '1') -ErrorAction Stop
+    $ScheduledTask = New-ScheduledTask -Action $ScheduledTaskAction -Principal $ScheduledTaskPrincipal -Trigger $ScheduledTaskTrigger -Settings $ScheduledTaskSettingsSet -Description 'Updates CRL to Local Pki Folder' -ErrorAction Stop
+    Register-ScheduledTask 'Update CRL' -InputObject $ScheduledTask -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed register Update CRL Scheduled Task $_"
+}
+
+Start-ScheduledTask -TaskName 'Update CRL' -ErrorAction SilentlyContinue
+
+Write-Output 'Restarting CA service'
+Try {
+    Restart-Service -Name 'certsvc' -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed restart CA service $_"
+}
