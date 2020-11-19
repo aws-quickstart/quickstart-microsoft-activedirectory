@@ -10,6 +10,29 @@
 
 #>
 
+[CmdletBinding()]
+# Incoming Parameters for Script, CloudFormation\SSM Parameters being passed in
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$DirectoryID,
+
+    [Parameter(Mandatory = $true)]
+    [string]$VPCCIDR
+)
+
+$Ip = $VPCCIDR.Split('/')[0]
+[System.Collections.ArrayList]$IPArray = $IP -Split "\."
+$IPArray[3] = 2
+$VPCDNS = $IPArray -Join "."
+
+Write-Output 'Creating Conditional Forwarder for amazonaws.com'
+Try {
+    New-DSConditionalForwarder -DirectoryId $DirectoryID -DnsIpAddr $VPCDNS -RemoteDomainName 'amazonaws.com' -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed to create DNS Conditional Forwarder for amazonaws.com $_"
+}
+
+
 Write-Output 'Removing DSC Configuration'
 Try {    
     Remove-DscConfigurationDocument -Stage 'Current' -ErrorAction Stop
