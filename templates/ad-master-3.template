@@ -197,9 +197,14 @@ Parameters:
   RDGWInstanceType:
     Description: Amazon EC2 instance type for the Remote Desktop Gateway instances
     Type: String
-    Default: t2.large
+    Default: t3.large
     AllowedValues:
+      - t2.small
+      - t2.medium
       - t2.large
+      - t3.small
+      - t3.medium
+      - t3.large
       - m5.large
       - m5.xlarge
       - m5.2xlarge

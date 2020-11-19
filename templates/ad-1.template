@@ -122,6 +122,8 @@ Metadata:
 Parameters:
   ADServer1InstanceType:
     AllowedValues:
+      - t2.medium
+      - t3.medium
       - t2.large
       - t3.large
       - m4.large
@@ -150,6 +152,8 @@ Parameters:
     Type: String
   ADServer2InstanceType:
     AllowedValues:
+      - t2.medium
+      - t3.medium
       - t2.large
       - t3.large
       - m4.large

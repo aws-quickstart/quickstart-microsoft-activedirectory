@@ -420,7 +420,7 @@ Resources:
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnteriseCaPreConfig.ps1"}'
                   - S3Bucket: !If
                       - UsingDefaultBucket
-                      - !Sub '${QSS3BucketName}'
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
                       - !Ref QSS3BucketName
                     S3Region: !If 
                       - UsingDefaultBucket
@@ -473,7 +473,7 @@ Resources:
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnteriseCaConfig.ps1"}'
                   - S3Bucket: !If
                       - UsingDefaultBucket
-                      - !Sub '${QSS3BucketName}'
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
                       - !Ref QSS3BucketName
                     S3Region: !If 
                       - UsingDefaultBucket
