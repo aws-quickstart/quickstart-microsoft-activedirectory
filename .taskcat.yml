@@ -50,6 +50,8 @@ tests:
       EntCaKeyLength: '2048'
       EntCaHashAlgorithm: 'SHA256'
       EntCaValidityPeriodUnits: '5'
+      CreateDefaultOUs: 'Yes'
+      DHCPOptionSet: 'Yes'
     regions:
     # - eu-west-3
     - sa-east-1
@@ -103,6 +105,7 @@ tests:
       MgMtServerInstanceType: t3.medium
       MgmtDataDriveSizeGiB: '2'
       MgmtServerNetBIOSName: 'Mgmt01'
+      DHCPOptionSet: 'No'
     regions:
     - us-west-1
     - us-west-2

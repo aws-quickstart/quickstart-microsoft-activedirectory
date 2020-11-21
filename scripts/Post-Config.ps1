@@ -16,7 +16,8 @@
 Param(
     [Parameter(Mandatory = $true)][string]$S3BucketName,
     [Parameter(Mandatory = $true)][string]$S3KeyPrefix,
-    [Parameter(Mandatory = $true)][string]$VPCCIDR
+    [Parameter(Mandatory = $true)][string]$VPCCIDR,
+    [Parameter(Mandatory = $true)][String][ValidateSet('Yes', 'No')][string]$CreateDefaultOUs
 )
 
 #==================================================
@@ -279,6 +280,31 @@ If ($ComputerName -eq $Pdce) {
         Import-GroupPolicy @GPO
         ForEach ($Target in $GPO.Targets) {
             Set-GroupPolicyLink -BackupGpoName $GPO.BackupGpoName -Target $Target.Location -LinkEnabled $Gpo.LinkEnabled -Order $Target.Order 
+        }
+    }
+
+    If ($CreateDefaultOUs -eq 'Yes') {
+        $OUs = @(
+            'Domain Elevated Accounts',
+            'Domain Users',
+            'Domain Computers',
+            'Domain Servers',
+            'Domain Service Accounts',
+            'Domain Groups'
+        )
+        Foreach ($OU in $OUs) {
+            Try {
+                $OuPresent = Get-ADOrganizationalUnit -Identity "OU=$OU,$BaseDn" -ErrorAction SilentlyContinue
+            } Catch {
+                $OuPresent = $Null
+            }
+            If (-not $OuPresent) {
+                Try {
+                    New-ADOrganizationalUnit -Name $OU -Path $BaseDn -ProtectedFromAccidentalDeletion $True -ErrorAction Stop
+                } Catch [System.Exception] {
+                    Write-Output "Failed to create $OU $_"
+                }
+            }
         }
     }
 }
