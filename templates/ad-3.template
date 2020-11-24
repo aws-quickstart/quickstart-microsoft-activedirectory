@@ -28,12 +28,11 @@ Metadata:
       - Label:
           default: Microsoft Windows Server Management Instance
         Parameters:
-          - MgmtServerSubnet
           - MgmtServerInstanceType
           - MgmtAmi
           - MgmtDataDriveSizeGiB
           - MgmtServerNetBIOSName
-          - MgmtKeyPairName
+          - KeyPairName
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -59,8 +58,6 @@ Metadata:
         default: Domain Admin Password
       ADEdition:
         default: AWS Microsoft AD edition
-      MgmtServerSubnet:
-        default: Management Instance Subnet ID
       MgmtServerInstanceType:
         default: Management Instance Instance Type
       MgmtAmi:
@@ -69,7 +66,7 @@ Metadata:
         default: Size of the Data Drive in GiB
       MgmtServerNetBIOSName:
         default: Management Instance NetBIOS Name
-      MgmtKeyPairName:
+      KeyPairName:
         default: Public/private key pairs allow you to securely connect to your instance
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
@@ -131,9 +128,6 @@ Parameters:
     Default: Enterprise
     Description: The AWS Microsoft AD edition. Valid values include Standard and Enterprise.
     Type: String
-  MgmtServerSubnet:
-    Description: ID of the private subnet 1 or 2 in Availability Zone 1 or 2  (e.g., subnet-a0246dcd)
-    Type: AWS::EC2::Subnet::Id
   MgmtServerInstanceType:
     AllowedValues:
       - t2.small
@@ -160,7 +154,7 @@ Parameters:
     MinLength: '1'
     Type: String
     Default: MGMT1
-  MgmtKeyPairName:
+  KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance
       after it launches
     Type: AWS::EC2::KeyPair::KeyName
@@ -258,11 +252,11 @@ Resources:
       Parameters:
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !Ref 'VPCID'
-        MgmtServerSubnet: !Ref 'MgmtServerSubnet'
+        MgmtServerSubnet: !Ref 'PrivateSubnet1ID'
         DomainMembersSG: !Ref 'DomainMemberSG'
         MgmtServerInstanceType : !Ref 'MgmtServerInstanceType'
         MgmtDataDriveSizeGiB : !Ref 'MgmtDataDriveSizeGiB'
-        KeyPairName: !Ref 'MgmtKeyPairName'
+        KeyPairName: !Ref 'KeyPairName'
         MgmtAmi: !Ref 'MgmtAmi'
         AdministratorSecret: !Ref 'ADAdminSecrets'
         MgmtServerNetBIOSName : !Ref 'MgmtServerNetBIOSName'
