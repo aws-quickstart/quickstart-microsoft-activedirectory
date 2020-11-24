@@ -309,10 +309,9 @@ Resources:
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
         DHCPOptionSet: !Ref 'DHCPOptionSet'
-        MgmtServerSubnet: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
         MgmtServerInstanceType : !Ref 'MgmtServerInstanceType'
         MgmtDataDriveSizeGiB : !Ref 'MgmtDataDriveSizeGiB'
-        MgmtKeyPairName: !Ref 'KeyPairName'
+        KeyPairName: !Ref 'KeyPairName'
         MgmtServerNetBIOSName : !Ref 'MgmtServerNetBIOSName'
   RDGWStack:
     DependsOn: ADStack
