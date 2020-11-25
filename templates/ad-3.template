@@ -8,6 +8,9 @@ Description: >-
   This template creates Amazon EC2 Windows instance and related resources. You will
   be billed for the AWS resources used if you create a stack from this template. (qs-1qup6rad4)
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Launch AWS Managed Active Directory into an existing VPC"
+    Order: "5"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:

@@ -11,6 +11,9 @@ Description: This template creates a VPC infrastructure for a multi-AZ, multi-ti
   instance and related resources. You will be billed for the AWS resources used if
   you create a stack from this template.
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Launch Active Directory on EC2 into a new VPC"
+    Order: "1"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:

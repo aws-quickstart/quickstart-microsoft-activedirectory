@@ -9,6 +9,9 @@ Description: >-
   This template creates Amazon EC2 Windows instance and related resources. You will
   be billed for the AWS resources used if you create a stack from this template.
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Extend on-premises Active Directory into a new VPC"
+    Order: "4"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:

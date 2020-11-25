@@ -8,6 +8,9 @@ Description: This template creates 2 Windows 2019 Active Directory Domain Contro
   EC2 Windows instance and related resources. You will be billed for the AWS resources
   used if you create a stack from this template. (qs-1qup6rae5)
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Launch Active Directory on EC2 into an existing VPC"
+    Order: "2"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:

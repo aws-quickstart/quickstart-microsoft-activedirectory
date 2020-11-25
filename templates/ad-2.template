@@ -7,6 +7,9 @@ Description: >-
   resources. You will be billed for the AWS resources used if you create a stack from
   this template. (qs-1qup6radg)
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Extend on-premises Active Directory into an existing VPC"
+    Order: "3"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
