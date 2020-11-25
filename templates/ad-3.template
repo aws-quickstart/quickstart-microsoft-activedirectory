@@ -11,7 +11,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Network Configuration
+          default: Network configuration
         Parameters:
           - VPCCIDR
           - VPCID
@@ -19,22 +19,23 @@ Metadata:
           - PrivateSubnet1ID
           - PrivateSubnet2ID
       - Label:
-          default: AWS Managed Microsoft Active Directory Configuration
+          default: AWS Managed Microsoft Active Directory configuration
         Parameters:
           - DomainDNSName
           - DomainNetBIOSName
           - DomainAdminPassword
           - ADEdition
       - Label:
-          default: Microsoft Windows Server Management Instance
+          default: Microsoft Windows Server management instance
         Parameters:
+          - MgmtServer
           - MgmtServerInstanceType
           - MgmtAmi
           - MgmtDataDriveSizeGiB
           - MgmtServerNetBIOSName
           - KeyPairName
       - Label:
-          default: AWS Quick Start Configuration
+          default: AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3KeyPrefix
@@ -51,29 +52,31 @@ Metadata:
       PrivateSubnet2ID:
         default: Private Subnet 2 ID
       DomainDNSName:
-        default: Domain DNS Name
+        default: Domain DNS name
       DomainNetBIOSName:
-        default: Domain NetBIOS Name
+        default: Domain NetBIOS name
       DomainAdminPassword:
-        default: Domain Admin Password
+        default: Domain Admin password
       ADEdition:
         default: AWS Microsoft AD edition
+      MgmtServer:
+        default: Deploy management server
       MgmtServerInstanceType:
-        default: Management Instance Instance Type
+        default: Management instance instance type
       MgmtAmi:
-        default: Management Instance SSM Parameter Value to grab the lastest AMI ID
+        default: Management instance SSM parameter value to grab the lastest AMI ID
       MgmtDataDriveSizeGiB:
-        default: Size of the Data Drive in GiB
+        default: Size of the data drive in GiB
       MgmtServerNetBIOSName:
-        default: Management Instance NetBIOS Name
+        default: Management instance NetBIOS name
       KeyPairName:
         default: Public/private key pairs allow you to securely connect to your instance
       QSS3BucketName:
-        default: Quick Start S3 Bucket Name
+        default: Quick Start S3 bucket name
       QSS3BucketRegion:
-        default: Quick Start S3 Bucket Region
+        default: Quick Start S3 bucket Region
       QSS3KeyPrefix:
-        default: Quick Start S3 Key Prefix
+        default: Quick Start S3 key prefix
 Parameters:
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
@@ -127,6 +130,13 @@ Parameters:
       - Enterprise
     Default: Enterprise
     Description: The AWS Microsoft AD edition. Valid values include Standard and Enterprise.
+    Type: String
+  MgmtServer:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: Deploy a management instance
     Type: String
   MgmtServerInstanceType:
     AllowedValues:
@@ -193,6 +203,7 @@ Rules:
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   ShouldCreateDHCPOption: !Not [!Equals [!Ref DHCPOptionSet, 'No']]
+  ShouldCreateMgmtServer: !Equals [!Ref MgmtServer, 'true']
 Resources:
   DHCPOptions:
     Type: AWS::EC2::DHCPOptions
@@ -236,7 +247,7 @@ Resources:
       VpcId: !Ref 'VPCID'
   MgmtStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: MicrosoftAD
+    Condition: ShouldCreateMgmtServer
     Properties:
       TemplateURL:
         Fn::Sub:
