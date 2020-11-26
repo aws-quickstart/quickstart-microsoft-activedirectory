@@ -1,6 +1,3 @@
-This Quick Start supports the following Regions:
-
-* us-east-1, US East (N. Virginia) (EXAMPLE)
-* us-east-2, US East (Ohio) (EXAMPLE)
+If deploying this scenario 3 of this Quick Start (AWS Managed Active Directory), first check the https://docs.aws.amazon.com/directoryservice/latest/admin-guide/regions.html[Region Availability for AWS Directory Service] page to ensure the Region into which you wish to deploy the Quick Start supports AWS Managed Directory Service.
 
 //Full list: https://docs.aws.amazon.com/general/latest/gr/rande.html

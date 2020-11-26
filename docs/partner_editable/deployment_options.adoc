@@ -1,8 +1,12 @@
 // Edit this placeholder text to accurately describe your architecture.
 
-This Quick Start provides two deployment options:
+This Quick Start provides six deployment options:
 
-* *Deploy {partner-product-short-name} into a new VPC*. This option builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys {partner-product-short-name} into this new VPC.
-* *Deploy {partner-product-short-name} into an existing VPC*. This option provisions {partner-product-short-name} in your existing AWS infrastructure.
+* *Deploy and manage your own AD DS installation in a new VPC*. This option builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys {partner-product-short-name} into this new VPC.
+* *Deploy and manage your own AD DS installation in an existing VPC*. This option provisions {partner-product-short-name} in your existing AWS infrastructure.
+* *Extend your on-premises AD into a new VPC*. This option builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys two Windows EC2 instances into this new VPC.
+* *Extend your on-premises AD into an existing VPC*. This option provisions two Windows EC2 instances in your existing AWS infrastructure.
+* *Deploy AD DS with AWS Directory Service on AWS in a new VPC*. This option builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys AWS Managed Directory Service into this new VPC.
+* *Deploy AD DS with AWS Directory Service on AWS in an existing VPC*. This option provisions AWS Managed Directory Service in your existing AWS infrastructure.
 
 The Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and {partner-product-short-name} settings, as discussed later in this guide.

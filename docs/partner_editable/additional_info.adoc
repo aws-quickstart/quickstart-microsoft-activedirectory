@@ -1,23 +1,104 @@
-// Add steps as necessary for accessing the software, post-configuration, and testing. Don’t include full usage instructions for your software, but add links to your product documentation for that information.
-//Should any sections not be applicable, remove them
+== Post-Deployment Tasks (Scenario 2 Only)
 
-== Test the deployment
-// If steps are required to test the deployment, add them here. If not, remove the heading
+If you’re extending your on-premises AD DS to the AWS Cloud (Scenario 2), note that the Quick Start does not promote the newly-created Windows servers to domain controllers. You will need to perform the following tasks manually, after the stack has been successfully created:
 
-== Post-deployment steps
-// If post-deployment steps are required, add them here. If not, remove the heading
+1.  Connect your on-premises network to the VPC using AWS Direct Connect or a VPN connection and verify that the new Windows Server instances that were created by the Quick Start can resolve the domain DNS name.
+2.  Promote the new Windows Server instances that were created by the Quick Start to domain controllers in your Active Directory domain.
+3.  Configure your on-premises Active Directory Sites and Services to include sites and subnets that represent the Availability Zones within your VPC, and place the newly-promoted Domain Controllers in their associated sites.
+4.  Ensure that instances can resolve names via AD DNS by using one of these methods:
 
-== Best practices for using {partner-product-short-name} on AWS
-// Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
+* Statically assign AD DNS servers on Windows instances.
++
+—or—
+* Set the domain-name-servers field in a new DHCP options set in your VPC to include your AWS-based domain controllers hosting Active Directory DNS.
 
-_Add any best practices for using the software._
+The following sections provide more information about these post-deployment tasks.
+
+[[connecting-your-on-premises-network-to-the-vpc]]
+=== Connecting Your On-Premises Network to the VPC
+
+By default, instances that you launch into a virtual private cloud can't communicate with your own network. To extend your existing AD DS into the AWS Cloud, you’ll need to extend your on-premises network to the VPC. We’ll discuss two ways to do this: by using IPsec Virtual Private Network (VPN) tunnels or by using AWS Direct Connect.
+
+[[using-ipsec-vpn-tunnels]]
+==== Using IPsec VPN Tunnels
+
+The most common scenario for extending your on-premises network to your VPC is through IPsec VPN tunnels. Within the VPC, you can create a virtual private gateway that acts as a VPN concentrator on the Amazon side of the VPN tunnel. A customer gateway is the anchor on your side of that connection. The customer gateway can be a physical device or a software appliance.
+
+[#additionalinfo1]
+.Single VPN connection from your on-premises network to your VPC
+image::../images/image15.png[Architecture,width=100%,height=100%]
+
+Multiple VPN configuration options are available, including the ability to use multiple on-premises customer gateways and configuring redundant VPN connections to provide failover. For details, see http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_VPN.html#Examples[VPN Configuration Examples] in the _Amazon VPC User’s Guide_. Details about which hardware or software appliances you can use are available in the http://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Introduction.html#DevicesTested[Customer Gateway devices we've tested] and http://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Introduction.html#CGRequirements[Requirements for your customer gateway] sections of the _Amazon VPC Network Administrator Guide_.
+
+[[using-aws-direct-connect]]
+==== Using AWS Direct Connect
+
+AWS Direct Connect links your internal network to an AWS Direct Connect location over a standard 1 gigabit or 10 gigabit Ethernet fiber-optic cable. One end of the cable is connected to your router, the other to an AWS Direct Connect router. With this connection in place, you can create virtual interfaces directly to the AWS Cloud (for example, to Amazon EC2, to Amazon S3, and to Amazon VPC), bypassing internet service providers in your network path. More information about AWS Direct Connect can be found here.
+
+[[connecting-to-additional-vpcs]]
+==== Connecting to Additional VPCs
+
+If your Active Directory environment has already been deployed to AWS via a different VPC, you can connect the other VPC to your new VPC via VPC Peering. VPC Peering allows network connectivity within the same account or across multiple accounts. Please see the AWS VPC Peering guide for additional information.
+
+[#additionalinfo2]
+.How AWS Direct Connect interfaces with your network
+image::../images/image16.png[Architecture,width=100%,height=100%]
+
+When you choose AWS Direct Connect to extend your on-premises network to the cloud, you should consider configuring two dedicated connections for maximum redundancy. There are different configuration choices available when you provision two dedicated connections, including active/active (BGP multipath), and active/passive (failover).
+
+In a failover configuration, only one connection link handles traffic. If that link becomes unavailable, the standby connection link becomes active. We recommend that you configure both connection links as active, because this will help ensure that network traffic is load-balanced across both connections. In an active configuration, if one connection link becomes unavailable, all traffic is routed through the other link. For implementation details, see http://docs.aws.amazon.com/directconnect/latest/UserGuide/getstarted.html[Getting Started] in the _AWS Direct Connect User Guide_.
+
+[[deploying-additional-domain-controllers-in-the-aws-cloud]]
+=== Deploying Additional Domain Controllers in the AWS Cloud
+
+Although you can use AWS Direct Connect or a VPN connection to provide access to on-premises resources from the VPC, we recommend that you also add domain controllers to the AWS Cloud. Additional domain controllers provide a reliable, low-latency network connection for resources in AWS that need access to your AD DS. They can also maintain availability for AD DS in the AWS Cloud if there’s an on-premises infrastructure outage.
+
+In the architecture shown in Figure 11, a single Active Directory forest has been extended from an on-premises deployment into a VPC using a VPN connection. Within the VPC, additional domain controllers configured as global catalog and DNS servers are deployed in the existing Active Directory forest.
+
+[#additionalinfo3]
+.How AWS Direct Connect interfaces with your network
+image::../images/image17.png[Architecture,width=100%,height=100%]
+
+In this type of environment, the customer network will already be defined in Active Directory Sites and Services. For example, there will already be a site definition that corresponds to the on-premises network, along with a subnet definition for the 192.168.1.0/24 network. The next step is to configure Active Directory Sites and Services to support the network components located in the VPC.
+
+[[configuring-active-directory-sites-and-services]]
+=== Configuring Active Directory Sites and Services
+
+An Active Directory site should be created for the Region in AWS. The 10.0.0.0/19 and 10.0.32.0/19 CIDR blocks used by the VPC subnets should be added to Active Directory Sites and Services. The subnets can then be associated with the AD DS site definition forthe Region. Additional subnets for web, application, and database tiers in the VPC can be mapped to each AWS site object. Both the on-premises site and the site in the AWS Cloud can be mapped to a site link, which can be configured to replicate at custom intervals or during a specific time of day, if needed.
+
+By properly configuring Active Directory Sites and Services, you can help ensure that the AD DS queries and authentication requests that originate from the VPC are serviced by a local domain controller in the same AWS Availability Zone. This configuration reduces network latency and minimizes traffic that may otherwise need to travel across the VPN back to the on-premises infrastructure.
+
+[[configuring-dns-resolution]]
+=== Configuring DNS Resolution
+
+After you’ve created a VPC and established connectivity to your on-premises network by using AWS Direct Connect or a VPN connection, your next step is to launch Windows instances to act as domain controllers. In order to join the on-premises Active Directory domain and promote your Windows instances to domain controllers, you’ll need to ensure that DNS resolution is configured appropriately.
+
+As discussed previously, by default, instances launched into the VPC will be assigned an Amazon-provided DNS server, which will not provide DNS resolution for your on-premises infrastructure. To address this, you can do one of two things:
+
+* Manually assign DNS server settings on the Windows instances. This static DNS setting would initially point to the on-premises Active Directory DNS server. After promoting the instance to a domain controller, you could modify the setting to use a cloud-based Active Directory DNS server IP address to prevent subsequent DNS queries from traversing the link back to the on-premises environment.
++
+—or—
+* Initially configure the VPC DHCP options set to assign your on-premises Active Directory DNS server IP address to your instances launched into the VPC. After the Windows instances have been joined to the domain and promoted to domain controllers, you can create a new DHCP options set to assign the IP address of the Active Directory DNS server instances running in AWS.
 
 == Security
-// Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
 
-_Add any security-related information._
+AWS provides a set of building blocks, including the Amazon EC2 and Amazon VPC services, that you can use to provision infrastructure for your applications. In this model, some security capabilities such as physical security are the responsibility of AWS and are highlighted in the https://d0.awsstatic.com/whitepapers/aws-security-best-practices.pdf[AWS security whitepaper]. Other capabilities, such as controlling access to applications, are the responsibility of the application developer and the tools provided in the Microsoft platform.
 
-== Other useful information
-//Provide any other information of interest to users, especially focusing on areas where AWS or cloud usage differs from on-premises usage.
+If you have followed the automated deployment options in this guide, the necessary security groups are configured for you by the provided AWS CloudFormation templates and are listed here for your reference.
 
-_Add any other details that will help the customer use the software on AWS._
+[cols=",,,",options="header",]
+|========================================================================================================================================================================================================================================
+|Security group |Associated with |Inbound source |Port(s)
+|DomainControllerSG |DC1, DC2 |VPCCIDR |TCP5985, TCP53, UDP53, TCP80, TCP3389
+| | |DomainControllerSG |IpProtocol-1, FromPort-1, ToPort-1
+| | |DomainMemberSG |UDP123, TCP135, UDP138, UDP137, TCP139, TCP445, UDP445, TCP464, UDP464, TCP49152-65535, UDP49152-65535, TCP389, UDP389, TCP636, TCP3268, TCP3269, TCP88, UDP88, UDP67, UDP2535, TCP9389, TCP5722, UDP5355, (ICMP -1)
+|DomainMemberSG |RDGW1, RDGW2 a|
+ADServer1PrivateIp,
+
+ADServer2PrivateIp
+
+ |UDP88, TCP88, TCP445, UDP445, TCP49152-65535, UDP49152-65535, TCP389, UDP389, TCP636
+|RDGWSecurityGroup |RDGW1, RDGW2 |RDGWCIDR* |TCP3389
+|========================================================================================================================================================================================================================================
+
+*Important* *RDP should never be opened up to the entire internet, not even temporarily or for testing purposes.* For more information, see this http://aws.amazon.com/security/security-bulletins/morto-worm-spreading-via-remote-desktop-protocol/[Amazon security bulletin]. Always restrict ports and source traffic to the minimum necessary to support the functionality of the application. For more about securing Remote Desktop Gateway, see the https://d0.awsstatic.com/whitepapers/aws-microsoft-platform-security.pdf[Securing the Microsoft Platform on Amazon Web Services] whitepaper.
