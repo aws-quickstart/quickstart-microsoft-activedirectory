@@ -1,0 +1,68 @@
+
+.Network Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Availability Zones
+(`AvailabilityZones`)|`**__Requires input__**`|List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment.|Number of Availability Zones
+(`NumberOfAZs`)|`2`|Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter.|VPC CIDR
+(`VPCCIDR`)|`10.0.0.0/16`|CIDR Block for the VPC|Create a DHCP Options set
+(`DHCPOptionSet`)|`Yes`|Do you want to create and apply a new DHCP Options Set|Private Subnet 1 CIDR
+(`PrivateSubnet1CIDR`)|`10.0.0.0/19`|CIDR block for private subnet 1 located in Availability Zone 1.|Private Subnet 2 CIDR
+(`PrivateSubnet2CIDR`)|`10.0.32.0/19`|CIDR block for private subnet 2 located in Availability Zone 2.|(Optional) Private Subnet 3 CIDR
+(`PrivateSubnet3CIDR`)|`**__Blank string__**`|CIDR block for private subnet 3 located in Availability Zone 3.|Public Subnet 1 CIDR
+(`PublicSubnet1CIDR`)|`10.0.128.0/20`|CIDR Block for the public DMZ subnet 1 located in Availability Zone 1|Public Subnet 2 CIDR
+(`PublicSubnet2CIDR`)|`10.0.144.0/20`|CIDR Block for the public DMZ subnet 2 located in Availability Zone 2|(Optional) Public Subnet 3 CIDR
+(`PublicSubnet3CIDR`)|`**__Blank string__**`|CIDR Block for the public DMZ subnet 3 located in Availability Zone 3
+|===
+.Amazon EC2 Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Domain Controller 1 Instance Type
+(`ADServer1InstanceType`)|`m5.large`|Amazon EC2 instance type for the first Active Directory instance|Domain Controller 1 NetBIOS Name
+(`ADServer1NetBIOSName`)|`DC1`|NetBIOS name of the first Active Directory server (up to 15 characters)|Domain Controller 1 Private IP Address
+(`ADServer1PrivateIP`)|`10.0.0.10`|Fixed private IP for the first Active Directory server located in Availability Zone 1|Domain Controller 2 Instance Type
+(`ADServer2InstanceType`)|`m5.large`|Amazon EC2 instance type for the second Active Directory instance|Domain Controller 2 NetBIOS Name
+(`ADServer2NetBIOSName`)|`DC2`|NetBIOS name of the second Active Directory server (up to 15 characters)|Domain Controller 2 Private IP Address
+(`ADServer2PrivateIP`)|`10.0.32.10`|Fixed private IP for the second Active Directory server located in Availability Zone 2|Size of Data Drive that contains SYSVOL and NTDS
+(`DataDriveSizeGiB`)|`10`|Size of Data Drive that contains SYSVOL and NTDS|Key Pair Name
+(`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches
+|===
+.Microsoft Active Directory Domain Services Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Domain Admin User Name
+(`DomainAdminUser`)|`Admin`|User name for the account that will be added as Domain Administrator. This is separate from the default "Administrator" account|Domain Admin Password
+(`DomainAdminPassword`)|`**__Requires input__**`|Password for the domain admin user. Must be at least 8 characters containing letters, numbers and symbols|Domain DNS Name
+(`DomainDNSName`)|`example.com`|Fully qualified domain name (FQDN) of the forest root domain e.g. example.com|Domain NetBIOS Name
+(`DomainNetBIOSName`)|`example`|NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE|Do you want Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, Domain Groups OUs created
+(`CreateDefaultOUs`)|`No`|Do you want Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, Domain Groups OUs created
+|===
+.Microsoft Active Directory Certificate Services Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Deploy PKI Infrastructure
+(`PKI`)|`No`|Do you want to deploy a Single Tier PKI Enterpise CA|Enterprise Root CA IP Address
+(`EntCaServerIP`)|`10.0.0.11`|Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet|Enterprise Root CA Instance Type
+(`EntCaServerInstanceType`)|`t3.medium`|Amazon EC2 instance type for the Enterprise Root CA instance|Size of the Data Drive in GiB
+(`EntCaDataDriveSizeGiB`)|`2`|Size of the Data Drive in GiB|Enterprise Root CA NetBIOS Name
+(`EntCaServerNetBIOSName`)|`CA1`|NetBIOS name of the Enterprise Root CA server (up to 15 characters)|Enterprise Root CA Key Length
+(`EntCaKeyLength`)|`2048`|Enterprise Root CA Key Length|Enterprise Root CA Hash Algorithm
+(`EntCaHashAlgorithm`)|`SHA256`|Enterprise Root CA Hash Algorithm|Enterprise Root CA Certificate Validity Period in Years
+(`EntCaValidityPeriodUnits`)|`5`|Enterprise Root CA Certificate Validity Period in Years
+|===
+.Microsoft Remote Desktop Gateway Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Number of RDGW hosts
+(`NumberOfRDGWHosts`)|`1`|Enter the number of Remote Desktop Gateway hosts to create|Remote Desktop Gateway Instance Type
+(`RDGWInstanceType`)|`t3.large`|Amazon EC2 instance type for the Remote Desktop Gateway instances|Allowed Remote Desktop Gateway External Access CIDR
+(`RDGWCIDR`)|`**__Requires input__**`|Allowed CIDR Block for external access to the Remote Desktop Gateways
+|===
+.AWS Quick Start Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Quick Start S3 Bucket Name
+(`QSS3BucketName`)|`aws-quickstart`|S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).|Quick Start S3 Key Prefix
+(`QSS3KeyPrefix`)|`quickstart-microsoft-activedirectory/`|S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).|Quick Start S3 Bucket Region
+(`QSS3BucketRegion`)|`us-east-1`|The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
+|===

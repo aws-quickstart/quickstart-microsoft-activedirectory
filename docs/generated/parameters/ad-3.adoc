@@ -1,0 +1,39 @@
+
+.Network configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|VPC CIDR
+(`VPCCIDR`)|`10.0.0.0/16`|CIDR Block for the VPC|VPC ID
+(`VPCID`)|`**__Requires input__**`|ID of the VPC (e.g., vpc-0343606e)|Create a DHCP Options set
+(`DHCPOptionSet`)|`Yes`|Do you want to create a new DHCP Options Set|Private Subnet 1 ID
+(`PrivateSubnet1ID`)|`**__Requires input__**`|ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)|Private Subnet 2 ID
+(`PrivateSubnet2ID`)|`**__Requires input__**`|ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+|===
+.AWS Managed Microsoft Active Directory configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Domain DNS name
+(`DomainDNSName`)|`example.com`|Fully qualified domain name (FQDN) of the forest root domain e.g. example.com|Domain NetBIOS name
+(`DomainNetBIOSName`)|`example`|NetBIOS name of the domain (upto 15 characters) for users of earlier versions of Windows e.g. EXAMPLE|Domain Admin password
+(`DomainAdminPassword`)|`**__Requires input__**`|Password for the domain admin user. Must be at least 8 characters containing letters, numbers and symbols|AWS Microsoft AD edition
+(`ADEdition`)|`Enterprise`|The AWS Microsoft AD edition. Valid values include Standard and Enterprise.
+|===
+.Microsoft Windows Server management instance
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Deploy management server
+(`MgmtServer`)|`true`|Deploy a management instance|Management instance instance type
+(`MgmtServerInstanceType`)|`t3.medium`|Amazon EC2 instance type for the Management Instance|Management instance SSM parameter value to grab the lastest AMI ID
+(`MgmtAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|Management Instance SSM Parameter Value to grab the lastest AMI ID|Size of the data drive in GiB
+(`MgmtDataDriveSizeGiB`)|`2`|Size of the Data Drive in GiB|Management instance NetBIOS name
+(`MgmtServerNetBIOSName`)|`MGMT1`|NetBIOS name of the Management Instance server (up to 15 characters)|Public/private key pairs allow you to securely connect to your instance
+(`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches
+|===
+.AWS Quick Start configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Quick Start S3 bucket name
+(`QSS3BucketName`)|`aws-quickstart`|S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).|Quick Start S3 key prefix
+(`QSS3KeyPrefix`)|`quickstart-microsoft-activedirectory/`|S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).|Quick Start S3 bucket Region
+(`QSS3BucketRegion`)|`us-east-1`|The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
+|===

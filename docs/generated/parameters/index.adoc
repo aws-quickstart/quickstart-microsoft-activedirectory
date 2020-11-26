@@ -1,1 +1,18 @@
-// placeholder
+
+=== Launch Active Directory on EC2 into a new VPC
+include::ad-master-1.adoc[]
+
+=== Launch Active Directory on EC2 into an existing VPC
+include::ad-1.adoc[]
+
+=== Extend on-premises Active Directory into an existing VPC
+include::ad-2.adoc[]
+
+=== Extend on-premises Active Directory into a new VPC
+include::ad-master-2.adoc[]
+
+=== Launch AWS Managed Active Directory into an existing VPC
+include::ad-3.adoc[]
+
+=== Launch AWS Managed Active Directory into a new VPC
+include::ad-master-3.adoc[]
