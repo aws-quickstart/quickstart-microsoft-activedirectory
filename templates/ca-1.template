@@ -16,7 +16,6 @@ Metadata:
       - Label:
           default: Amazon EC2 Configuration
         Parameters:
-          - EntCaServerIP
           - EntCaServerInstanceType
           - EntCaDataDriveSizeGiB
           - KeyPairName
@@ -48,8 +47,6 @@ Metadata:
         default: Enterprise Root CA Subnet ID
       DomainMembersSG:
         default: Security Group ID for Domain Members Security Group.  
-      EntCaServerIP:
-        default: Enterprise Root CA IP Address
       EntCaServerInstanceType:
         default: Enterprise Root CA Instance Type
       EntCaDataDriveSizeGiB:
@@ -98,11 +95,6 @@ Parameters:
   DomainMembersSG:
     Description: Security Group ID for Domain Members Security Group.  
     Type: String
-  EntCaServerIP:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Description: Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet
-    Type: String
-    Default: 10.0.0.11
   EntCaServerInstanceType:
     AllowedValues:
       - t2.small
@@ -545,7 +537,6 @@ Resources:
       SecurityGroupIds:
         - !Ref 'CaSG'
         - !Ref 'DomainMembersSG'
-      PrivateIpAddress: !Ref 'EntCaServerIP'
       KeyName: !Ref 'KeyPairName'
       UserData: !Base64
         Fn::Join:
