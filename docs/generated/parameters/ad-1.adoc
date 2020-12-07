@@ -37,9 +37,7 @@
 [width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label (name) |Default value|Description|Do you want to Deploy PKI Infrastructure
-(`PKI`)|`No`|Do you want to deploy a Single Tier PKI Enterpise CA|Enterprise Root CA Subnet ID
-(`EntCaServerSubnet`)|`**__Requires input__**`|ID of the private subnet 1 or 2 in Availability Zone 1 or 2  (e.g., subnet-a0246dcd)|Enterprise Root CA IP Address
-(`EntCaServerIP`)|`10.0.0.11`|Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet|Enterprise Root CA Instance Type
+(`PKI`)|`No`|Do you want to deploy a Single Tier PKI Enterpise CA|Enterprise Root CA Instance Type
 (`EntCaServerInstanceType`)|`t3.medium`|Amazon EC2 instance type for the Enterprise Root CA instance|Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
 (`EntCaAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID|Size of the Data Drive in GiB
 (`EntCaDataDriveSizeGiB`)|`2`|Size of the Data Drive in GiB|Enterprise Root CA NetBIOS Name
