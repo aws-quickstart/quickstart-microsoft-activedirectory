@@ -43,7 +43,6 @@ tests:
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
       PKI: 'Yes'
-      EntCaServerIP: 10.0.0.11
       EntCaServerInstanceType: t3.large
       EntCaDataDriveSizeGiB: '2'
       EntCaServerNetBIOSName: 'EntCa1'

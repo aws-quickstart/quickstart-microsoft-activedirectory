@@ -45,8 +45,6 @@ Metadata:
           default: Microsoft Active Directory Certificate Services Configuration
         Parameters:
           - PKI
-          - EntCaServerSubnet
-          - EntCaServerIP
           - EntCaServerInstanceType
           - EntCaAmi
           - EntCaDataDriveSizeGiB
@@ -101,10 +99,6 @@ Metadata:
         default: Do you want Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, Domain Groups OUs created
       PKI:
         default: Do you want to Deploy PKI Infrastructure
-      EntCaServerSubnet:
-        default: Enterprise Root CA Subnet ID
-      EntCaServerIP:
-        default: Enterprise Root CA IP Address
       EntCaServerInstanceType:
         default: Enterprise Root CA Instance Type
       EntCaAmi:
@@ -265,14 +259,6 @@ Parameters:
     Default: 'No'
     Description: Do you want to deploy a Single Tier PKI Enterpise CA
     Type: String
-  EntCaServerSubnet:
-    Description: ID of the private subnet 1 or 2 in Availability Zone 1 or 2  (e.g., subnet-a0246dcd)
-    Type: AWS::EC2::Subnet::Id
-  EntCaServerIP:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Description: Fixed private IP for the Enterprise Root CA server located in the Enterprise Root CA Subnet
-    Type: String
-    Default: 10.0.0.11
   EntCaServerInstanceType:
     AllowedValues:
       - t2.small
@@ -1099,9 +1085,8 @@ Resources:
       Parameters:
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !Ref 'VPCID'
-        EntCaServerSubnet: !Ref 'EntCaServerSubnet'
+        EntCaServerSubnet: !Ref 'PrivateSubnet1ID'
         DomainMembersSG: !Ref 'DomainMembersSG'
-        EntCaServerIP : !Ref 'EntCaServerIP'
         EntCaServerInstanceType : !Ref 'EntCaServerInstanceType'
         EntCaDataDriveSizeGiB : !Ref 'EntCaDataDriveSizeGiB'
         KeyPairName: !Ref 'KeyPairName'
