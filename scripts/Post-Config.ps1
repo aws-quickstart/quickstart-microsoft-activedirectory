@@ -246,7 +246,7 @@ If ($ComputerName -eq $Pdce) {
 
     Write-Output 'Installing default CA templates'
     Try {
-        & certutil.exe -InstallDefaultTemplates
+        & certutil.exe -InstallDefaultTemplates > $null
     } Catch [Exception] {
         Write-Output "Failed to install default CA templates $_"
     }       
@@ -261,7 +261,7 @@ If ($ComputerName -eq $Pdce) {
 
     Write-Output 'Downloading GPO Zip File'
     Try {
-        Read-S3Object -BucketName $S3BucketName -Key "$($S3KeyPrefix)scripts/GPOs.zip" -File 'C:\AWSQuickstart\GPOs.zip'
+        $Null = Read-S3Object -BucketName $S3BucketName -Key "$($S3KeyPrefix)scripts/GPOs.zip" -File 'C:\AWSQuickstart\GPOs.zip'
     } Catch [System.Exception] {
         Write-Output "Failed to read and download GPO from S3 $_"
         Exit 1
@@ -351,5 +351,5 @@ Invoke-GPUpdate -RandomDelayInMinutes '0' -Force
 Write-Output 'Restarting Time Service'
 Restart-Service -Name 'W32Time'
 
-Write-Output 'Resynching Time Service'
-& w32tm.exe /resync
+Write-Output 'Resyncing Time Service'
+& w32tm.exe /resync > $null

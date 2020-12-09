@@ -14,7 +14,7 @@
 
 Write-Output 'Installing NuGet Package Provider'
 Try {
-    Install-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5' -Force -ErrorAction Stop
+    $Null = Install-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5' -Force -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed to install NuGet Package Provider $_"
     Exit 1
@@ -66,7 +66,7 @@ Get-NetFirewallProfile -ErrorAction Stop | Set-NetFirewallProfile -Enabled False
 
 Write-Output 'Creating Directory for DSC Public Cert'
 Try {
-    New-Item -Path 'C:\AWSQuickstart\publickeys' -ItemType 'Directory' -ErrorAction Stop
+    $Null = New-Item -Path 'C:\AWSQuickstart\publickeys' -ItemType 'Directory' -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed to create publickeys directory $_"
     Exit 1
@@ -82,14 +82,13 @@ Try {
 
 Write-Output 'Exporting the public key certificate'
 Try {
-    $cert | Export-Certificate -FilePath 'C:\AWSQuickstart\publickeys\AWSQSDscPublicKey.cer' -Force -ErrorAction Stop
+    $Null = $cert | Export-Certificate -FilePath 'C:\AWSQuickstart\publickeys\AWSQSDscPublicKey.cer' -Force -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed to copy self signed cert to publickeys directory $_"
     Exit 1
 }
 
 Write-Output 'Finding RAW Disk'
-
 $Counter = 0
 Do {
     $BlankDisk = Get-Disk -ErrorAction Stop | Where-Object { $_.partitionstyle -eq 'raw' }

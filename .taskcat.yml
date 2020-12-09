@@ -42,7 +42,7 @@ tests:
       VPCCIDR: 10.0.0.0/16
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
-      PKI: 'Yes'
+      PKI: 'One-Tier'
       EntCaServerInstanceType: t3.large
       EntCaDataDriveSizeGiB: '2'
       EntCaServerNetBIOSName: 'EntCa1'
