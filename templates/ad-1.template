@@ -45,13 +45,15 @@ Metadata:
           default: Microsoft Active Directory Certificate Services Configuration
         Parameters:
           - PKI
-          - EntCaServerInstanceType
-          - EntCaAmi
-          - EntCaDataDriveSizeGiB
+          - CaServerInstanceType
+          - CaAmi
+          - CaDataDriveSizeGiB
+          - OrCaServerNetBIOSName
           - EntCaServerNetBIOSName
-          - EntCaKeyLength
-          - EntCaHashAlgorithm
-          - EntCaValidityPeriodUnits
+          - CaKeyLength
+          - CaHashAlgorithm
+          - OrCaValidityPeriodUnits          
+          - CaValidityPeriodUnits
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -98,21 +100,25 @@ Metadata:
       CreateDefaultOUs:
         default: Do you want Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, Domain Groups OUs created
       PKI:
-        default: Do you want to Deploy PKI Infrastructure
-      EntCaServerInstanceType:
-        default: Enterprise Root CA Instance Type
-      EntCaAmi:
-        default: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
-      EntCaDataDriveSizeGiB:
-        default: Size of the Data Drive in GiB
+        default: Do you want to Deploy PKI Infrastructure what kind Two Tier or One Tier
+      CaServerInstanceType:
+        default: CA Instance Type
+      CaAmi:
+        default: CA SSM Parameter Value to grab the lastest AMI ID
+      CaDataDriveSizeGiB:
+        default: CA size of the Data Drive in GiB
+      OrCaServerNetBIOSName:
+        default: Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
       EntCaServerNetBIOSName:
-        default: Enterprise Root CA NetBIOS Name
-      EntCaKeyLength:
-        default: Enterprise Root CA Key Length
-      EntCaHashAlgorithm:
-        default: Enterprise Root CA Hash Algorithm
-      EntCaValidityPeriodUnits:
-        default: Enterprise Root CA Certificate Validity Period in Years
+        default: Enterprise Root or Subordinate CA NetBIOS Name
+      CaKeyLength:
+        default: CA Key Length
+      CaHashAlgorithm:
+        default: CA Hash Algorithm
+      OrCaValidityPeriodUnits:
+        default: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+      CaValidityPeriodUnits:
+        default: Enterprise Root or Subordinate CA Certificate Validity Period in Years
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
@@ -254,12 +260,13 @@ Parameters:
     Type: String
   PKI:
     AllowedValues:
-      - 'Yes'
+      - 'One-Tier'
+      - 'Two-Tier'
       - 'No'
     Default: 'No'
-    Description: Do you want to deploy a Single Tier PKI Enterpise CA
+    Description: Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier
     Type: String
-  EntCaServerInstanceType:
+  CaServerInstanceType:
     AllowedValues:
       - t2.small
       - t3.small
@@ -268,40 +275,51 @@ Parameters:
       - t2.large
       - t3.large
     Default: t3.medium
-    Description: Amazon EC2 instance type for the Enterprise Root CA instance
+    Description: Amazon EC2 instance type for the CA instance(s)
     Type: String
-  EntCaAmi:
+  CaAmi:
     Type: String
     Description: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
-  EntCaDataDriveSizeGiB:
+  CaDataDriveSizeGiB:
     Type: 'Number'
     Default: '2'
     Description: Size of the Data Drive in GiB
-  EntCaServerNetBIOSName:
+  OrCaServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
-    Description: NetBIOS name of the Enterprise Root CA server (up to 15 characters)
+    Description: NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
-    Default: CA1
-  EntCaKeyLength:
-    Description: Enterprise Root CA Key Length
+    Default: ORCA1
+  EntCaServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+    Default: ENTCA1
+  CaKeyLength:
+    Description: CA Key Length
     AllowedValues:
       - '2048'
       - '4096'
     Default: '2048'
     Type: String
-  EntCaHashAlgorithm:
-    Description: Enterprise Root CA Hash Algorithm
+  CaHashAlgorithm:
+    Description: CA Hash Algorithm
     AllowedValues:
       - 'SHA256'
       - 'SHA384'
       - 'SHA512'
     Default: 'SHA256'
     Type: String
-  EntCaValidityPeriodUnits:
-    Description: Enterprise Root CA Certificate Validity Period in Years
+  OrCaValidityPeriodUnits:
+    Description: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+    Default: '10'
+    Type: String
+  CaValidityPeriodUnits:
+    Description: Enterprise Root or Subordinate CA Certificate Validity Period in Years
     Default: '5'
     Type: String
   QSS3BucketName:
@@ -358,7 +376,8 @@ Rules:
         AssertDescription: M4 instances are not available in the Paris region
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
-  ShouldCreateResource: !Not [!Equals [!Ref PKI, 'No']]
+  ShouldCreateOneTierPkiResource: !Equals [!Ref PKI, 'One-Tier']
+  ShouldCreateTwoTierPkiResource: !Equals [!Ref PKI, 'Two-Tier']
   ShouldCreateDHCPOption: !Not [!Equals [!Ref DHCPOptionSet, 'No']]
 Resources:
   DHCPOptions:
@@ -1069,7 +1088,7 @@ Resources:
   EntCAStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: DomainController2
-    Condition: ShouldCreateResource
+    Condition: ShouldCreateOneTierPkiResource
     Properties:
       TemplateURL:
         Fn::Sub:
@@ -1087,19 +1106,63 @@ Resources:
         VPCID: !Ref 'VPCID'
         EntCaServerSubnet: !Ref 'PrivateSubnet1ID'
         DomainMembersSG: !Ref 'DomainMembersSG'
-        EntCaServerInstanceType : !Ref 'EntCaServerInstanceType'
-        EntCaDataDriveSizeGiB : !Ref 'EntCaDataDriveSizeGiB'
+        EntCaServerInstanceType : !Ref 'CaServerInstanceType'
+        EntCaDataDriveSizeGiB : !Ref 'CaDataDriveSizeGiB'
         KeyPairName: !Ref 'KeyPairName'
-        EntCaAmi: !Ref 'EntCaAmi'
+        EntCaAmi: !Ref 'CaAmi'
         AdministratorSecret: !Ref 'ADAdminSecrets'
         EntCaServerNetBIOSName : !Ref 'EntCaServerNetBIOSName'
         DomainController1IP: !Ref 'ADServer1PrivateIP'
         DomainController2IP: !Ref 'ADServer2PrivateIP'
         DomainDNSName: !Ref 'DomainDNSName'     
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
-        EntCaKeyLength : !Ref 'EntCaKeyLength'
-        EntCaHashAlgorithm : !Ref 'EntCaHashAlgorithm'
-        EntCaValidityPeriodUnits : !Ref 'EntCaValidityPeriodUnits'
+        EntCaKeyLength : !Ref 'CaKeyLength'
+        EntCaHashAlgorithm : !Ref 'CaHashAlgorithm'
+        EntCaValidityPeriodUnits : !Ref 'CaValidityPeriodUnits'
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
+  TwoTierCAStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: DomainController2
+    Condition: ShouldCreateTwoTierPkiResource
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ca-1-two-tier.template'
+          - S3Region: !If
+              - UsingDefaultBucket
+              - !Ref AWS::Region
+              - !Ref QSS3BucketRegion
+            S3Bucket: !If
+              - UsingDefaultBucket
+              - !Sub '${QSS3BucketName}-${AWS::Region}'
+              - !Ref QSS3BucketName
+      Parameters:
+        VPCCIDR: !Ref 'VPCCIDR'
+        VPCID: !Ref 'VPCID'
+        OrCaServerSubnet: !Ref 'PrivateSubnet1ID'
+        SubCaServerSubnet: !Ref 'PrivateSubnet1ID'
+        DomainMembersSG: !Ref 'DomainMembersSG'
+        OrCaServerInstanceType : !Ref 'CaServerInstanceType'
+        SubCaServerInstanceType : !Ref 'CaServerInstanceType'
+        OrCaDataDriveSizeGiB : !Ref 'CaDataDriveSizeGiB'
+        SubCaDataDriveSizeGiB : !Ref 'CaDataDriveSizeGiB'
+        KeyPairName: !Ref 'KeyPairName'
+        Ami: !Ref 'CaAmi'
+        AdministratorSecret: !Ref 'ADAdminSecrets'
+        OrCaServerNetBIOSName : !Ref 'OrCaServerNetBIOSName'
+        SubCaServerNetBIOSName : !Ref 'EntCaServerNetBIOSName'
+        DomainController1IP: !Ref 'ADServer1PrivateIP'
+        DomainController2IP: !Ref 'ADServer2PrivateIP'
+        DomainDNSName: !Ref 'DomainDNSName'     
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
+        OrCaKeyLength : !Ref 'CaKeyLength'
+        SubCaKeyLength : !Ref 'CaKeyLength'
+        OrCaHashAlgorithm : !Ref 'CaHashAlgorithm'
+        SubCaHashAlgorithm : !Ref 'CaHashAlgorithm'
+        OrCaValidityPeriodUnits : !Ref 'OrCaValidityPeriodUnits'
+        SubCaValidityPeriodUnits : !Ref 'CaValidityPeriodUnits'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
