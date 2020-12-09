@@ -858,7 +858,7 @@ Resources:
   CaSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Offline CA Security Group
+      GroupDescription: CA Security Group
       VpcId: !Ref VPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -874,7 +874,7 @@ Resources:
 Outputs:
   CASGID:
     Value: !Ref 'CaSG'
-    Description: Enterpise CA Security Group ID
+    Description: CA Security Group ID
   OrCaInstanceId:
     Value: !Ref 'ORCA'
     Description: ORCA instance ID
