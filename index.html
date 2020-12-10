@@ -2283,43 +2283,55 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">Deploy PKI Infrastructure
 (<code>PKI</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>No</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to deploy a Single Tier PKI Enterpise CA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Instance Type
-(<code>EntCaServerInstanceType</code>)</p></td>
+(<code>CaServerInstanceType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>t3.medium</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the Enterprise Root CA instance</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the CA instance(s)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Size of the Data Drive in GiB
-(<code>EntCaDataDriveSizeGiB</code>)</p></td>
+(<code>CaDataDriveSizeGiB</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>2</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Size of the Data Drive in GiB</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA NetBIOS Name
+(<code>OrCaServerNetBIOSName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ORCA1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA NetBIOS Name
 (<code>EntCaServerNetBIOSName</code>)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CA1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Enterprise Root CA server (up to 15 characters)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ENTCA1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Key Length
-(<code>EntCaKeyLength</code>)</p></td>
+(<code>CaKeyLength</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>2048</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Key Length</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Key Length</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Hash Algorithm
-(<code>EntCaHashAlgorithm</code>)</p></td>
+(<code>CaHashAlgorithm</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SHA256</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Hash Algorithm</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Hash Algorithm</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA Certificate Validity Period in Years
+(<code>OrCaValidityPeriodUnits</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>10</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Certificate Validity Period in Years
-(<code>EntCaValidityPeriodUnits</code>)</p></td>
+(<code>CaValidityPeriodUnits</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>5</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Certificate Validity Period in Years</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA Certificate Validity Period in Years</p></td>
 </tr>
 </tbody>
 </table>
@@ -2577,52 +2589,64 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to Deploy PKI Infrastructure
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to Deploy PKI Infrastructure what kind Two Tier or One Tier
 (<code>PKI</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>No</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to deploy a Single Tier PKI Enterpise CA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Instance Type
-(<code>EntCaServerInstanceType</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Instance Type
+(<code>CaServerInstanceType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>t3.medium</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the Enterprise Root CA instance</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the CA instance(s)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
-(<code>EntCaAmi</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA SSM Parameter Value to grab the lastest AMI ID
+(<code>CaAmi</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Size of the Data Drive in GiB
-(<code>EntCaDataDriveSizeGiB</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA size of the Data Drive in GiB
+(<code>CaDataDriveSizeGiB</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>2</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Size of the Data Drive in GiB</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
+(<code>OrCaServerNetBIOSName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ORCA1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA NetBIOS Name
 (<code>EntCaServerNetBIOSName</code>)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CA1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Enterprise Root CA server (up to 15 characters)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ENTCA1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Key Length
-(<code>EntCaKeyLength</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Key Length
+(<code>CaKeyLength</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>2048</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Key Length</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Key Length</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Hash Algorithm
-(<code>EntCaHashAlgorithm</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Hash Algorithm
+(<code>CaHashAlgorithm</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SHA256</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Hash Algorithm</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Hash Algorithm</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Certificate Validity Period in Years
-(<code>EntCaValidityPeriodUnits</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+(<code>OrCaValidityPeriodUnits</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>10</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA Certificate Validity Period in Years
+(<code>CaValidityPeriodUnits</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>5</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Certificate Validity Period in Years</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA Certificate Validity Period in Years</p></td>
 </tr>
 </tbody>
 </table>
