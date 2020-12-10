@@ -880,11 +880,11 @@ Resources:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
-            VolumeType: gp2
+            VolumeType: gp3
         - DeviceName: /dev/xvdf
           Ebs:
             VolumeSize: !Ref 'DataDriveSizeGiB'
-            VolumeType: gp2
+            VolumeType: gp3
       SecurityGroupIds:
         - !Ref 'DomainControllersSG'
       PrivateIpAddress: !Ref 'ADServer1PrivateIP'
@@ -908,11 +908,11 @@ Resources:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
-            VolumeType: gp2
+            VolumeType: gp3
         - DeviceName: /dev/xvdf
           Ebs:
             VolumeSize: !Ref 'DataDriveSizeGiB'
-            VolumeType: gp2
+            VolumeType: gp3
       SecurityGroupIds:
         - !Ref 'DomainControllersSG'
       PrivateIpAddress: !Ref 'ADServer2PrivateIP'

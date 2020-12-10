@@ -333,7 +333,7 @@ Resources:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 100
-            VolumeType: gp2
+            VolumeType: gp3
       SecurityGroupIds:
         - !Ref 'DomainController1SG'
       PrivateIpAddress: !Ref 'ADServer1PrivateIP'
@@ -442,7 +442,7 @@ Resources:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 100
-            VolumeType: gp2
+            VolumeType: gp3
       SecurityGroupIds:
         - !Ref 'DomainController2SG'
       PrivateIpAddress: !Ref 'ADServer2PrivateIP'
