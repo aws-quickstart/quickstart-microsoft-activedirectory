@@ -506,11 +506,11 @@ Resources:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
-            VolumeType: gp2
+            VolumeType: gp3
         - DeviceName: /dev/xvdf
           Ebs:
             VolumeSize: !Ref 'MgmtDataDriveSizeGiB'
-            VolumeType: gp2
+            VolumeType: gp3
       SecurityGroupIds:
         - !Ref 'DomainMembersSG'
       KeyName: !Ref 'KeyPairName'
