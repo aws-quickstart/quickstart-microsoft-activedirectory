@@ -13,23 +13,13 @@
 [CmdletBinding()]
 # Incoming Parameters for Script, CloudFormation\SSM Parameters being passed in
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$SubCaNetBIOSName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$DomainNetBIOSName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$DomainDNSName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$DomainController1IP,
-
-    [Parameter(Mandatory = $true)]
-    [string]$DomainController2IP,
-
-    [Parameter(Mandatory = $true)]
-    [string]$ADAdminSecParam
+    [Parameter(Mandatory = $true)][String]$SubCaNetBIOSName,
+    [Parameter(Mandatory = $true)][String]$DomainNetBIOSName,
+    [Parameter(Mandatory = $true)][String]$DomainDNSName,
+    [Parameter(Mandatory = $true)][String]$DomainController1IP,
+    [Parameter(Mandatory = $true)][String]$DomainController2IP,
+    [Parameter(Mandatory = $true)][String]$ADAdminSecParam,
+    [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][String]$UseS3ForCRL
 )
 
 #Requires -Modules PSDesiredStateConfiguration, NetworkingDsc, ComputerManagementDsc, ActiveDirectoryDsc
@@ -160,18 +150,6 @@ Configuration ConfigSubCa {
         {
             Name   = 'RSAT-ADCS'
             Ensure = 'Present'
-            DependsOn = '[WindowsFeature]ADCSCA'
-        }
-
-        WindowsFeature IIS {
-            Ensure    = 'Present'
-            Name      = 'Web-WebServer'
-            DependsOn = '[DnsServerAddress]DnsServerAddress'
-        }
-
-        WindowsFeature IIS-ManagementTools {
-            Ensure    = 'Present'
-            Name      = 'Web-Mgmt-Console'
             DependsOn = '[DnsServerAddress]DnsServerAddress'
         }
 
@@ -181,10 +159,24 @@ Configuration ConfigSubCa {
             DependsOn = '[DnsServerAddress]DnsServerAddress'
         }
 
-        WindowsFeature RSAT-DNS-ManagementTools {
-            Ensure    = 'Present'
-            Name      = 'RSAT-DNS-Server'
-            DependsOn = '[DnsServerAddress]DnsServerAddress'
+        If ($UseS3ForCRL -eq 'No') {
+            WindowsFeature IIS {
+                Ensure    = 'Present'
+                Name      = 'Web-WebServer'
+                DependsOn = '[DnsServerAddress]DnsServerAddress'
+            }
+
+            WindowsFeature IIS-ManagementTools {
+                Ensure    = 'Present'
+                Name      = 'Web-Mgmt-Console'
+                DependsOn = '[DnsServerAddress]DnsServerAddress'
+            }
+
+            WindowsFeature RSAT-DNS-ManagementTools {
+                Ensure    = 'Present'
+                Name      = 'RSAT-DNS-Server'
+                DependsOn = '[DnsServerAddress]DnsServerAddress'
+            }
         }
 
         # Rename Computer and Join Domain
@@ -192,7 +184,7 @@ Configuration ConfigSubCa {
             Name       = $SubCaNetBIOSName
             DomainName = $DomainDnsName
             Credential = $Credentials
-            DependsOn  = '[WindowsFeature]RSAT-DNS-ManagementTools'
+            DependsOn  = '[WindowsFeature]RSAT-ADCS-ManagementTools'
         }
     }
 }

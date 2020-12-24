@@ -13,7 +13,9 @@
 [CmdletBinding()]
 Param (
     [Parameter(Mandatory = $true)][String]$ADAdminSecParam,
-    [Parameter(Mandatory = $true)][String]$DomainDNSName
+    [Parameter(Mandatory = $true)][String]$DomainDNSName,
+    [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][String]$UseS3ForCRL,
+    [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType
 )
 
 $CAComputerName = "$env:COMPUTERNAME\$env:COMPUTERNAME"
@@ -40,8 +42,14 @@ $AdminUserPW = ConvertTo-SecureString ($ADAdminPassword.Password) -AsPlainText -
 $Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ("$DomainDNSName\$AdminUserName", $AdminUserPW)
 
 Write-Output 'Creating IssuePkiSysvolPSDrive'
+If ($DirectoryType -eq 'SelfManaged') {
+    $SysvolPath = "\\$DomainDNSName\SYSVOL\$DomainDNSName"
+} Else {
+    $SysvolPath = "\\$DomainDNSName\SYSVOL\$DomainDNSName\Policies"
+}
+
 Try {
-    $Null = New-PSDrive -Name 'IssuePkiSysvolPSDrive' -PSProvider 'FileSystem' -Root "\\$DomainDNSName\SYSVOL\$DomainDNSName" -Credential $Credentials -ErrorAction Stop
+    $Null = New-PSDrive -Name 'IssuePkiSysvolPSDrive' -PSProvider 'FileSystem' -Root $SysvolPath -Credential $Credentials -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed to create IssuePkiSysvolPSDrive $_"
     Exit 1

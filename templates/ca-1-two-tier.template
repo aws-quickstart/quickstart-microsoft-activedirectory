@@ -39,6 +39,9 @@ Metadata:
           - SubCaKeyLength
           - SubCaHashAlgorithm
           - SubCaValidityPeriodUnits
+          - UseS3ForCRL
+          - S3CRLBucketName
+          - DirectoryType
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -94,6 +97,12 @@ Metadata:
         default: Subordinate CA Hash Algorithm
       SubCaValidityPeriodUnits:
         default: Subordinate CA Certificate Validity Period in Years
+      UseS3ForCRL:
+        default: Use S3 for Offline Root and Subordinate CA CRL location
+      S3CRLBucketName:
+        default: S3 bucket name for Offline Root and Subordinate CA CRL
+      DirectoryType:
+        default: Type of Active Directory CA(s) will be integrated with
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
@@ -118,7 +127,6 @@ Parameters:
     Type: AWS::EC2::Subnet::Id
   DomainMembersSG:
     Description: Security Group ID for Domain Members Security Group.  
-    #Type: String
     Type: AWS::EC2::SecurityGroup::Id
   OrCaServerInstanceType:
     AllowedValues:
@@ -166,12 +174,14 @@ Parameters:
     Description: NetBIOS name of the Offline Root CA server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
+    Default: 'ORCA1'
     Type: String
   SubCaServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Description: NetBIOS name of the Subordinate CA server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
+    Default: 'SUBCA1'
     Type: String
   DomainController1IP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
@@ -231,6 +241,25 @@ Parameters:
     Description: Subordinate CA Certificate Validity Period in Years
     Default: '5'
     Type: String
+  UseS3ForCRL:
+    Description: Use S3 for Offline Root and Subordinate CA CRL location
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Type: String
+  S3CRLBucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    Default: examplebucket
+    Description: S3 bucket name for Offline Root and Subordinate CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Type: String
+  DirectoryType:
+    Description: Type of Active Directory CA(s) will be integrated with, AWS Managed Microsoft AD or Self Managed AD
+    AllowedValues:
+      - 'AWSManaged'
+      - 'SelfManaged'
+    Default: 'AWSManaged'
+    Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -263,8 +292,16 @@ Rules:
             - VpcId
           - !RefAll 'AWS::EC2::VPC::Id'
         AssertDescription: All subnets must in the VPC
+  S3CRLBucketNameValidation:
+    RuleCondition: !Equals
+      - !Ref UseS3ForCRL
+      - 'Yes'
+    Assertions:
+      - AssertDescription: CRL BucketName cannot must be valid BucketName
+        Assert: !Not [!Equals [!Ref S3CRLBucketName, 'examplebucket']]
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  UsingS3BucketForCrl: !Equals [!Ref UseS3ForCRL, 'Yes']
 Resources:
   InstanceRole:
     Type: AWS::IAM::Role
@@ -326,6 +363,28 @@ Resources:
       Roles:
         - !Ref 'InstanceRole'
       Path: /
+  S3CrlRolePolicy:
+    Type: AWS::IAM::Policy
+    Condition: UsingS3BucketForCrl
+    Properties:
+      PolicyName: S3-CRL-PublishRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetBucketLocation
+              - s3:ListBucket
+            Resource: !Sub 'arn:aws:s3:::${S3CRLBucketName}'
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:PutObjectAcl
+              - s3:DeleteObject
+            Resource: !Sub 'arn:aws:s3:::${S3CRLBucketName}/*'
+      Roles:
+        - !Ref 'InstanceRole'
   AWSQuickstartCA:
     Type: AWS::SSM::Document
     Properties:
@@ -378,6 +437,15 @@ Resources:
           SubCaValidityPeriodUnits:
             description: Subordinate CA Certificate Validity Period in Years
             type: String
+          UseS3ForCRL:
+            description: Use S3 for Enterprise Root CA CRL location
+            type: String
+          S3CRLBucketName:
+            description: S3 bucket name for Enterprise Root CA CRL
+            type: String
+          DirectoryType:
+            description: Type of Active Directory CA will be integrated with
+            type: String            
           QSS3BucketName:
             default: "aws-quickstart"
             description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
@@ -568,7 +636,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-TwoTierOrCaConfig.ps1 -DomainDNSName {{DomainDNSName}} -OrCaCommonName {{OrCaServerNetBIOSName}} -OrCaKeyLength {{OrCaKeyLength}} -OrCaHashAlgorithm {{OrCaHashAlgorithm}} -OrCaValidityPeriodUnits {{OrCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}}"
+              commandLine: "./Invoke-TwoTierOrCaConfig.ps1 -DomainDNSName {{DomainDNSName}} -OrCaCommonName {{OrCaServerNetBIOSName}} -OrCaKeyLength {{OrCaKeyLength}} -OrCaHashAlgorithm {{OrCaHashAlgorithm}} -OrCaValidityPeriodUnits {{OrCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}} -S3CRLBucketName {{S3CRLBucketName}} -DirectoryType {{DirectoryType}}"
         # This step grabs the Instance ID for the node that will be configured as the second DC in the new domain.
         - name: "SubCaInstanceId"
           action: aws:executeAwsApi
@@ -613,7 +681,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-TwoTierSubCaPreConfig.ps1 -SubCaNetBIOSName  {{SubCaServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam {{AdministratorSecret}}"
+              commandLine: "./Invoke-TwoTierSubCaPreConfig.ps1 -SubCaNetBIOSName  {{SubCaServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}}"
         # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
         - name: "ConfigSubCa"
           action: aws:runCommand
@@ -667,7 +735,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-TwoTierSubCaInstall.ps1 -SubCaCommonName {{SubCaServerNetBIOSName}} -SubCaKeyLength {{SubCaKeyLength}} -SubCaHashAlgorithm {{SubCaHashAlgorithm}} -SubCaValidityPeriodUnits {{SubCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}}"
+              commandLine: "./Invoke-TwoTierSubCaInstall.ps1 -SubCaCommonName {{SubCaServerNetBIOSName}} -SubCaKeyLength {{SubCaKeyLength}} -SubCaHashAlgorithm {{SubCaHashAlgorithm}} -SubCaValidityPeriodUnits {{SubCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}} -S3CRLBucketName {{S3CRLBucketName}} -DirectoryType {{DirectoryType}}"
         # Issues SubCa cert from Offline Root CA configuration.
         - name: "TwoTierSubCaCertIssue"
           action: "aws:runCommand"
@@ -693,7 +761,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-TwoTierSubCaCertIssue.ps1 -DomainDNSName {{DomainDNSName}} -ADAdminSecParam {{AdministratorSecret}}"
+              commandLine: "./Invoke-TwoTierSubCaCertIssue.ps1 -DomainDNSName {{DomainDNSName}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}} -DirectoryType {{DirectoryType}}"
         - name: "TwoTierSubCaConfig"
           action: "aws:runCommand"
           onFailure: "step:signalfailure"
@@ -718,7 +786,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-TwoTierSubCaConfig.ps1 -ADAdminSecParam {{AdministratorSecret}}"
+              commandLine: "./Invoke-TwoTierSubCaConfig.ps1 -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}} -S3CRLBucketName {{S3CRLBucketName}} -DirectoryType {{DirectoryType}}"
         # Determines if CFN Needs to be Signaled or if Work flow should just end
         - name: CFNSignalEnd
           action: aws:branch
@@ -842,6 +910,12 @@ Resources:
             - !Sub '"${SubCaHashAlgorithm}"'
             - ';"SubCaValidityPeriodUnits"='
             - !Sub '"${SubCaValidityPeriodUnits}"'
+            - ';"UseS3ForCRL"='
+            - !Sub '"${UseS3ForCRL}"'
+            - ';"S3CRLBucketName"='
+            - !Sub '"${S3CRLBucketName}"'
+            - ';"DirectoryType"='
+            - !Sub '"${DirectoryType}"'
             - ';"QSS3BucketName"='
             - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
             - ';"QSS3BucketRegion"='

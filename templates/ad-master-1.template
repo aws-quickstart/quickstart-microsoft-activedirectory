@@ -60,6 +60,8 @@ Metadata:
           - CaHashAlgorithm
           - OrCaValidityPeriodUnits
           - CaValidityPeriodUnits
+          - UseS3ForCRL
+          - S3CRLBucketName
       - Label:
           default: Microsoft Remote Desktop Gateway Configuration
         Parameters:
@@ -137,6 +139,10 @@ Metadata:
         default: Offline Root CA Certificate Validity Period in Years
       CaValidityPeriodUnits:
         default: Enterprise Root CA Certificate Validity Period in Years
+      UseS3ForCRL:
+        default: Use S3 for Enterprise Root CA CRL location
+      S3CRLBucketName:
+        default: S3 bucket name for Enterprise Root CA CRL
       NumberOfRDGWHosts:
         default: Number of RDGW hosts
       RDGWInstanceType:
@@ -377,6 +383,18 @@ Parameters:
     Description: Enterprise Root or Subordinate CA Certificate Validity Period in Years
     Default: '5'
     Type: String
+  UseS3ForCRL:
+    Description: Use S3 for Enterprise Root CA CRL location
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Type: String
+  S3CRLBucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    Default: examplebucket
+    Description: S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Type: String
   NumberOfRDGWHosts:
     AllowedValues:
       - '0'
@@ -444,6 +462,18 @@ Rules:
     Assertions:
       - Assert: !Not [!Contains [[eu-west-3], !Ref 'AWS::Region']]
         AssertDescription: M4 instances are not available in the Paris region
+  S3CRLBucketNameValidation:
+    RuleCondition: !And
+      - !Equals
+        - !Ref UseS3ForCRL
+        - 'Yes'
+      - !Not 
+        - !Equals
+          - !Ref PKI
+          - 'No'
+    Assertions:
+      - AssertDescription: CRL BucketName cannot must be valid BucketName
+        Assert: !Not [!Equals [!Ref S3CRLBucketName, 'examplebucket']]
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -495,7 +525,7 @@ Resources:
         ADServer2InstanceType: !Ref 'ADServer2InstanceType'
         ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
         ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
-        DataDriveSizeGiB : !Ref 'DataDriveSizeGiB'
+        DataDriveSizeGiB: !Ref 'DataDriveSizeGiB'
         KeyPairName: !Ref 'KeyPairName'
         DomainAdminUser: !Ref 'DomainAdminUser'    
         DomainAdminPassword: !Ref 'DomainAdminPassword'
@@ -503,14 +533,16 @@ Resources:
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'
         CreateDefaultOUs: !Ref 'CreateDefaultOUs'
         PKI: !Ref 'PKI'
-        CaServerInstanceType : !Ref 'CaServerInstanceType'
-        CaDataDriveSizeGiB : !Ref 'CaDataDriveSizeGiB'
-        OrCaServerNetBIOSName : !Ref 'OrCaServerNetBIOSName'
-        EntCaServerNetBIOSName : !Ref 'EntCaServerNetBIOSName'
-        CaKeyLength : !Ref 'CaKeyLength'
-        CaHashAlgorithm : !Ref 'CaHashAlgorithm'
+        CaServerInstanceType: !Ref 'CaServerInstanceType'
+        CaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
+        EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
+        CaKeyLength: !Ref 'CaKeyLength'
+        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
         OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
-        CaValidityPeriodUnits : !Ref 'CaValidityPeriodUnits'
+        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
+        UseS3ForCRL: !Ref 'UseS3ForCRL'
+        S3CRLBucketName: !Ref 'S3CRLBucketName'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'

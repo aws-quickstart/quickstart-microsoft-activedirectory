@@ -47,6 +47,20 @@ Metadata:
           - MgmtDataDriveSizeGiB
           - MgmtServerNetBIOSName
       - Label:
+          default: Microsoft Active Directory Certificate Services Configuration
+        Parameters:
+          - PKI
+          - CaServerInstanceType
+          - CaDataDriveSizeGiB
+          - OrCaServerNetBIOSName
+          - EntCaServerNetBIOSName
+          - CaKeyLength
+          - CaHashAlgorithm
+          - OrCaValidityPeriodUnits
+          - CaValidityPeriodUnits
+          - UseS3ForCRL
+          - S3CRLBucketName
+      - Label:
           default: Microsoft Remote Desktop Gateway Configuration
         Parameters:
           - NumberOfRDGWHosts
@@ -87,6 +101,28 @@ Metadata:
         default: Size of the data drive in GiB
       MgmtServerNetBIOSName:
         default: Management instance NetBIOS name
+      PKI:
+        default: Deploy PKI Infrastructure
+      CaServerInstanceType:
+        default: Enterprise Root CA Instance Type
+      CaDataDriveSizeGiB:
+        default: Size of the Data Drive in GiB
+      OrCaServerNetBIOSName:
+        default: Offline Root CA NetBIOS Name
+      EntCaServerNetBIOSName:
+        default: Enterprise Root CA NetBIOS Name
+      CaKeyLength:
+        default: Enterprise Root CA Key Length
+      CaHashAlgorithm:
+        default: Enterprise Root CA Hash Algorithm
+      OrCaValidityPeriodUnits:
+        default: Offline Root CA Certificate Validity Period in Years
+      CaValidityPeriodUnits:
+        default: Enterprise Root CA Certificate Validity Period in Years
+      UseS3ForCRL:
+        default: Use S3 for Enterprise Root CA CRL location
+      S3CRLBucketName:
+        default: S3 bucket name for Enterprise Root CA CRL
       QSS3BucketName:
         default: Quick Start S3 bucket name
       QSS3BucketRegion:
@@ -255,6 +291,78 @@ Parameters:
     MinLength: '1'
     Type: String
     Default: MGMT1
+  PKI:
+    AllowedValues:
+      - 'One-Tier'
+      - 'Two-Tier'
+      - 'No'
+    Default: 'No'
+    Description: Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier
+    Type: String
+  CaServerInstanceType:
+    AllowedValues:
+      - t2.small
+      - t3.small
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+    Default: t3.medium
+    Description: Amazon EC2 instance type for the CA instance(s)
+    Type: String
+  CaDataDriveSizeGiB:
+    Type: 'Number'
+    Default: '2'
+    Description: Size of the Data Drive in GiB
+  OrCaServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+    Default: ORCA1
+  EntCaServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+    Default: ENTCA1
+  CaKeyLength:
+    Description: CA Key Length
+    AllowedValues:
+      - '2048'
+      - '4096'
+    Default: '2048'
+    Type: String
+  CaHashAlgorithm:
+    Description: CA Hash Algorithm
+    AllowedValues:
+      - 'SHA256'
+      - 'SHA384'
+      - 'SHA512'
+    Default: 'SHA256'
+    Type: String
+  OrCaValidityPeriodUnits:
+    Description: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+    Default: '10'
+    Type: String
+  CaValidityPeriodUnits:
+    Description: Enterprise Root or Subordinate CA Certificate Validity Period in Years
+    Default: '5'
+    Type: String
+  UseS3ForCRL:
+    Description: Use S3 for Enterprise Root CA CRL location
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Type: String
+  S3CRLBucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    Default: examplebucket
+    Description: S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Type: String
   DHCPOptionSet:
     AllowedValues:
       - 'Yes'
@@ -268,6 +376,19 @@ Conditions:
     - !Equals
       - !Ref NumberOfRDGWHosts
       - '0'
+Rules:
+  S3CRLBucketNameValidation:
+    RuleCondition: !And
+      - !Equals
+        - !Ref UseS3ForCRL
+        - 'Yes'
+      - !Not 
+        - !Equals
+          - !Ref PKI
+          - 'No'
+    Assertions:
+      - AssertDescription: CRL BucketName cannot must be valid BucketName
+        Assert: !Not [!Equals [!Ref S3CRLBucketName, 'examplebucket']]
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -323,10 +444,21 @@ Resources:
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
         DHCPOptionSet: !Ref 'DHCPOptionSet'
         MgmtServer: !Ref 'MgmtServer'
-        MgmtServerInstanceType : !Ref 'MgmtServerInstanceType'
-        MgmtDataDriveSizeGiB : !Ref 'MgmtDataDriveSizeGiB'
+        MgmtServerInstanceType: !Ref 'MgmtServerInstanceType'
+        MgmtDataDriveSizeGiB: !Ref 'MgmtDataDriveSizeGiB'
         KeyPairName: !Ref 'KeyPairName'
-        MgmtServerNetBIOSName : !Ref 'MgmtServerNetBIOSName'
+        MgmtServerNetBIOSName: !Ref 'MgmtServerNetBIOSName'
+        PKI: !Ref 'PKI'
+        CaServerInstanceType: !Ref 'CaServerInstanceType'
+        CaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
+        EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
+        CaKeyLength: !Ref 'CaKeyLength'
+        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
+        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
+        UseS3ForCRL: !Ref 'UseS3ForCRL'
+        S3CRLBucketName: !Ref 'S3CRLBucketName'
   RDGWStack:
     DependsOn: ADStack
     Condition: IncludeRDGW

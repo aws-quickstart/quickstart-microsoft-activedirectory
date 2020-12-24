@@ -12,7 +12,10 @@
 
 [CmdletBinding()]
 Param (
-    [Parameter(Mandatory = $true)][String]$ADAdminSecParam
+    [Parameter(Mandatory = $true)][String]$ADAdminSecParam,
+    [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][String]$UseS3ForCRL,
+    [Parameter(Mandatory = $true)][String]$S3CRLBucketName,
+    [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType
 )
 
 Try {
@@ -52,8 +55,14 @@ $AdminUserPW = ConvertTo-SecureString ($ADAdminPassword.Password) -AsPlainText -
 $Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ("$Netbios\$AdminUserName", $AdminUserPW)
 
 Write-Output 'Creating CertPkiSysvolPSDrive'
+If ($DirectoryType -eq 'SelfManaged') {
+    $SysvolPath = "\\$FQDN\SYSVOL\$FQDN"
+} Else {
+    $SysvolPath = "\\$FQDN\SYSVOL\$FQDN\Policies"
+}
+
 Try {
-    $Null = New-PSDrive -Name 'CertPkiSysvolPSDrive' -PSProvider 'FileSystem' -Root "\\$FQDN\SYSVOL\$FQDN" -Credential $Credentials -ErrorAction Stop
+    $Null = New-PSDrive -Name 'CertPkiSysvolPSDrive' -PSProvider 'FileSystem' -Root $SysvolPath -Credential $Credentials -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed to create CertPkiSysvolPSDrive $_"
     Exit 1
@@ -79,10 +88,30 @@ Try {
     Write-Output "Failed restart CA service $_"
     Exit 1
 }
+
+If ($UseS3ForCRL -eq 'Yes') {
+    $BucketRegion = Get-S3BucketLocation -BucketName $S3CRLBucketName | Select-Object -ExpandProperty 'Value'
+    If ($BucketRegion -eq ''){
+        $S3BucketUrl = "$S3CRLBucketName.s3.amazonaws.com"
+    } Else {
+        $S3BucketUrl = "$S3CRLBucketName.s3-$BucketRegion.amazonaws.com"
+    }
+    $CDP = "http://$S3BucketUrl/$CompName/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
+    $AIA = "http://$S3BucketUrl/$CompName/<ServerDNSName>_<CaName><CertificateName>.crt"
+} Else {
+    If ($DirectoryType -eq 'SelfManaged') {
+        $CDP = "http://pki.$FQDN/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
+        $AIA = "http://pki.$FQDN/pki/<ServerDNSName>_<CaName><CertificateName>.crt"
+    } Else {
+        $CDP = "http://$CompName.$FQDN/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
+        $AIA = "http://$CompName.$FQDN/pki/<ServerDNSName>_<CaName><CertificateName>.crt"
+    }
+}
+
 Write-Output 'Configuring CRL distro points'
 Try {
     $Null = Get-CACRLDistributionPoint | Where-Object { $_.Uri -like '*ldap*' -or $_.Uri -like '*http*' -or $_.Uri -like '*file*' } -ErrorAction Stop | Remove-CACRLDistributionPoint -Force -ErrorAction Stop
-    $Null = Add-CACRLDistributionPoint -Uri "http://pki.$FQDN/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl" -AddToCertificateCDP -Force -ErrorAction Stop
+    $Null = Add-CACRLDistributionPoint -Uri $CDP -AddToCertificateCDP -Force -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed set CRL Distro $_"
     Exit 1
@@ -90,8 +119,8 @@ Try {
 
 Write-Output 'Configuring AIA distro points'
 Try {
-    $Null = Get-CAAuthorityInformationAccess | Where-Object { $_.Uri -like '*ldap*' -or $_.Uri -like '*http*' -or $_.Uri -like '*file*' } -ErrorAction Stop | Remove-CAAuthorityInformationAccess -Force
-    $Null = Add-CAAuthorityInformationAccess -AddToCertificateAia -Uri "http://pki.$FQDN/pki/<ServerDNSName>_<CaName><CertificateName>.crt" -Force -ErrorAction Stop
+    $Null = Get-CAAuthorityInformationAccess | Where-Object { $_.Uri -like '*ldap*' -or $_.Uri -like '*http*' -or $_.Uri -like '*file*' } -ErrorAction Stop | Remove-CAAuthorityInformationAccess -Force -ErrorAction Stop
+    $Null = Add-CAAuthorityInformationAccess -AddToCertificateAia -Uri $AIA -Force -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed set AIA Distro $_"
     Exit 1
@@ -126,6 +155,10 @@ Try {
     Exit 1
 }
 
+If ($UseS3ForCRL -eq 'Yes') {
+    Write-S3Object -BucketName $S3CRLBucketName -Folder 'C:\Windows\System32\CertSrv\CertEnroll\' -KeyPrefix "$CompName\" -SearchPattern '*.cr*' -PublicReadOnly
+}
+
 Write-Output 'Restarting CA service'
 Try {
     Restart-Service -Name 'certsvc' -ErrorAction Stop
@@ -133,29 +166,31 @@ Try {
     Write-Output "Failed restart CA service $_"
 }
 
-Write-Output 'Publishing KerberosAuthentication template'
-$Counter = 0
-Do {
-    $KerbTempPresent = $Null
-    Try {
-        $KerbTempPresent = Get-CATemplate -ErrorAction SilentlyContinue | Where-Object {$_.Name -eq 'KerberosAuthentication'}
-    } Catch [System.Exception] {
-        Write-Output 'KerberosAuthentication Template missing'
+If ($DirectoryType -eq 'SelfManaged') {
+    Write-Output 'Publishing KerberosAuthentication template'
+    $Counter = 0
+    Do {
         $KerbTempPresent = $Null
-    }
-    If (-not $KerbTempPresent) {
-        $Counter ++
-        Write-Output 'KerberosAuthentication Template missing adding it.'
         Try {
-            Add-CATemplate -Name 'KerberosAuthentication' -Force -ErrorAction Stop
+            $KerbTempPresent = Get-CATemplate -ErrorAction SilentlyContinue | Where-Object {$_.Name -eq 'KerberosAuthentication'}
         } Catch [System.Exception] {
-            Write-Output "Failed to add publish KerberosAuthentication template $_"
+            Write-Output 'KerberosAuthentication Template missing'
+            $KerbTempPresent = $Null
         }
-        If ($Counter -gt '1') {
-            Start-Sleep -Seconds 10
+        If (-not $KerbTempPresent) {
+            $Counter ++
+            Write-Output 'KerberosAuthentication Template missing adding it.'
+            Try {
+                Add-CATemplate -Name 'KerberosAuthentication' -Force -ErrorAction Stop
+            } Catch [System.Exception] {
+                Write-Output "Failed to add publish KerberosAuthentication template $_"
+            }
+            If ($Counter -gt '1') {
+                Start-Sleep -Seconds 10
+            }
         }
-    }
-} Until ($KerbTempPresent -or $Counter -eq 12)
+    } Until ($KerbTempPresent -or $Counter -eq 12)
+}
 
 Write-Output 'Removing DSC Configuration'
 Try {    
@@ -186,16 +221,22 @@ Try {
     Write-Output "Failed remove self signed cert $_"
 }
 
-Write-Output 'Running Group Policy update'
-$BaseDn = $Domain.DistinguishedName
-$DomainControllers = Get-ADComputer -SearchBase "OU=Domain Controllers,$BaseDn" -Filter * | Select-Object -ExpandProperty 'DNSHostName'
-Foreach ($DomainController in $DomainControllers) {
-    Invoke-Command -ComputerName $DomainController -Credential $Credentials -ScriptBlock { Invoke-GPUpdate -RandomDelayInMinutes '0' -Force }
+If ($DirectoryType -eq 'SelfManaged') {
+    Write-Output 'Running Group Policy update'
+    $BaseDn = $Domain.DistinguishedName
+    $DomainControllers = Get-ADComputer -SearchBase "OU=Domain Controllers,$BaseDn" -Filter * | Select-Object -ExpandProperty 'DNSHostName'
+    Foreach ($DomainController in $DomainControllers) {
+        Invoke-Command -ComputerName $DomainController -Credential $Credentials -ScriptBlock { Invoke-GPUpdate -RandomDelayInMinutes '0' -Force }
+    }
 }
 
 Write-Output 'Creating Update CRL Scheduled Task'
 Try {
-    $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument '& certutil.exe -crl; Copy-Item -Path C:\Windows\System32\CertSrv\CertEnroll\*.cr* -Destination D:\Pki\'
+    If ($UseS3ForCRL -eq 'Yes') {
+        $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "& certutil.exe -crl; Write-S3Object -BucketName $S3CRLBucketName -Folder C:\Windows\System32\CertSrv\CertEnroll\ -KeyPrefix $CompName\ -SearchPattern *.cr* -PublicReadOnly"
+    } Else {
+        $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument '& certutil.exe -crl; Copy-Item -Path C:\Windows\System32\CertSrv\CertEnroll\*.cr* -Destination D:\Pki\'
+    }
     $ScheduledTaskTrigger = New-ScheduledTaskTrigger -Daily -DaysInterval '5' -At '12am' -ErrorAction Stop
     $ScheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType 'ServiceAccount' -RunLevel 'Highest' -ErrorAction Stop
     $ScheduledTaskSettingsSet = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -Compatibility 'Win8' -ExecutionTimeLimit (New-TimeSpan -Hours '1') -ErrorAction Stop
@@ -238,12 +279,21 @@ Foreach ($SvolFolder in $SvolFolders) {
     }
 }
 
-Write-Output 'Removing computer account from Enterprise Admins'
-Try {
-    Remove-ADGroupMember -Identity 'Enterprise Admins' -Members (Get-ADComputer -Identity $CompName | Select-Object -ExpandProperty 'DistinguishedName') -Confirm:$false -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed to remove computer account from Enterprise Admins $_"
-    Exit 1
+Write-Output 'Removing computer account from elevated groups'
+If ($DirectoryType -eq 'SelfManaged') {
+    Try {
+        Remove-ADGroupMember -Identity 'Enterprise Admins' -Members (Get-ADComputer -Identity $CompName | Select-Object -ExpandProperty 'DistinguishedName') -Confirm:$false -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to remove computer account from Enterprise Admins $_"
+        Exit 1
+    }
+} Else {
+    Try {
+        Remove-ADGroupMember -Identity 'AWS Delegated Enterprise Certificate Authority Administrators' -Members (Get-ADComputer -Identity $CompName -Credential $Credentials | Select-Object -ExpandProperty 'DistinguishedName') -Confirm:$false -ErrorAction Stop -Credential $Credentials
+    } Catch [System.Exception] {
+        Write-Output "Failed to remove computer account from AWS Delegated Enterprise Certificate Authority Administrators $_"
+        Exit 1
+    }
 }
 
 Write-Output 'Clearing all SYSTEM kerberos tickets'

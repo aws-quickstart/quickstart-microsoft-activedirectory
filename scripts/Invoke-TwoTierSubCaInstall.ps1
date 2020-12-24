@@ -13,10 +13,13 @@
 [CmdletBinding()]
 Param (
     [Parameter(Mandatory = $true)][String]$SubCaCommonName,
-    [Parameter(Mandatory = $true)][String]$SubCaKeyLength,
-    [Parameter(Mandatory = $true)][String]$SubCaHashAlgorithm,
+    [Parameter(Mandatory = $true)][ValidateSet('2048', '4096')][String]$SubCaKeyLength,
+    [Parameter(Mandatory = $true)][ValidateSet('SHA256', 'SHA384', 'SHA512')][String]$SubCaHashAlgorithm,
     [Parameter(Mandatory = $true)][String]$SubCaValidityPeriodUnits,
-    [Parameter(Mandatory = $true)][String]$ADAdminSecParam
+    [Parameter(Mandatory = $true)][String]$ADAdminSecParam,
+    [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][String]$UseS3ForCRL,
+    [Parameter(Mandatory = $true)][String]$S3CRLBucketName,
+    [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType
 )
 
 $CompName = $env:COMPUTERNAME
@@ -61,7 +64,22 @@ $AdminUserName = $ADAdminPassword.UserName
 $AdminUserPW = ConvertTo-SecureString ($ADAdminPassword.Password) -AsPlainText -Force
 $Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ("$Netbios\$AdminUserName", $AdminUserPW)
 
-Invoke-Command -ComputerName $DC -Credential $Credentials -ScriptBlock { Add-ADGroupMember -Identity 'Enterprise Admins' -Members (Get-ADComputer -Identity $using:CompName | Select-Object -ExpandProperty 'DistinguishedName') }
+Write-Output 'Adding computer account to elevated permission group for install'
+If ($DirectoryType -eq 'SelfManaged') {
+    Try {
+        Add-ADGroupMember -Identity 'Enterprise Admins' -Members (Get-ADComputer -Identity $CompName -Credential $Credentials -ErrorAction Stop | Select-Object -ExpandProperty 'DistinguishedName') -Credential $Credentials -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to add computer account to Enteprise Admins $_"
+        Exit 1
+    }
+} Else {
+    Try {
+        Add-ADGroupMember -Identity 'AWS Delegated Enterprise Certificate Authority Administrators' -Members (Get-ADComputer -Identity $CompName -Credential $Credentials -ErrorAction Stop | Select-Object -ExpandProperty 'DistinguishedName') -Credential $Credentials -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to add computer account to AWS Delegated Enterprise Certificate Authority Administrators $_"
+        Exit 1
+    }
+}
 
 Write-Output 'Sleeping to ensure replication of group membership has completed'
 Start-Sleep -Seconds 60 
@@ -70,42 +88,44 @@ Write-Output 'Clearing all SYSTEM kerberos tickets'
 & Klist.exe -li 0x3e7 purge > $null
 Start-Sleep -Seconds 5
 
-$Counter = 0
-Do {
-    $ARecordPresent = Resolve-DnsName -Name "$CompName.$FQDN" -DnsOnly -Server $DC -ErrorAction SilentlyContinue
-    If (-not $ARecordPresent) {
-        $Counter ++
-        Write-Output 'A record missing.'
-        Register-DnsClient
-        If ($Counter -gt '1') {
-            Start-Sleep -Seconds 10
+If ($UseS3ForCRL -eq 'No' -and $DirectoryType -eq 'SelfManaged') {
+    $Counter = 0
+    Do {
+        $ARecordPresent = Resolve-DnsName -Name "$CompName.$FQDN" -DnsOnly -Server $DC -ErrorAction SilentlyContinue
+        If (-not $ARecordPresent) {
+            $Counter ++
+            Write-Output 'A record missing.'
+            Register-DnsClient
+            If ($Counter -gt '1') {
+                Start-Sleep -Seconds 10
+            }
         }
+    } Until ($ARecordPresent -or $Counter -eq 12)
+
+    If ($Counter -ge 12) {
+        Write-Output 'A record never created'
+        Exit 1
     }
-} Until ($ARecordPresent -or $Counter -eq 12)
 
-If ($Counter -ge 12) {
-    Write-Output 'A record never created'
-    Exit 1
-}
-
-Write-Output 'Creating PKI CNAME record'
-$Counter = 0
-Do {
-    $CnameRecordPresent = Resolve-DnsName -Name "PKI.$FQDN" -DnsOnly -Server $DC -ErrorAction SilentlyContinue
-    If (-not $CnameRecordPresent) {
-        $Counter ++
-        Write-Output 'CNAME record missing.'
-        $HostNameAlias = "$CompName.$FQDN"
-        Invoke-Command -ComputerName $DC -Credential $Credentials -ScriptBlock { Add-DnsServerResourceRecordCName -Name 'PKI' -HostNameAlias $using:HostNameAlias -ZoneName $using:FQDN }
-        If ($Counter -gt '1') {
-            Start-Sleep -Seconds 10
+    Write-Output 'Creating PKI CNAME record'
+    $Counter = 0
+    Do {
+        $CnameRecordPresent = Resolve-DnsName -Name "PKI.$FQDN" -DnsOnly -Server $DC -ErrorAction SilentlyContinue
+        If (-not $CnameRecordPresent) {
+            $Counter ++
+            Write-Output 'CNAME record missing.'
+            $HostNameAlias = "$CompName.$FQDN"
+            Invoke-Command -ComputerName $DC -Credential $Credentials -ScriptBlock { Add-DnsServerResourceRecordCName -Name 'PKI' -HostNameAlias $using:HostNameAlias -ZoneName $using:FQDN }
+            If ($Counter -gt '1') {
+                Start-Sleep -Seconds 10
+            }
         }
-    }
-} Until ($CnameRecordPresent -or $Counter -eq 12)
+    } Until ($CnameRecordPresent -or $Counter -eq 12)
 
-If ($Counter -ge 12) {
-    Write-Output 'CNAME record never created'
-    Exit 1
+    If ($Counter -ge 12) {
+        Write-Output 'CNAME record never created'
+        Exit 1
+    }
 }
 
 Write-Output 'Creating PKI folders'
@@ -128,79 +148,97 @@ Foreach ($Folder in $Folders) {
 
 Write-Output 'Example CPS statement' | Out-File 'D:\Pki\cps.txt'
 
-Write-Output 'Sharing PKI folder'
-$SharePresent = Get-SmbShare -Name 'Pki' -ErrorAction SilentlyContinue
-If (-not $SharePresent) {
+If ($UseS3ForCRL -eq 'No') {
+    Write-Output 'Sharing PKI folder'
+    $SharePresent = Get-SmbShare -Name 'Pki' -ErrorAction SilentlyContinue
+    If (-not $SharePresent) {
+        Try {
+            $Null = New-Smbshare -Name 'Pki' -Path 'D:\Pki' -FullAccess 'SYSTEM', "$Netbios\Domain Admins" -ChangeAccess "$Netbios\Cert Publishers" -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to create PKI SMB Share $_"
+            Exit 1
+        }
+    }
+
+    Write-Output 'Creating PKI IIS virtual directory'
+    $VdPresent = Get-WebVirtualDirectory -Name 'Pki'
+    If (-not $VdPresent) {
+        Try {
+            $Null = New-WebVirtualDirectory -Site 'Default Web Site' -Name 'Pki' -PhysicalPath 'D:\Pki' -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to create IIS virtual directory  $_"
+            Exit 1
+        }
+    }
+
+    Write-Output 'Setting PKI IIS virtual directory requestFiltering'
     Try {
-        $Null = New-Smbshare -Name 'Pki' -Path 'D:\Pki' -FullAccess 'SYSTEM', "$Netbios\Domain Admins" -ChangeAccess "$Netbios\Cert Publishers" -ErrorAction Stop
+        $Null = Set-WebConfigurationProperty -Filter '/system.webServer/security/requestFiltering' -Name 'allowDoubleEscaping' -Value 'true' -PSPath 'IIS:\Sites\Default Web Site\Pki' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to create PKI SMB Share $_"
+        Write-Output "Failed to set IIS requestFiltering  $_"
         Exit 1
     }
-}
 
-Write-Output 'Creating PKI IIS virtual directory'
-$VdPresent = Get-WebVirtualDirectory -Name 'Pki'
-If (-not $VdPresent) {
+    Write-Output 'Setting PKI IIS virtual directory directoryBrowse'
     Try {
-        $Null = New-WebVirtualDirectory -Site 'Default Web Site' -Name 'Pki' -PhysicalPath 'D:\Pki' -ErrorAction Stop
+        $Null = Set-WebConfigurationProperty -Filter '/system.webServer/directoryBrowse' -Name 'enabled' -Value 'true' -PSPath 'IIS:\Sites\Default Web Site\Pki' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to create IIS virtual directory  $_"
+        Write-Output "Failed to set IIS directoryBrowse  $_"
         Exit 1
     }
-}
 
-Write-Output 'Setting PKI IIS virtual directory requestFiltering'
-Try {
-    $Null = Set-WebConfigurationProperty -Filter '/system.webServer/security/requestFiltering' -Name 'allowDoubleEscaping' -Value 'true' -PSPath 'IIS:\Sites\Default Web Site\Pki' -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed to set IIS requestFiltering  $_"
-    Exit 1
-}
+    $Principals = @(
+        'ANONYMOUS LOGON',
+        'EVERYONE'
+    )
 
-Write-Output 'Setting PKI IIS virtual directory directoryBrowse'
-Try {
-    $Null = Set-WebConfigurationProperty -Filter '/system.webServer/directoryBrowse' -Name 'enabled' -Value 'true' -PSPath 'IIS:\Sites\Default Web Site\Pki' -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed to set IIS directoryBrowse  $_"
-    Exit 1
-}
+    Write-Output 'Setting PKI folder file system ACLs'
+    $FilePath = 'D:\Pki'
+    Foreach ($Princ in $Principals) {
+        $Principal = New-Object -TypeName 'System.Security.Principal.NTAccount'($Princ)
+        $Perms = [System.Security.AccessControl.FileSystemRights]'Read, ReadAndExecute, ListDirectory'
+        $Inheritance = [System.Security.AccessControl.InheritanceFlags]::'ContainerInherit', 'ObjectInherit'
+        $Propagation = [System.Security.AccessControl.PropagationFlags]::'None'
+        $Access = [System.Security.AccessControl.AccessControlType]::'Allow'
+        $AccessRule = New-Object -TypeName 'System.Security.AccessControl.FileSystemAccessRule'($Principal, $Perms, $Inheritance, $Propagation, $Access) 
+        Try {
+            $Acl = Get-Acl -Path $FilePath -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to get ACL for PKI directory  $_"
+            Exit 1
+        }
+        $Acl.AddAccessRule($AccessRule)
+        Try {
+            Set-ACL -Path $FilePath -AclObject $Acl -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to set ACL for PKI directory  $_"
+            Exit 1
+        }
+    }
 
-$Principals = @(
-    'ANONYMOUS LOGON',
-    'EVERYONE'
-)
-
-Write-Output 'Setting PKI folder file system ACLs'
-$FilePath = 'D:\Pki'
-Foreach ($Princ in $Principals) {
-    $Principal = New-Object -TypeName 'System.Security.Principal.NTAccount'($Princ)
-    $Perms = [System.Security.AccessControl.FileSystemRights]'Read, ReadAndExecute, ListDirectory'
-    $Inheritance = [System.Security.AccessControl.InheritanceFlags]::'ContainerInherit', 'ObjectInherit'
-    $Propagation = [System.Security.AccessControl.PropagationFlags]::'None'
-    $Access = [System.Security.AccessControl.AccessControlType]::'Allow'
-    $AccessRule = New-Object -TypeName 'System.Security.AccessControl.FileSystemAccessRule'($Principal, $Perms, $Inheritance, $Propagation, $Access) 
+    Write-Output 'Resetting IIS'
     Try {
-        $Acl = Get-Acl -Path $FilePath -ErrorAction Stop
+        & iisreset.exe > $null
     } Catch [System.Exception] {
-        Write-Output "Failed to get ACL for PKI directory  $_"
+        Write-Output "Failed to reset IIS service  $_"
         Exit 1
     }
-    $Acl.AddAccessRule($AccessRule)
-    Try {
-        Set-ACL -Path $FilePath -AclObject $Acl -ErrorAction Stop
-    } Catch [System.Exception] {
-        Write-Output "Failed to set ACL for PKI directory  $_"
-        Exit 1
-    }
-}
 
-Write-Output 'Resetting IIS'
-Try {
-    & iisreset.exe > $null
-} Catch [System.Exception] {
-    Write-Output "Failed to reset IIS service  $_"
-    Exit 1
+    If ($DirectoryType -eq 'SelfManaged') {
+        $URL = "URL=http://pki.$FQDN/pki/cps.txt"
+    } Else {
+        $URL = "URL=http://$CompName.$FQDN/pki/cps.txt"
+    }
+} Else {
+    $BucketRegion = Get-S3BucketLocation -BucketName $S3CRLBucketName | Select-Object -ExpandProperty 'Value'
+    If ($BucketRegion -eq ''){
+        $S3BucketUrl = "$S3CRLBucketName.s3.amazonaws.com"
+    } Else {
+        $S3BucketUrl = "$S3CRLBucketName.s3-$BucketRegion.amazonaws.com"
+    }
+    $URL = "URL=http://$S3BucketUrl/SubCa/cps.txt"
+
+    Write-S3Object -BucketName $S3CRLBucketName -Folder 'D:\Pki\' -KeyPrefix "$CompName\" -SearchPattern 'cps.txt' -PublicReadOnly
 }
 
 $Inf = @(
@@ -211,7 +249,7 @@ $Inf = @(
     '[InternalPolicy]',
     'OID=1.2.3.4.1455.67.89.5', 
     'Notice="Legal Policy Statement"',
-    "URL=http://pki.$FQDN/pki/cps.txt",
+    $URL
     '[Certsrv_Server]',
     "RenewalKeyLength=$SubCaKeyLength",
     'RenewalValidityPeriod=Years',
@@ -235,8 +273,14 @@ Try {
 }
 
 Write-Output 'Creating SubPkiSysvolPSDrive'
+If ($DirectoryType -eq 'SelfManaged') {
+    $SysvolPath = "\\$FQDN\SYSVOL\$FQDN"
+} Else {
+    $SysvolPath = "\\$FQDN\SYSVOL\$FQDN\Policies"
+}
+
 Try {
-    $Null = New-PSDrive -Name 'SubPkiSysvolPSDrive' -PSProvider 'FileSystem' -Root "\\$FQDN\SYSVOL\$FQDN" -Credential $Credentials -ErrorAction Stop
+    $Null = New-PSDrive -Name 'SubPkiSysvolPSDrive' -PSProvider 'FileSystem' -Root $SysvolPath -Credential $Credentials -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed to create SubPkiSysvolPSDrive $_"
     Exit 1
@@ -265,7 +309,6 @@ $OrcaCrlFn = Get-ChildItem -Path 'D:\Pki\*.crl' | Select-Object -ExpandProperty 
 $SVolPath = "\\$FQDN\SYSVOL\$FQDN\PkiRootCA\$OrcaCertName"
 
 Write-Output 'Publishing Offline CA Certs and CRLs'
-#Invoke-Command -ComputerName $DC -Credential $Credentials -ScriptBlock { & certutil.exe -dspublish -f $using:SVolPath RootCA }
 & certutil.exe -dspublish -f $OrcaCertFn RootCA > $null
 & certutil.exe -addstore -f root $OrcaCertFn > $null
 & certutil.exe -addstore -f root $OrcaCrlFn > $null

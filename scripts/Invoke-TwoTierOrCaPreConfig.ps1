@@ -13,14 +13,9 @@
 [CmdletBinding()]
 # Incoming Parameters for Script, CloudFormation\SSM Parameters being passed in
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$OrCaNetBIOSName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$DomainController1IP,
-
-    [Parameter(Mandatory = $true)]
-    [string]$DomainController2IP
+    [Parameter(Mandatory = $true)][String]$OrCaNetBIOSName,
+    [Parameter(Mandatory = $true)][String]$DomainController1IP,
+    [Parameter(Mandatory = $true)][String]$DomainController2IP
 )
 
 #Requires -Modules PSDesiredStateConfiguration, NetworkingDsc, ComputerManagementDsc
