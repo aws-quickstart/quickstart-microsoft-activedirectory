@@ -52,8 +52,10 @@ Metadata:
           - EntCaServerNetBIOSName
           - CaKeyLength
           - CaHashAlgorithm
-          - OrCaValidityPeriodUnits          
+          - OrCaValidityPeriodUnits
           - CaValidityPeriodUnits
+          - UseS3ForCRL
+          - S3CRLBucketName
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -119,6 +121,10 @@ Metadata:
         default: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
       CaValidityPeriodUnits:
         default: Enterprise Root or Subordinate CA Certificate Validity Period in Years
+      UseS3ForCRL:
+        default: Use S3 for Enterprise Root CA CRL location
+      S3CRLBucketName:
+        default: S3 bucket name for Enterprise Root CA CRL
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
@@ -322,6 +328,18 @@ Parameters:
     Description: Enterprise Root or Subordinate CA Certificate Validity Period in Years
     Default: '5'
     Type: String
+  UseS3ForCRL:
+    Description: Use S3 for Enterprise Root CA CRL location
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Type: String
+  S3CRLBucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    Default: examplebucket
+    Description: S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -374,6 +392,18 @@ Rules:
             - - eu-west-3
             - !Ref 'AWS::Region'
         AssertDescription: M4 instances are not available in the Paris region
+  S3CRLBucketNameValidation:
+    RuleCondition: !And
+      - !Equals
+        - !Ref UseS3ForCRL
+        - 'Yes'
+      - !Not 
+        - !Equals
+          - !Ref PKI
+          - 'No'
+    Assertions:
+      - AssertDescription: CRL BucketName cannot must be valid BucketName
+        Assert: !Not [!Equals [!Ref S3CRLBucketName, 'examplebucket']]
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   ShouldCreateOneTierPkiResource: !Equals [!Ref PKI, 'One-Tier']
@@ -1106,19 +1136,22 @@ Resources:
         VPCID: !Ref 'VPCID'
         EntCaServerSubnet: !Ref 'PrivateSubnet1ID'
         DomainMembersSG: !Ref 'DomainMembersSG'
-        EntCaServerInstanceType : !Ref 'CaServerInstanceType'
-        EntCaDataDriveSizeGiB : !Ref 'CaDataDriveSizeGiB'
+        EntCaServerInstanceType: !Ref 'CaServerInstanceType'
+        EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
         KeyPairName: !Ref 'KeyPairName'
         EntCaAmi: !Ref 'CaAmi'
-        AdministratorSecret: !Ref 'ADAdminSecrets'
-        EntCaServerNetBIOSName : !Ref 'EntCaServerNetBIOSName'
+        AdministratorSecret: !Ref 'ADAltUserSecrets'
+        EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
         DomainController1IP: !Ref 'ADServer1PrivateIP'
         DomainController2IP: !Ref 'ADServer2PrivateIP'
         DomainDNSName: !Ref 'DomainDNSName'     
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
-        EntCaKeyLength : !Ref 'CaKeyLength'
-        EntCaHashAlgorithm : !Ref 'CaHashAlgorithm'
-        EntCaValidityPeriodUnits : !Ref 'CaValidityPeriodUnits'
+        EntCaKeyLength: !Ref 'CaKeyLength'
+        EntCaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        EntCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
+        UseS3ForCRL: !Ref 'UseS3ForCRL'
+        S3CRLBucketName: !Ref 'S3CRLBucketName'
+        DirectoryType: 'SelfManaged'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
@@ -1144,25 +1177,28 @@ Resources:
         OrCaServerSubnet: !Ref 'PrivateSubnet1ID'
         SubCaServerSubnet: !Ref 'PrivateSubnet1ID'
         DomainMembersSG: !Ref 'DomainMembersSG'
-        OrCaServerInstanceType : !Ref 'CaServerInstanceType'
-        SubCaServerInstanceType : !Ref 'CaServerInstanceType'
-        OrCaDataDriveSizeGiB : !Ref 'CaDataDriveSizeGiB'
-        SubCaDataDriveSizeGiB : !Ref 'CaDataDriveSizeGiB'
+        OrCaServerInstanceType: !Ref 'CaServerInstanceType'
+        SubCaServerInstanceType: !Ref 'CaServerInstanceType'
+        OrCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        SubCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
         KeyPairName: !Ref 'KeyPairName'
         Ami: !Ref 'CaAmi'
-        AdministratorSecret: !Ref 'ADAdminSecrets'
-        OrCaServerNetBIOSName : !Ref 'OrCaServerNetBIOSName'
-        SubCaServerNetBIOSName : !Ref 'EntCaServerNetBIOSName'
+        AdministratorSecret: !Ref 'ADAltUserSecrets'
+        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
+        SubCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
         DomainController1IP: !Ref 'ADServer1PrivateIP'
         DomainController2IP: !Ref 'ADServer2PrivateIP'
         DomainDNSName: !Ref 'DomainDNSName'     
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
-        OrCaKeyLength : !Ref 'CaKeyLength'
-        SubCaKeyLength : !Ref 'CaKeyLength'
-        OrCaHashAlgorithm : !Ref 'CaHashAlgorithm'
-        SubCaHashAlgorithm : !Ref 'CaHashAlgorithm'
-        OrCaValidityPeriodUnits : !Ref 'OrCaValidityPeriodUnits'
-        SubCaValidityPeriodUnits : !Ref 'CaValidityPeriodUnits'
+        OrCaKeyLength: !Ref 'CaKeyLength'
+        SubCaKeyLength: !Ref 'CaKeyLength'
+        OrCaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        SubCaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
+        SubCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
+        UseS3ForCRL: !Ref 'UseS3ForCRL'
+        S3CRLBucketName: !Ref 'S3CRLBucketName'
+        DirectoryType: 'SelfManaged'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'

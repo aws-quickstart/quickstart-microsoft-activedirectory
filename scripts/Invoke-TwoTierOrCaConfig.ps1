@@ -12,23 +12,15 @@
 
 [CmdletBinding()]
 Param (
-    [Parameter(Mandatory = $true)]
-    [string]$DomainDNSName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$OrCaCommonName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$OrCaKeyLength,
-
-    [Parameter(Mandatory = $true)]
-    [string]$OrCaHashAlgorithm,
-    
-    [Parameter(Mandatory = $true)]
-    [string]$OrCaValidityPeriodUnits,
-
-    [Parameter(Mandatory = $true)]
-    [string]$ADAdminSecParam
+    [Parameter(Mandatory = $true)][String]$DomainDNSName,
+    [Parameter(Mandatory = $true)][String]$OrCaCommonName,
+    [Parameter(Mandatory = $true)][ValidateSet('2048', '4096')][String]$OrCaKeyLength,
+    [Parameter(Mandatory = $true)][ValidateSet('SHA256', 'SHA384', 'SHA512')][String]$OrCaHashAlgorithm,
+    [Parameter(Mandatory = $true)][String]$OrCaValidityPeriodUnits,
+    [Parameter(Mandatory = $true)][String]$ADAdminSecParam,
+    [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][String]$UseS3ForCRL,
+    [Parameter(Mandatory = $true)][String]$S3CRLBucketName,
+    [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType
 )
 
 $CompName = $env:COMPUTERNAME
@@ -74,6 +66,25 @@ Foreach ($Folder in $Folders) {
 
 Write-Output 'Example CPS statement' | Out-File 'D:\Pki\cps.txt'
 
+If ($UseS3ForCRL -eq 'No') {
+    If ($DirectoryType -eq 'SelfManaged') {
+        $URL = "URL=http://pki.$DomainDNSName/pki/cps.txt"
+    } Else {
+        $URL = "URL=http://$CompName.$DomainDNSName/pki/cps.txt"
+    }
+} Else {
+    $BucketRegion = Get-S3BucketLocation -BucketName $S3CRLBucketName | Select-Object -ExpandProperty 'Value'
+    If ($BucketRegion -eq ''){
+        $S3BucketUrl = "$S3CRLBucketName.s3.amazonaws.com"
+    } Else {
+        $S3BucketUrl = "$S3CRLBucketName.s3-$BucketRegion.amazonaws.com"
+    }
+    $URL = "URL=http://$S3BucketUrl/$CompName/cps.txt"
+
+    Write-S3Object -BucketName $S3CRLBucketName -Folder 'D:\Pki\' -KeyPrefix "$CompName\" -SearchPattern 'cps.txt' -PublicReadOnly
+}
+
+
 $Inf = @(
     '[Version]',
     'Signature="$Windows NT$"',
@@ -82,7 +93,7 @@ $Inf = @(
     '[InternalPolicy]',
     'OID=1.2.3.4.1455.67.89.5', 
     'Notice="Legal Policy Statement"',
-    "URL=http://pki.$DomainDNSName/pki/cps.txt",
+    $URL
     '[Certsrv_Server]',
     "RenewalKeyLength=$OrCaKeyLength",
     'RenewalValidityPeriod=Years',
@@ -113,10 +124,23 @@ Try {
     Exit 1
 }
 
+If ($UseS3ForCRL -eq 'No') {
+    If ($DirectoryType -eq 'SelfManaged') {
+        $CDP = "http://pki.$DomainDNSName/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
+        $AIA = "http://pki.$DomainDNSName/pki/<ServerDNSName>_<CaName><CertificateName>.crt"
+    } Else {
+        $CDP = "http://$CompName.$DomainDNSName/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
+        $AIA = "http://$CompName.$DomainDNSName/pki/<ServerDNSName>_<CaName><CertificateName>.crt"
+    }
+} Else {
+    $CDP = "http://$S3BucketUrl/$CompName/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
+    $AIA = "http://$S3BucketUrl/$CompName/<ServerDNSName>_<CaName><CertificateName>.crt"
+}
+
 Write-Output 'Configuring CRL distro points'
 Try {
     $Null = Get-CACRLDistributionPoint | Where-Object { $_.Uri -like '*ldap*' -or $_.Uri -like '*http*' -or $_.Uri -like '*file*' } -ErrorAction Stop | Remove-CACRLDistributionPoint -Force -ErrorAction Stop
-    $Null = Add-CACRLDistributionPoint -Uri "http://pki.$DomainDNSName/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl" -AddToCertificateCDP -Force -ErrorAction Stop
+    $Null = Add-CACRLDistributionPoint -Uri $CDP -AddToCertificateCDP -Force -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed set CRL Distro $_"
     Exit 1
@@ -124,8 +148,8 @@ Try {
 
 Write-Output 'Configuring AIA distro points'
 Try {
-   $Null = Get-CAAuthorityInformationAccess | Where-Object { $_.Uri -like '*ldap*' -or $_.Uri -like '*http*' -or $_.Uri -like '*file*' } -ErrorAction Stop | Remove-CAAuthorityInformationAccess -Force
-   $Null = Add-CAAuthorityInformationAccess -AddToCertificateAia -Uri "http://pki.$DomainDNSName/pki/<ServerDNSName>_<CaName><CertificateName>.crt" -Force -ErrorAction Stop
+    $Null = Get-CAAuthorityInformationAccess | Where-Object { $_.Uri -like '*ldap*' -or $_.Uri -like '*http*' -or $_.Uri -like '*file*' } -ErrorAction Stop | Remove-CAAuthorityInformationAccess -Force -ErrorAction Stop
+    $Null = Add-CAAuthorityInformationAccess -AddToCertificateAia -Uri $AIA -Force -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed set AIA Distro $_"
     Exit 1
@@ -158,6 +182,10 @@ Try {
 } Catch [System.Exception] {
     Write-Output "Failed to copy CRL to PKI folder  $_"
     Exit 1
+}
+
+If ($UseS3ForCRL -eq 'Yes') {
+    Write-S3Object -BucketName $S3CRLBucketName -Folder 'C:\Windows\System32\CertSrv\CertEnroll\' -KeyPrefix "$CompName\" -SearchPattern '*.cr*' -PublicReadOnly
 }
 
 Write-Output 'Restarting CA service'
@@ -198,7 +226,11 @@ Try {
 
 Write-Output 'Creating Update CRL Scheduled Task'
 Try {
-    $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument '& certutil.exe -crl; Copy-Item -Path C:\Windows\System32\CertSrv\CertEnroll\*.cr* -Destination D:\Pki\'
+    If ($UseS3ForCRL -eq 'No') {
+        $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument '& certutil.exe -crl; Copy-Item -Path C:\Windows\System32\CertSrv\CertEnroll\*.cr* -Destination D:\Pki\'
+    } Else {
+        $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "& certutil.exe -crl; Write-S3Object -BucketName $S3CRLBucketName -Folder C:\Windows\System32\CertSrv\CertEnroll\ -KeyPrefix $CompName\ -SearchPattern *.cr* -PublicReadOnly"
+    }
     $ScheduledTaskTrigger = New-ScheduledTaskTrigger -Weekly -WeeksInterval '25' -DaysOfWeek 'Sunday' -At '12am' -ErrorAction Stop
     $ScheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType 'ServiceAccount' -RunLevel 'Highest' -ErrorAction Stop
     $ScheduledTaskSettingsSet = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -Compatibility 'Win8' -ExecutionTimeLimit (New-TimeSpan -Hours '1') -ErrorAction Stop
@@ -218,8 +250,13 @@ Try {
 }
 
 Write-Output 'Creating PkiSysvolPSDrive'
+If ($DirectoryType -eq 'SelfManaged') {
+    $SysvolPath = "\\$DomainDNSName\SYSVOL\$DomainDNSName"
+} Else {
+    $SysvolPath = "\\$DomainDNSName\SYSVOL\$DomainDNSName\Policies"
+}
 Try {
-    $Null = New-PSDrive -Name 'PkiSysvolPSDrive' -PSProvider 'FileSystem' -Root "\\$DomainDNSName\SYSVOL\$DomainDNSName" -Credential $Credentials -ErrorAction Stop
+    $Null = New-PSDrive -Name 'PkiSysvolPSDrive' -PSProvider 'FileSystem' -Root $SysvolPath -Credential $Credentials -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed to create PkiSysvolPSDrive $_"
     Exit 1
