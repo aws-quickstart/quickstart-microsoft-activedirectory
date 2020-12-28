@@ -52,7 +52,6 @@ Metadata:
           - CaValidityPeriodUnits
           - UseS3ForCRL
           - S3CRLBucketName
-          - DirectoryType
       - Label:
           default: AWS Quick Start configuration
         Parameters:
@@ -114,8 +113,6 @@ Metadata:
         default: Use S3 for Enterprise Root CA CRL location
       S3CRLBucketName:
         default: S3 bucket name for Enterprise Root CA CRL
-      DirectoryType:
-        default: Type of Active Directory CA(s) will be integrated with
       QSS3BucketName:
         default: Quick Start S3 bucket name
       QSS3BucketRegion:
@@ -289,12 +286,6 @@ Parameters:
     Default: examplebucket
     Description: S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Type: String
-  DirectoryType:
-    Description: Type of Active Directory CA(s) will be integrated with, AWS Managed Microsoft AD or Self Managed AD
-    AllowedValues:
-      - 'AWSManaged'
-    Default: 'AWSManaged'
-    Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -456,7 +447,7 @@ Resources:
         EntCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
         UseS3ForCRL: !Ref 'UseS3ForCRL'
         S3CRLBucketName: !Ref 'S3CRLBucketName'
-        DirectoryType: !Ref 'DirectoryType'
+        DirectoryType: 'AWSManaged'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
@@ -503,7 +494,7 @@ Resources:
         SubCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
         UseS3ForCRL: !Ref 'UseS3ForCRL'
         S3CRLBucketName: !Ref 'S3CRLBucketName'
-        DirectoryType: !Ref 'DirectoryType'
+        DirectoryType: 'AWSManaged'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
