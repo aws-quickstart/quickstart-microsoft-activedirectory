@@ -29,6 +29,23 @@
 (`MgmtServerNetBIOSName`)|`MGMT1`|NetBIOS name of the Management Instance server (up to 15 characters)|Public/private key pairs allow you to securely connect to your instance
 (`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches
 |===
+.Microsoft Active Directory Certificate Services Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Do you want to Deploy PKI Infrastructure what kind Two Tier or One Tier
+(`PKI`)|`No`|Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier|CA Instance Type
+(`CaServerInstanceType`)|`t3.medium`|Amazon EC2 instance type for the CA instance(s)|CA SSM Parameter Value to grab the lastest AMI ID
+(`CaAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID|CA size of the Data Drive in GiB
+(`CaDataDriveSizeGiB`)|`2`|Size of the Data Drive in GiB|Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
+(`OrCaServerNetBIOSName`)|`ORCA1`|NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)|Enterprise Root or Subordinate CA NetBIOS Name
+(`EntCaServerNetBIOSName`)|`ENTCA1`|NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)|CA Key Length
+(`CaKeyLength`)|`2048`|CA Key Length|CA Hash Algorithm
+(`CaHashAlgorithm`)|`SHA256`|CA Hash Algorithm|Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+(`OrCaValidityPeriodUnits`)|`10`|Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)|Enterprise Root or Subordinate CA Certificate Validity Period in Years
+(`CaValidityPeriodUnits`)|`5`|Enterprise Root or Subordinate CA Certificate Validity Period in Years|Use S3 for Enterprise Root CA CRL location
+(`UseS3ForCRL`)|`No`|Use S3 for Enterprise Root CA CRL location|S3 bucket name for Enterprise Root CA CRL
+(`S3CRLBucketName`)|`examplebucket`|S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+|===
 .AWS Quick Start configuration
 [width="100%",cols="16%,11%,73%",options="header",]
 |===

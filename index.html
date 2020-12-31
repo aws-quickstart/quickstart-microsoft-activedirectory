@@ -2333,6 +2333,18 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>5</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA Certificate Validity Period in Years</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use S3 for Enterprise Root CA CRL location
+(<code>UseS3ForCRL</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>No</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use S3 for Enterprise Root CA CRL location</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for Enterprise Root CA CRL
+(<code>S3CRLBucketName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>examplebucket</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+</tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
@@ -2647,6 +2659,18 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 (<code>CaValidityPeriodUnits</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>5</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA Certificate Validity Period in Years</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use S3 for Enterprise Root CA CRL location
+(<code>UseS3ForCRL</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>No</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use S3 for Enterprise Root CA CRL location</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for Enterprise Root CA CRL
+(<code>S3CRLBucketName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>examplebucket</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
 </tr>
 </tbody>
 </table>
@@ -3201,7 +3225,96 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 22. AWS Quick Start configuration</caption>
+<caption class="title">Table 22. Microsoft Active Directory Certificate Services Configuration</caption>
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 11%;">
+<col style="width: 73%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter label (name)</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to Deploy PKI Infrastructure what kind Two Tier or One Tier
+(<code>PKI</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>No</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Instance Type
+(<code>CaServerInstanceType</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>t3.medium</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the CA instance(s)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA SSM Parameter Value to grab the lastest AMI ID
+(<code>CaAmi</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA size of the Data Drive in GiB
+(<code>CaDataDriveSizeGiB</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>2</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Size of the Data Drive in GiB</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
+(<code>OrCaServerNetBIOSName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ORCA1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA NetBIOS Name
+(<code>EntCaServerNetBIOSName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ENTCA1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Key Length
+(<code>CaKeyLength</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>2048</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Key Length</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Hash Algorithm
+(<code>CaHashAlgorithm</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SHA256</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Hash Algorithm</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+(<code>OrCaValidityPeriodUnits</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>10</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA Certificate Validity Period in Years
+(<code>CaValidityPeriodUnits</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>5</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA Certificate Validity Period in Years</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use S3 for Enterprise Root CA CRL location
+(<code>UseS3ForCRL</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>No</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use S3 for Enterprise Root CA CRL location</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for Enterprise Root CA CRL
+(<code>S3CRLBucketName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>examplebucket</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 23. AWS Quick Start configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -3239,7 +3352,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <div class="sect2">
 <h3 id="_launch_aws_managed_active_directory_into_a_new_vpc">Launch AWS Managed Active Directory into a new VPC</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 23. Network configuration</caption>
+<caption class="title">Table 24. Network configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -3304,7 +3417,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 24. Amazon EC2 configuration</caption>
+<caption class="title">Table 25. Amazon EC2 configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -3333,7 +3446,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 25. Microsoft Active Directory configuration</caption>
+<caption class="title">Table 26. Microsoft Active Directory configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -3374,7 +3487,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 26. Microsoft Windows Server management instance</caption>
+<caption class="title">Table 27. Microsoft Windows Server management instance</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -3415,7 +3528,90 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 27. Microsoft Remote Desktop Gateway Configuration</caption>
+<caption class="title">Table 28. Microsoft Active Directory Certificate Services Configuration</caption>
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 11%;">
+<col style="width: 73%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter label (name)</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deploy PKI Infrastructure
+(<code>PKI</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>No</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Instance Type
+(<code>CaServerInstanceType</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>t3.medium</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the CA instance(s)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Size of the Data Drive in GiB
+(<code>CaDataDriveSizeGiB</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>2</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Size of the Data Drive in GiB</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA NetBIOS Name
+(<code>OrCaServerNetBIOSName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ORCA1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA NetBIOS Name
+(<code>EntCaServerNetBIOSName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ENTCA1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Key Length
+(<code>CaKeyLength</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>2048</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Key Length</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Hash Algorithm
+(<code>CaHashAlgorithm</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SHA256</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CA Hash Algorithm</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA Certificate Validity Period in Years
+(<code>OrCaValidityPeriodUnits</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>10</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root CA Certificate Validity Period in Years
+(<code>CaValidityPeriodUnits</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>5</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enterprise Root or Subordinate CA Certificate Validity Period in Years</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use S3 for Enterprise Root CA CRL location
+(<code>UseS3ForCRL</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>No</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use S3 for Enterprise Root CA CRL location</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for Enterprise Root CA CRL
+(<code>S3CRLBucketName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>examplebucket</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 29. Microsoft Remote Desktop Gateway Configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -3438,7 +3634,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 28. AWS Quick Start configuration</caption>
+<caption class="title">Table 30. AWS Quick Start configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">

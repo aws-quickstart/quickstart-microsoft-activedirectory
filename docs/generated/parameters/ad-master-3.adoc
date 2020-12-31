@@ -37,6 +37,22 @@
 (`MgmtDataDriveSizeGiB`)|`2`|Size of the Data Drive in GiB|Management instance NetBIOS name
 (`MgmtServerNetBIOSName`)|`MGMT1`|NetBIOS name of the Management Instance server (up to 15 characters)
 |===
+.Microsoft Active Directory Certificate Services Configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Deploy PKI Infrastructure
+(`PKI`)|`No`|Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier|Enterprise Root CA Instance Type
+(`CaServerInstanceType`)|`t3.medium`|Amazon EC2 instance type for the CA instance(s)|Size of the Data Drive in GiB
+(`CaDataDriveSizeGiB`)|`2`|Size of the Data Drive in GiB|Offline Root CA NetBIOS Name
+(`OrCaServerNetBIOSName`)|`ORCA1`|NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)|Enterprise Root CA NetBIOS Name
+(`EntCaServerNetBIOSName`)|`ENTCA1`|NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)|Enterprise Root CA Key Length
+(`CaKeyLength`)|`2048`|CA Key Length|Enterprise Root CA Hash Algorithm
+(`CaHashAlgorithm`)|`SHA256`|CA Hash Algorithm|Offline Root CA Certificate Validity Period in Years
+(`OrCaValidityPeriodUnits`)|`10`|Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)|Enterprise Root CA Certificate Validity Period in Years
+(`CaValidityPeriodUnits`)|`5`|Enterprise Root or Subordinate CA Certificate Validity Period in Years|Use S3 for Enterprise Root CA CRL location
+(`UseS3ForCRL`)|`No`|Use S3 for Enterprise Root CA CRL location|S3 bucket name for Enterprise Root CA CRL
+(`S3CRLBucketName`)|`examplebucket`|S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+|===
 .Microsoft Remote Desktop Gateway Configuration
 [width="100%",cols="16%,11%,73%",options="header",]
 |===
