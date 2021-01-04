@@ -477,7 +477,7 @@ Resources:
               sourceType: "S3"
               sourceInfo: 
                 !Sub
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnteriseCaPreConfig.ps1"}'
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnterpriseCaPreConfig.ps1"}'
                   - S3Bucket: !If
                       - UsingDefaultBucket
                       - !Sub '${QSS3BucketName}-${AWS::Region}'
@@ -486,7 +486,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-EnteriseCaPreConfig.ps1  -EntCaNetBIOSName {{EntCaServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}}"
+              commandLine: "./Invoke-EnterpriseCaPreConfig.ps1  -EntCaNetBIOSName {{EntCaServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}}"
         # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
         - name: "configEntCA"
           action: aws:runCommand
@@ -530,7 +530,7 @@ Resources:
               sourceType: S3
               sourceInfo: 
                 !Sub 
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnteriseCaConfig.ps1"}'
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-EnterpriseCaConfig.ps1"}'
                   - S3Bucket: !If
                       - UsingDefaultBucket
                       - !Sub '${QSS3BucketName}-${AWS::Region}'
@@ -539,7 +539,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-EnteriseCaConfig.ps1 -EntCaCommonName {{EntCaServerNetBIOSName}} -EntCaKeyLength {{EntCaKeyLength}} -EntCaHashAlgorithm {{EntCaHashAlgorithm}} -EntCaValidityPeriodUnits {{EntCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}} -S3CRLBucketName {{S3CRLBucketName}} -DirectoryType {{DirectoryType}}"
+              commandLine: "./Invoke-EnterpriseCaConfig.ps1 -EntCaCommonName {{EntCaServerNetBIOSName}} -EntCaKeyLength {{EntCaKeyLength}} -EntCaHashAlgorithm {{EntCaHashAlgorithm}} -EntCaValidityPeriodUnits {{EntCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}} -S3CRLBucketName {{S3CRLBucketName}} -DirectoryType {{DirectoryType}} -VPCCIDR {{VPCCIDR}}"
         # Determines if CFN Needs to be Signaled or if Work flow should just end
         - name: CFNSignalEnd
           action: aws:branch
@@ -663,6 +663,11 @@ Resources:
           FromPort: 135
           ToPort: 135
           CidrIp: !Ref VPCCIDR
+        - IpProtocol: tcp
+          Description: RDP
+          FromPort: 3389
+          ToPort: 3389
+          SourceSecurityGroupId: !Ref DomainMembersSG
         - IpProtocol: tcp
           Description: Random RPC
           FromPort: 49152

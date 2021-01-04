@@ -6,7 +6,7 @@
     This script makes the instance an Offline Root CA.  
     
     .EXAMPLE
-    .\Invoke-TwoTierOrCaConfig -DomainDNSName 'example.com' -OrCaCommonName 'CA01' -OrCaKeyLength '2048' -OrCaHashAlgorithm 'SHA256' -OrCaValidityPeriodUnits '5' -$ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW'
+    .\Invoke-TwoTierOrCaConfig -DomainDNSName 'example.com' -OrCaCommonName 'CA01' -OrCaKeyLength '2048' -OrCaHashAlgorithm 'SHA256' -OrCaValidityPeriodUnits '5' -$ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW' -UseS3ForCRL 'Yes' -S3CRLBucketName 'examplebucketname' -DirectoryType 'AWSManaged' -VPCCIDR '10.0.0.0/16'
 
 #>
 
@@ -20,7 +20,8 @@ Param (
     [Parameter(Mandatory = $true)][String]$ADAdminSecParam,
     [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][String]$UseS3ForCRL,
     [Parameter(Mandatory = $true)][String]$S3CRLBucketName,
-    [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType
+    [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType,
+    [Parameter(Mandatory = $true)][String]$VPCCIDR
 )
 
 $CompName = $env:COMPUTERNAME
@@ -195,35 +196,6 @@ Try {
     Write-Output "Failed restart CA service $_"
 }
 
-Write-Output 'Removing DSC Configuration'
-Try {    
-    Remove-DscConfigurationDocument -Stage 'Current' -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed build DSC Configuration $_"
-}
-
-Write-Output 'Re-enabling Windows Firewall'
-Try {
-    Get-NetFirewallProfile -ErrorAction Stop | Set-NetFirewallProfile -Enabled 'True' -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed re-enable firewall $_"
-}
-
-Write-Output 'Removing QuickStart build files'
-Try {
-    Remove-Item -Path 'C:\AWSQuickstart' -Recurse -Force -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed remove QuickStart build files $_"
-}
-
-Write-Output 'Removing self signed cert'
-Try {
-    $SelfSignedThumb = Get-ChildItem -Path 'cert:\LocalMachine\My\' -ErrorAction Stop | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
-    Remove-Item -Path "cert:\LocalMachine\My\$SelfSignedThumb" -DeleteKey -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed remove self signed cert $_"
-}
-
 Write-Output 'Creating Update CRL Scheduled Task'
 Try {
     If ($UseS3ForCRL -eq 'No') {
@@ -278,10 +250,46 @@ Try {
     Exit 1
 }
 
+Write-Output 'Setting Windows Firewall WinRM Public rule to allow VPC CIDR traffic'
+Try {
+    Set-NetFirewallRule -Name 'WINRM-HTTP-In-TCP-PUBLIC' -RemoteAddress $VPCCIDR -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed allow WinRM Traffic from VPC CIDR $_"
+}
+
 Write-Output 'Removing PkiSysvolPSDrive'
 Try {
     Remove-PSDrive -Name 'PkiSysvolPSDrive' -ErrorAction Stop
 } Catch [System.Exception] {
     Write-Output "Failed to remove PkiSysvolPSDrive $_"
     Exit 1
+}
+
+Write-Output 'Removing DSC Configuration'
+Try {    
+    Remove-DscConfigurationDocument -Stage 'Current' -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed build DSC Configuration $_"
+}
+
+Write-Output 'Re-enabling Windows Firewall'
+Try {
+    Get-NetFirewallProfile -ErrorAction Stop | Set-NetFirewallProfile -Enabled 'True' -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed re-enable firewall $_"
+}
+
+Write-Output 'Removing QuickStart build files'
+Try {
+    Remove-Item -Path 'C:\AWSQuickstart' -Recurse -Force -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed remove QuickStart build files $_"
+}
+
+Write-Output 'Removing self signed cert'
+Try {
+    $SelfSignedThumb = Get-ChildItem -Path 'cert:\LocalMachine\My\' -ErrorAction Stop | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
+    Remove-Item -Path "cert:\LocalMachine\My\$SelfSignedThumb" -DeleteKey -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed remove self signed cert $_"
 }

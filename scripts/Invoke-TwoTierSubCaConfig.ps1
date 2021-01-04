@@ -6,7 +6,7 @@
     This script finalizes the an Enterprise CA configuration.  
     
     .EXAMPLE
-    .\Invoke-TwoTierSubCaConfig -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW'
+    .\Invoke-TwoTierSubCaConfig -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW' -UseS3ForCRL 'Yes' -S3CRLBucketName 'examplebucketname' -DirectoryType 'AWSManaged' -VPCCIDR '10.0.0.0/16'
 
 #>
 
@@ -15,7 +15,8 @@ Param (
     [Parameter(Mandatory = $true)][String]$ADAdminSecParam,
     [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][String]$UseS3ForCRL,
     [Parameter(Mandatory = $true)][String]$S3CRLBucketName,
-    [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType
+    [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType,
+    [Parameter(Mandatory = $true)][String]$VPCCIDR
 )
 
 Try {
@@ -167,58 +168,35 @@ Try {
 }
 
 If ($DirectoryType -eq 'SelfManaged') {
-    Write-Output 'Publishing KerberosAuthentication template'
-    $Counter = 0
-    Do {
-        $KerbTempPresent = $Null
-        Try {
-            $KerbTempPresent = Get-CATemplate -ErrorAction SilentlyContinue | Where-Object {$_.Name -eq 'KerberosAuthentication'}
-        } Catch [System.Exception] {
-            Write-Output 'KerberosAuthentication Template missing'
-            $KerbTempPresent = $Null
-        }
-        If (-not $KerbTempPresent) {
-            $Counter ++
-            Write-Output 'KerberosAuthentication Template missing adding it.'
+    $Templates = @(
+        'KerberosAuthentication',
+        'WebServer'
+    )
+    Foreach ($Template in $Templates) {
+        Write-Output "Publishing $Template template"
+        $Counter = 0
+        Do {
+            $TempPresent = $Null
             Try {
-                Add-CATemplate -Name 'KerberosAuthentication' -Force -ErrorAction Stop
+                $TempPresent = Get-CATemplate -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq $Template }
             } Catch [System.Exception] {
-                Write-Output "Failed to add publish KerberosAuthentication template $_"
+                Write-Output "$Template Template missing"
+                $TempPresent = $Null
             }
-            If ($Counter -gt '1') {
-                Start-Sleep -Seconds 10
+            If (-not $TempPresent) {
+                $Counter ++
+                Write-Output "$Template Template missing adding it."
+                Try {
+                    Add-CATemplate -Name $Template -Force -ErrorAction Stop
+                } Catch [System.Exception] {
+                    Write-Output "Failed to add publish $Template template $_"
+                }
+                If ($Counter -gt '1') {
+                    Start-Sleep -Seconds 10
+                }
             }
-        }
-    } Until ($KerbTempPresent -or $Counter -eq 12)
-}
-
-Write-Output 'Removing DSC Configuration'
-Try {    
-    Remove-DscConfigurationDocument -Stage 'Current' -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed build DSC Configuration $_"
-}
-
-Write-Output 'Re-enabling Windows Firewall'
-Try {
-    Get-NetFirewallProfile -ErrorAction Stop | Set-NetFirewallProfile -Enabled 'True' -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed re-enable firewall $_"
-}
-
-Write-Output 'Removing QuickStart build files'
-Try {
-    Remove-Item -Path 'C:\AWSQuickstart' -Recurse -Force -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed remove QuickStart build files $_"
-}
-
-Write-Output 'Removing self signed cert'
-Try {
-    $SelfSignedThumb = Get-ChildItem -Path 'cert:\LocalMachine\My\' -ErrorAction Stop | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
-    Remove-Item -Path "cert:\LocalMachine\My\$SelfSignedThumb" -DeleteKey -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed remove self signed cert $_"
+        } Until ($TempPresent -or $Counter -eq 12)
+    }
 }
 
 If ($DirectoryType -eq 'SelfManaged') {
@@ -298,3 +276,39 @@ If ($DirectoryType -eq 'SelfManaged') {
 
 Write-Output 'Clearing all SYSTEM kerberos tickets'
 & Klist.exe -li 0x3e7 purge > $null
+
+Write-Output 'Setting Windows Firewall WinRM Public rule to allow VPC CIDR traffic'
+Try {
+    Set-NetFirewallRule -Name 'WINRM-HTTP-In-TCP-PUBLIC' -RemoteAddress $VPCCIDR -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed allow WinRM Traffic from VPC CIDR $_"
+}
+
+Write-Output 'Removing DSC Configuration'
+Try {    
+    Remove-DscConfigurationDocument -Stage 'Current' -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed build DSC Configuration $_"
+}
+
+Write-Output 'Re-enabling Windows Firewall'
+Try {
+    Get-NetFirewallProfile -ErrorAction Stop | Set-NetFirewallProfile -Enabled 'True' -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed re-enable firewall $_"
+}
+
+Write-Output 'Removing QuickStart build files'
+Try {
+    Remove-Item -Path 'C:\AWSQuickstart' -Recurse -Force -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed remove QuickStart build files $_"
+}
+
+Write-Output 'Removing self signed cert'
+Try {
+    $SelfSignedThumb = Get-ChildItem -Path 'cert:\LocalMachine\My\' -ErrorAction Stop | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
+    Remove-Item -Path "cert:\LocalMachine\My\$SelfSignedThumb" -DeleteKey -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed remove self signed cert $_"
+}
