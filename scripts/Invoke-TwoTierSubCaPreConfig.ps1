@@ -6,7 +6,7 @@
     This script installs the required Windows features to make the computer an Subordinate Enterprise CA and joins the computer to the domain specified.
     
     .EXAMPLE
-    .\Invoke-TwoTierSubCaPreConfig -SubCaNetBIOSName 'CA01' -DomainNetBIOSName 'example' -DomainDNSName 'example.com' -DomainController1IP '10.20.30.40' DomainController2IP '10.20.30.41' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW'
+    .\Invoke-TwoTierSubCaPreConfig -SubCaNetBIOSName 'CA01' -DomainNetBIOSName 'example' -DomainDNSName 'example.com' -DomainController1IP '10.20.30.40' DomainController2IP '10.20.30.41' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW' -UseS3ForCRL 'Yes'
 
 #>
 

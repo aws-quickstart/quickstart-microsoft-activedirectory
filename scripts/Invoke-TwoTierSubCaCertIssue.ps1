@@ -6,7 +6,7 @@
     This script issues the the certificate to the Subordinate CA  
     
     .EXAMPLE
-    .\Invoke-TwoTierSubCaCertIssue -DomainDNSName 'example.com' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW'
+    .\Invoke-TwoTierSubCaCertIssue -DomainDNSName 'example.com' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW' -UseS3ForCRL 'Yes' -DirectoryType 'AWSManaged'
 
 #>
 

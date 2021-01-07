@@ -6,7 +6,7 @@
     This script makes the instance an Enterpise Subordinate CA.  
     
     .EXAMPLE
-    .\Invoke-TwoTierSubCaInstall -SubCaCommonName 'CA01' -SubCaKeyLength '2048' -SubCaHashAlgorithm 'SHA256' -SubCaValidityPeriodUnits '5' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW'
+    .\Invoke-TwoTierSubCaInstall -SubCaCommonName 'CA01' -SubCaKeyLength '2048' -SubCaHashAlgorithm 'SHA256' -SubCaValidityPeriodUnits '5' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW' -UseS3ForCRL 'Yes' -S3CRLBucketName 'examplebucketname' -DirectoryType 'AWSManaged'
 
 #>
 
