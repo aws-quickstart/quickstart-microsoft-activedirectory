@@ -636,7 +636,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Invoke-TwoTierOrCaConfig.ps1 -DomainDNSName {{DomainDNSName}} -OrCaCommonName {{OrCaServerNetBIOSName}} -OrCaKeyLength {{OrCaKeyLength}} -OrCaHashAlgorithm {{OrCaHashAlgorithm}} -OrCaValidityPeriodUnits {{OrCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}} -S3CRLBucketName {{S3CRLBucketName}} -DirectoryType {{DirectoryType}} -VPCCIDR {{VPCCIDR}}"
+              commandLine: "./Invoke-TwoTierOrCaConfig.ps1 -DomainDNSName {{DomainDNSName}} -OrCaCommonName {{OrCaServerNetBIOSName}} -OrCaKeyLength {{OrCaKeyLength}} -OrCaHashAlgorithm {{OrCaHashAlgorithm}} -OrCaValidityPeriodUnits {{OrCaValidityPeriodUnits}} -ADAdminSecParam {{AdministratorSecret}} -UseS3ForCRL {{UseS3ForCRL}} -S3CRLBucketName {{S3CRLBucketName}} -DirectoryType {{DirectoryType}} -VPCCIDR {{VPCCIDR}} -SubCaServerNetBIOSName {{SubCaServerNetBIOSName}}"
         # This step grabs the Instance ID for the node that will be configured as the second DC in the new domain.
         - name: "SubCaInstanceId"
           action: aws:executeAwsApi
