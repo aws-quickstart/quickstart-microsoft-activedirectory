@@ -6,7 +6,7 @@
     This script makes the instance an Offline Root CA.  
     
     .EXAMPLE
-    .\Invoke-TwoTierOrCaConfig -DomainDNSName 'example.com' -OrCaCommonName 'CA01' -OrCaKeyLength '2048' -OrCaHashAlgorithm 'SHA256' -OrCaValidityPeriodUnits '5' -$ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW' -UseS3ForCRL 'Yes' -S3CRLBucketName 'examplebucketname' -DirectoryType 'AWSManaged' -VPCCIDR '10.0.0.0/16'
+    .\Invoke-TwoTierOrCaConfig -DomainDNSName 'example.com' -OrCaCommonName 'CA01' -OrCaKeyLength '2048' -OrCaHashAlgorithm 'SHA256' -OrCaValidityPeriodUnits '5' -$ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example-VX5fcW' -UseS3ForCRL 'Yes' -S3CRLBucketName 'examplebucketname' -DirectoryType 'AWSManaged' -VPCCIDR '10.0.0.0/16' -SubCaServerNetBIOSName 'SUBCA01'
 
 #>
 
@@ -21,7 +21,8 @@ Param (
     [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][String]$UseS3ForCRL,
     [Parameter(Mandatory = $true)][String]$S3CRLBucketName,
     [Parameter(Mandatory = $true)][ValidateSet('AWSManaged', 'SelfManaged')][String]$DirectoryType,
-    [Parameter(Mandatory = $true)][String]$VPCCIDR
+    [Parameter(Mandatory = $true)][String]$VPCCIDR,
+    [Parameter(Mandatory = $true)][String]$SubCaServerNetBIOSName
 )
 
 $CompName = $env:COMPUTERNAME
@@ -71,7 +72,7 @@ If ($UseS3ForCRL -eq 'No') {
     If ($DirectoryType -eq 'SelfManaged') {
         $URL = "URL=http://pki.$DomainDNSName/pki/cps.txt"
     } Else {
-        $URL = "URL=http://$CompName.$DomainDNSName/pki/cps.txt"
+        $URL = "URL=http://$SubCaServerNetBIOSName.$DomainDNSName/pki/cps.txt"
     }
 } Else {
     $BucketRegion = Get-S3BucketLocation -BucketName $S3CRLBucketName | Select-Object -ExpandProperty 'Value'
@@ -84,7 +85,6 @@ If ($UseS3ForCRL -eq 'No') {
 
     Write-S3Object -BucketName $S3CRLBucketName -Folder 'D:\Pki\' -KeyPrefix "$CompName\" -SearchPattern 'cps.txt' -PublicReadOnly
 }
-
 
 $Inf = @(
     '[Version]',
@@ -130,8 +130,8 @@ If ($UseS3ForCRL -eq 'No') {
         $CDP = "http://pki.$DomainDNSName/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
         $AIA = "http://pki.$DomainDNSName/pki/<ServerDNSName>_<CaName><CertificateName>.crt"
     } Else {
-        $CDP = "http://$CompName.$DomainDNSName/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
-        $AIA = "http://$CompName.$DomainDNSName/pki/<ServerDNSName>_<CaName><CertificateName>.crt"
+        $CDP = "http://$SubCaServerNetBIOSName.$DomainDNSName/pki/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
+        $AIA = "http://$SubCaServerNetBIOSName.$DomainDNSName/pki/<ServerDNSName>_<CaName><CertificateName>.crt"
     }
 } Else {
     $CDP = "http://$S3BucketUrl/$CompName/<CaName><CRLNameSuffix><DeltaCRLAllowed>.crl"
