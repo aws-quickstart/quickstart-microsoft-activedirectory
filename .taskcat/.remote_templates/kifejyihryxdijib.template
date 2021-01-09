@@ -420,7 +420,7 @@ Resources:
         CaKeyLength: !Ref 'CaKeyLength'
         CaServerSubnet: !Ref 'PrivateSubnet1ID'
         CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        DirectoryType: 'AWSManaged'
+        DirectoryType: 'SelfManaged'
         DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainDNSName: !Ref 'DomainDNSName'     
@@ -454,7 +454,7 @@ Resources:
         CaKeyLength: !Ref 'CaKeyLength'
         CaServerSubnet: !Ref 'PrivateSubnet1ID'
         CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        DirectoryType: 'AWSManaged'
+        DirectoryType: 'SelfManaged'
         DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainDNSName: !Ref 'DomainDNSName'     

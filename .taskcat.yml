@@ -96,6 +96,7 @@ tests:
       PrivateSubnet2CIDR: 10.0.32.0/19
       PublicSubnet1CIDR: 10.0.128.0/20
       PublicSubnet2CIDR: 10.0.144.0/20
+      PKI: 'Two-Tier'
       RDGWInstanceType: t2.large
       RDGWCIDR: 10.0.0.0/16
       VPCCIDR: 10.0.0.0/16

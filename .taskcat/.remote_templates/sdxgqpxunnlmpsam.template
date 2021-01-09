@@ -409,30 +409,29 @@ Resources:
     Properties:
       TemplateURL:
         Fn::Sub:
-          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/templates/microsoft-pki.template.yaml'
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/templates/one-tier.template'
           - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
             S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AdministratorSecret: !Ref 'ADAdminSecrets'
-        AMI: !Ref 'CaAmi'
-        CADeploymentType: 'One-Tier'
-        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        CaKeyLength: !Ref 'CaKeyLength'
-        CaServerSubnet: !Ref 'PrivateSubnet1ID'
-        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
         DirectoryType: 'AWSManaged'
         DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainDNSName: !Ref 'DomainDNSName'     
         DomainMembersSG: !Ref 'DomainMemberSG'
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
+        AMI: !Ref 'CaAmi'
         EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        EntCaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        EntCaKeyLength: !Ref 'CaKeyLength'
         EntCaServerInstanceType: !Ref 'CaServerInstanceType'
         EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
+        EntCaServerSubnet: !Ref 'PrivateSubnet1ID'
+        EntCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
         KeyPairName: !Ref 'KeyPairName'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
         S3CRLBucketName: !Ref 'S3CRLBucketName'
         UseS3ForCRL: !Ref 'UseS3ForCRL'
         VPCCIDR: !Ref 'VPCCIDR'
@@ -443,31 +442,37 @@ Resources:
     Properties:
       TemplateURL:
         Fn::Sub:
-          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/templates/microsoft-pki.template.yaml'
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/templates/two-tier.template'
           - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
             S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AdministratorSecret: !Ref 'ADAdminSecrets'
         AMI: !Ref 'CaAmi'
-        CADeploymentType: 'Two-Tier'
-        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        CaKeyLength: !Ref 'CaKeyLength'
-        CaServerSubnet: !Ref 'PrivateSubnet1ID'
-        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
         DirectoryType: 'AWSManaged'
         DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainDNSName: !Ref 'DomainDNSName'     
         DomainMembersSG: !Ref 'DomainMemberSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
-        EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        EntCaServerInstanceType: !Ref 'CaServerInstanceType'
-        EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'   
         KeyPairName: !Ref 'KeyPairName'
+        OrCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        OrCaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        OrCaKeyLength: !Ref 'CaKeyLength'
+        OrCaServerInstanceType: !Ref 'CaServerInstanceType'
+        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
+        OrCaServerSubnet: !Ref 'PrivateSubnet1ID'
+        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
         S3CRLBucketName: !Ref 'S3CRLBucketName'
+        SubCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        SubCaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        SubCaKeyLength: !Ref 'CaKeyLength'
+        SubCaServerInstanceType: !Ref 'CaServerInstanceType'
+        SubCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'  
+        SubCaServerSubnet: !Ref 'PrivateSubnet1ID'
+        SubCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
         UseS3ForCRL: !Ref 'UseS3ForCRL'
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !Ref 'VPCID'
