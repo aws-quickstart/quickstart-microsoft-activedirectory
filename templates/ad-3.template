@@ -375,6 +375,15 @@ Resources:
     Properties:
       GroupDescription: Domain Members
       VpcId: !Ref 'VPCID'
+  DomainMembersIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: RDP 
+      GroupId: !Ref DomainMemberSG
+      IpProtocol: tcp 
+      FromPort: 3389 
+      ToPort: 3389
+      SourceSecurityGroupId: !Ref DomainMemberSG
   MgmtStack:
     Type: AWS::CloudFormation::Stack
     Condition: ShouldCreateMgmtServer
