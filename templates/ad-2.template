@@ -17,23 +17,30 @@ Metadata:
         Parameters:
           - VPCCIDR
           - VPCID
-          - PrivateSubnet1CIDR
-          - PrivateSubnet1ID
-          - PrivateSubnet2CIDR
-          - PrivateSubnet2ID
-          - PublicSubnet1CIDR
-          - PublicSubnet2CIDR
+          - Subnet1ID
+          - Subnet2ID
+          - DomainControllersSG
       - Label:
           default: Amazon EC2 Configuration
         Parameters:
-          - KeyPairName
-          - ADServer1InstanceType
+          - ADServerInstanceType
           - ADServer1NetBIOSName
           - ADServer1PrivateIP
-          - ADServer2InstanceType
           - ADServer2NetBIOSName
           - ADServer2PrivateIP
+          - DataDriveSizeGiB
+          - KeyPairName
           - LatestAmiId
+      - Label:
+          default: Microsoft Active Directory Domain Services Configuration
+        Parameters:
+          - JoinAndPromote
+          - AdministratorSecret
+          - RestoreModeSecret
+          - ExistingDomainController1IP
+          - ExistingDomainController2IP
+          - DomainDNSName
+          - DomainNetBIOSName
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -41,125 +48,159 @@ Metadata:
           - QSS3BucketRegion
           - QSS3KeyPrefix
     ParameterLabels:
-      ADServer1InstanceType:
-        default: Domain Controller 1 Instance Type
+      VPCCIDR:
+        default: VPC CIDR
+      VPCID:
+        default: VPC ID
+      Subnet1ID:
+        default: Subnet 1 ID
+      Subnet2ID:
+        default: Subnet 2 ID
+      DomainControllersSG:
+        default: Security Group ID for Domain Members Security Group.
+      ADServerInstanceType:
+        default: Domain Controller Instance Type
       ADServer1NetBIOSName:
         default: Domain Controller 1 NetBIOS Name
       ADServer1PrivateIP:
         default: Domain Controller 1 Private IP Address
-      ADServer2InstanceType:
-        default: Domain Controller 2 Instance Type
       ADServer2NetBIOSName:
         default: Domain Controller 2 NetBIOS Name
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
+      DataDriveSizeGiB:
+        default: Size of Data Drive that contains SYSVOL and NTDS
       KeyPairName:
         default: Key Pair Name
       LatestAmiId:
         default: SSM Parameter to Grab Latest AMI ID
-      PrivateSubnet1CIDR:
-        default: Private Subnet 1 CIDR
-      PrivateSubnet1ID:
-        default: Private Subnet 1 ID
-      PrivateSubnet2CIDR:
-        default: Private Subnet 2 CIDR
-      PrivateSubnet2ID:
-        default: Private Subnet 2 ID
-      PublicSubnet1CIDR:
-        default: Public Subnet 1 CIDR
-      PublicSubnet2CIDR:
-        default: Public Subnet 2 CIDR
+      JoinAndPromote:
+        default: Do you want to join and promote these instances to domain controllers
+      AdministratorSecret:
+        default: The arn for the Secret containing Administrator credentials which can join and promote domain controllers (Only used if JoinAndPromote is Yes)
+      RestoreModeSecret:
+        default: The arn for the Secret containing Restore Mode password credentials (Only used if JoinAndPromote is Yes)
+      ExistingDomainController1IP:
+        default: IP For Domain Controller the Instance will use for DNS (Must be accessible)
+      ExistingDomainController2IP:
+        default: IP For Domain Controller the Instance will use for DNS (Must be accessible)
+      DomainDNSName:
+        default: Domain DNS Name
+      DomainNetBIOSName:
+        default: Domain NetBIOS Name
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3BucketRegion:
         default: Quick Start S3 Bucket Region
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
-      VPCCIDR:
-        default: VPC CIDR
 Parameters:
-  ADServer1InstanceType:
+  VPCCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    Description: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/16
+    Type: String
+  VPCID:
+    Description: ID of the VPC (e.g., vpc-0343606e)
+    Type: AWS::EC2::VPC::Id
+  Subnet1ID:
+    Description: ID of the subnet in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
+  Subnet2ID:
+    Description: ID of the subnet in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
+  DomainControllersSG:
+    Description: Security Group ID for Domain Controllers Security Group.  
+    Type: AWS::EC2::SecurityGroup::Id
+  ADServerInstanceType:
     AllowedValues:
+      - t2.medium
+      - t3.medium
       - t2.large
+      - t3.large
       - m4.large
       - m4.xlarge
       - m4.2xlarge
       - m4.4xlarge
-    Default: m4.xlarge
-    Description: Amazon EC2 instance type for the first Active Directory Instance
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: m5.large
+    Description: Amazon EC2 instance type for the domain controller instances
     Type: String
   ADServer1NetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: DC1
-    Description: NetBIOS name of the 1st AD Server (upto 15 characters)
+    Default: DC3
+    Description: NetBIOS name of the first additional AD Server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer1PrivateIP:
-    Default: 10.0.0.10
-    Description: Fixed private IP for the first Active Directory server located in
-      AZ1
-    Type: String
-  ADServer2InstanceType:
-    AllowedValues:
-      - t2.large
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
-    Default: m4.xlarge
-    Description: Amazon EC2 instance type for the second Active Directory Instance
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.11
+    Description: Fixed private IP for the first additional Active Directory server located in AZ1
     Type: String
   ADServer2NetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: DC2
-    Description: NetBIOS name of the 2nd AD Server (upto 15 characters)
+    Default: DC4
+    Description: NetBIOS name of the second additional AD Server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer2PrivateIP:
-    Default: 10.0.32.10
-    Description: Fixed private IP for the second Active Directory serverr located
-      in AZ2
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.32.11
+    Description: Fixed private IP for the second additional Active Directory server located in AZ2
     Type: String
+  DataDriveSizeGiB:
+    Default: '10'
+    Description: Size of Data Drive that contains SYSVOL and NTDS
+    Type: 'Number'
   KeyPairName:
-    Description: Public/private key pairs allow you to securely connect to your instance
-      after it launches
+    Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
   LatestAmiId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
-  PrivateSubnet1CIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.0.0/19
-    Description: CIDR block for private subnet 1 located in Availability Zone 1.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+  JoinAndPromote:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Description: Do you want to join and promote these instances as additional domain controllers
     Type: String
-  PrivateSubnet1ID:
-    Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
-    Type: AWS::EC2::Subnet::Id
-  PrivateSubnet2CIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.32.0/19
-    Description: CIDR block for private subnet 2 located in Availability Zone 2.
+  AdministratorSecret:
+    Default: 'arn:aws:secretsmanager:us-east-1:############:secret:admin-creds-example'
+    Description: The arn for the Secret containing Administrator credentials which can join and promote domain controllers (Only used if JoinAndPromote is Yes)
     Type: String
-  PrivateSubnet2ID:
-    Description: ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
-    Type: AWS::EC2::Subnet::Id
-  PublicSubnet1CIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.128.0/20
-    Description: CIDR Block for the public DMZ subnet 1 located in Availability Zone
-      1
+  RestoreModeSecret:
+    Default: 'arn:aws:secretsmanager:us-east-1:############:secret:restore-creds-example'
+    Description: The arn for the Secret containing Restore Mode password credentials (Only used if JoinAndPromote is Yes)
     Type: String
-  PublicSubnet2CIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.144.0/20
-    Description: CIDR Block for the public DMZ subnet 2 located in Availability Zone
-      2
+  ExistingDomainController1IP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.10
+    Description: IP1 For Domain Controller the Instance will use for DNS (Must be accessible)
+    Type: String
+  ExistingDomainController2IP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.32.10
+    Description: IP2 For Domain Controller the Instance will use for DNS (Must be accessible)
+    Type: String
+  DomainDNSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+\..+'
+    Default: example.com
+    Description: Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com
+    MaxLength: '255'
+    MinLength: '2'
+    Type: String
+  DomainNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: example
+    Description: NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g. EXAMPLE
+    MaxLength: '15'
+    MinLength: '1'
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -184,15 +225,6 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
     Type: String
-  VPCCIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.0.0/16
-    Description: CIDR Block for the VPC
-    Type: String
-  VPCID:
-    Description: ID of the VPC (e.g., vpc-0343606e)
-    Type: AWS::EC2::VPC::Id
 Rules:
   SubnetsInVPC:
     Assertions:
@@ -202,9 +234,733 @@ Rules:
             - VpcId
           - !RefAll 'AWS::EC2::VPC::Id'
         AssertDescription: All subnets must in the VPC
+  SecretValidation:
+    RuleCondition: !Equals
+      - !Ref JoinAndPromote
+      - 'Yes'
+    Assertions:
+      - AssertDescription: The Administrator Secret must be valid
+        Assert: !Not [!Equals [!Ref AdministratorSecret, 'arn:aws:secretsmanager:us-east-1:############:secret:admin-creds-example']]
+      - AssertDescription: The Restore Mode Secret must be valid
+        Assert: !Not [!Equals [!Ref RestoreModeSecret, 'arn:aws:secretsmanager:us-east-1:############:secret:restore-creds-example']]
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  DoJoinAndPromote: !Equals [!Ref JoinAndPromote, 'Yes']
+  DoNOTJoinAndPromote: !Equals [!Ref JoinAndPromote, 'No']
 Resources:
+  AWSQuickstartActiveDirectoryDS:
+    Type: AWS::SSM::Document
+    Condition: DoNOTJoinAndPromote
+    Properties:
+      DocumentType: Automation
+      Content:
+        schemaVersion: "0.3"
+        description: "Deploy non-promoted domain contollers with SSM Automation"
+        # Gathering parameters needed to configure DCs in the Quick Start
+        parameters:
+          VPCCIDR:
+            default: '10.0.0.0/16'
+            description: "CIDR block for private subnet 1 located in Availability Zone 1."
+            type: "String"
+          ADServer1NetBIOSName:
+            default: "DC1"
+            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            type: "String"
+          ADServer2NetBIOSName:
+            default: "DC2"
+            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            type: "String"
+          ExistingDomainController1IP:
+            description: "IP For Domain Controller the Instance will use for DNS"
+            type: "String"
+          ExistingDomainController2IP:
+            description: "IP For Domain Controller the Instance will use for DNS"
+            type: "String"
+          DomainDNSName: 
+            default: "example.com"
+            description: "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com"
+            type: "String"
+          DomainNetBIOSName: 
+            default: "example"
+            description: "NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE"
+            type: "String"
+          QSS3BucketName:
+            default: "aws-quickstart"
+            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+            type: "String"
+          QSS3BucketRegion:
+            default: "us-east-1"
+            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
+            type: "String"
+          QSS3KeyPrefix:
+            default: "quickstart-microsoft-activedirectory/"
+            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+            type: "String"
+          StackName:
+            default: ""
+            description: "Stack Name Input for cfn resource signal"
+            type: "String"
+          URLSuffix:
+            default: "amazonaws.com"
+            description: "AWS URL suffix"
+            type: "String"
+        mainSteps:
+        # This step grabs the Instance IDs for both nodes that will be configured as DCs in the Quick Start and Instance IDs for the for next steps.
+        - name: "dcsInstanceIds"
+          action: aws:executeAwsApi
+          onFailure: "step:signalfailure"
+          nextStep: "dc1InstanceId"
+          inputs:
+            Service: ec2
+            Api: DescribeInstances
+            Filters:  
+            - Name: "tag:Name"
+              Values: [ "{{ADServer1NetBIOSName}}","{{ADServer2NetBIOSName}}" ]
+            - Name: "tag:aws:cloudformation:stack-name"
+              Values: ["{{StackName}}"]
+            - Name: "instance-state-name"
+              Values: [ "running" ]
+          outputs:
+          - Name: InstanceIds
+            Selector: "$.Reservations..Instances..InstanceId"
+            Type: "StringList"
+        # This step grabs the Instance ID for the node that will be configured as the first DC in the new domain.
+        - name: "dc1InstanceId"
+          action: aws:executeAwsApi
+          onFailure: "step:signalfailure"
+          nextStep: "dc2InstanceId"
+          inputs:
+            Service: ec2
+            Api: DescribeInstances
+            Filters:  
+            - Name: "tag:Name"
+              Values: [ "{{ADServer1NetBIOSName}}" ]
+            - Name: "tag:aws:cloudformation:stack-name"
+              Values: ["{{StackName}}"]
+            - Name: "instance-state-name"
+              Values: [ "running" ]
+          outputs:
+          - Name: InstanceId
+            Selector: "$.Reservations[0].Instances[0].InstanceId"
+            Type: "String"
+        # This step grabs the Instance ID for the node that will be configured as the second DC in the new domain.
+        - name: "dc2InstanceId"
+          action: aws:executeAwsApi
+          onFailure: "step:signalfailure"
+          nextStep: "dcsInstallDscModules"
+          inputs:
+            Service: ec2
+            Api: DescribeInstances
+            Filters:  
+            - Name: "tag:Name"
+              Values: [ "{{ADServer2NetBIOSName}}" ]
+            - Name: "tag:aws:cloudformation:stack-name"
+              Values: ["{{StackName}}"]
+            - Name: "instance-state-name"
+              Values: [ "running" ]
+          outputs:
+          - Name: InstanceId
+            Selector: "$.Reservations[0].Instances[0].InstanceId"
+            Type: "String"
+        # Installs needed Powershell DSC Modules and components on both nodes.
+        - name: "dcsInstallDscModules"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dcsLCMConfig"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dcsInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/install-ad-modules.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./install-ad-modules.ps1"
+        # Configures Local Configuration Manager on each of the nodes.
+        - name: "dcsLCMConfig"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dc1createDCMof"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dcsInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/LCM-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./LCM-Config.ps1"
+        # Generates MOF file on second DC Node to be processed by LCM.
+        - name: "dc1createDCMof"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dc1configDC"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dc1InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AD2-NonPromoConfig.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./AD2-NonPromoConfig.ps1 -ADServerNetBIOSName {{ADServer1NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -ADServer1PrivateIP {{ExistingDomainController1IP}} -ADServer2PrivateIP {{ExistingDomainController2IP}}"
+        # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
+        - name: "dc1configDC"
+          action: aws:runCommand
+          onFailure: "step:signalfailure"
+          nextStep: "dc2createDCMof"
+          inputs:
+            DocumentName: AWS-RunPowerShellScript
+            InstanceIds: 
+            - "{{dc1InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              commands: 
+                - |     
+                   function DscStatusCheck () {
+                       $LCMState = (Get-DscLocalConfigurationManager).LCMState
+                       if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
+                           'returning 3010, should continue after reboot'
+                           exit 3010
+                       } else {
+                           'Completed'
+                       }
+                   }
+                   
+                   Start-DscConfiguration 'C:\AWSQuickstart\NonPromoConfig' -Wait -Verbose -Force
+                   
+                   DscStatusCheck
+        # Generates MOF file on second DC Node to be processed by LCM.
+        - name: "dc2createDCMof"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dc2configDC"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dc2InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AD2-NonPromoConfig.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./AD2-NonPromoConfig.ps1 -ADServerNetBIOSName {{ADServer2NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -ADServer1PrivateIP {{ExistingDomainController1IP}} -ADServer2PrivateIP {{ExistingDomainController2IP}}"
+        # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
+        - name: "dc2configDC"
+          action: aws:runCommand
+          onFailure: "step:signalfailure"
+          nextStep: "PostConfig"
+          inputs:
+            DocumentName: AWS-RunPowerShellScript
+            InstanceIds: 
+            - "{{dc2InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              commands: 
+                - |     
+                   function DscStatusCheck () {
+                       $LCMState = (Get-DscLocalConfigurationManager).LCMState
+                       if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
+                           'returning 3010, should continue after reboot'
+                           exit 3010
+                       } else {
+                           'Completed'
+                       }
+                   }
+                   
+                   Start-DscConfiguration 'C:\AWSQuickstart\NonPromoConfig' -Wait -Verbose -Force
+                   
+                   DscStatusCheck
+        # Cleanup and finalize setup
+        - name: "PostConfig"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+              - "{{dcsInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: S3
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AD2-Post-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./AD2-Post-Config.ps1 -VPCCIDR {{VPCCIDR}}"
+        # Determines if CFN Needs to be Signaled or if Work flow should just end
+        - name: "CFNSignalEnd"
+          action: aws:branch
+          inputs:
+            Choices:
+            - NextStep: signalsuccess
+              Not: 
+                Variable: "{{StackName}}"
+                StringEquals: ""
+            - NextStep: sleepend
+              Variable: "{{StackName}}"
+              StringEquals: ""
+        # If all steps complete successfully signals CFN of Success
+        - name: "signalsuccess"
+          action: "aws:executeAwsApi"
+          isEnd: True
+          inputs:
+            Service: cloudformation
+            Api: SignalResource
+            LogicalResourceId: "DomainController2"
+            StackName: "{{StackName}}"
+            Status: SUCCESS
+            UniqueId: "{{dc2InstanceId.InstanceId}}"
+        # If CFN Signl Not Needed this sleep ends work flow
+        - name: "sleepend"
+          action: "aws:sleep"
+          isEnd: True
+          inputs:
+            Duration: PT1S
+        # If any steps fails signals CFN of Failure
+        - name: "signalfailure"
+          action: "aws:executeAwsApi"
+          inputs:
+            Service: cloudformation
+            Api: SignalResource
+            LogicalResourceId: "DomainController2"
+            StackName: "{{StackName}}"
+            Status: FAILURE
+            UniqueId: "{{dc2InstanceId.InstanceId}}"
+  AWSQuickstartActiveDirectoryDSPromote:
+    Type: AWS::SSM::Document
+    Condition: DoJoinAndPromote
+    Properties:
+      DocumentType: Automation
+      Content:
+        schemaVersion: "0.3"
+        description: "Deploy promoted domain contollers with SSM Automation"
+        # Gathering parameters needed to configure DCs in the Quick Start
+        parameters:
+          VPCCIDR:
+            default: '10.0.0.0/16'
+            description: "CIDR block for private subnet 1 located in Availability Zone 1."
+            type: "String"
+          ADServer1NetBIOSName:
+            default: "DC1"
+            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            type: "String"
+          ADServer1PrivateIP:
+            default: "10.0.0.11"
+            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            type: "String"
+          ADServer2NetBIOSName:
+            default: "DC2"
+            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            type: "String"
+          ADServer2PrivateIP:
+            default: "10.0.32.11"
+            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            type: "String"
+          ADAdminSecParamName:
+            description: "AWS Secrets Parameter Name that has Password and User namer for the domain administrator."
+            type: "String"
+          RestoreModeSecParamName:
+            description: "AWS Secrets Parameter Name for the Restore Mode Password"
+            type: "String"
+          ExistingDomainController1IP:
+            description: "IP For Domain Controller the Instance will use for DNS"
+            type: "String"
+          DomainDNSName: 
+            default: "example.com"
+            description: "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com"
+            type: "String"
+          DomainNetBIOSName: 
+            default: "example"
+            description: "NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE"
+            type: "String"
+          QSS3BucketName:
+            default: "aws-quickstart"
+            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+            type: "String"
+          QSS3BucketRegion:
+            default: "us-east-1"
+            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
+            type: "String"
+          QSS3KeyPrefix:
+            default: "quickstart-microsoft-activedirectory/"
+            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+            type: "String"
+          StackName:
+            default: ""
+            description: "Stack Name Input for cfn resource signal"
+            type: "String"
+          URLSuffix:
+            default: "amazonaws.com"
+            description: "AWS URL suffix"
+            type: "String"
+        mainSteps:
+        # This step grabs the Instance IDs for both nodes that will be configured as DCs in the Quick Start and Instance IDs for the for next steps.
+        - name: "dcsInstanceIds"
+          action: aws:executeAwsApi
+          onFailure: "step:signalfailure"
+          nextStep: "dc1InstanceId"
+          inputs:
+            Service: ec2
+            Api: DescribeInstances
+            Filters:  
+            - Name: "tag:Name"
+              Values: [ "{{ADServer1NetBIOSName}}","{{ADServer2NetBIOSName}}" ]
+            - Name: "tag:aws:cloudformation:stack-name"
+              Values: ["{{StackName}}"]
+            - Name: "instance-state-name"
+              Values: [ "running" ]
+          outputs:
+          - Name: InstanceIds
+            Selector: "$.Reservations..Instances..InstanceId"
+            Type: "StringList"
+        # This step grabs the Instance ID for the node that will be configured as the first DC in the new domain.
+        - name: "dc1InstanceId"
+          action: aws:executeAwsApi
+          onFailure: "step:signalfailure"
+          nextStep: "dc2InstanceId"
+          inputs:
+            Service: ec2
+            Api: DescribeInstances
+            Filters:  
+            - Name: "tag:Name"
+              Values: [ "{{ADServer1NetBIOSName}}" ]
+            - Name: "tag:aws:cloudformation:stack-name"
+              Values: ["{{StackName}}"]
+            - Name: "instance-state-name"
+              Values: [ "running" ]
+          outputs:
+          - Name: InstanceId
+            Selector: "$.Reservations[0].Instances[0].InstanceId"
+            Type: "String"
+        # This step grabs the Instance ID for the node that will be configured as the second DC in the new domain.
+        - name: "dc2InstanceId"
+          action: aws:executeAwsApi
+          onFailure: "step:signalfailure"
+          nextStep: "dcsInstallDscModules"
+          inputs:
+            Service: ec2
+            Api: DescribeInstances
+            Filters:  
+            - Name: "tag:Name"
+              Values: [ "{{ADServer2NetBIOSName}}" ]
+            - Name: "tag:aws:cloudformation:stack-name"
+              Values: ["{{StackName}}"]
+            - Name: "instance-state-name"
+              Values: [ "running" ]
+          outputs:
+          - Name: InstanceId
+            Selector: "$.Reservations[0].Instances[0].InstanceId"
+            Type: "String"
+        # Installs needed Powershell DSC Modules and components on both nodes.
+        - name: "dcsInstallDscModules"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dcsLCMConfig"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dcsInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/install-ad-modules.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./install-ad-modules.ps1"
+        # Configures Local Configuration Manager on each of the nodes.
+        - name: "dcsLCMConfig"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dc1createDCMof"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dcsInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/LCM-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./LCM-Config.ps1"
+        # Generates MOF file on second DC Node to be processed by LCM.
+        - name: "dc1createDCMof"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dc1configDC"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dc1InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/ConfigDC2.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./ConfigDC2.ps1 -ADServer2NetBIOSName {{ADServer1NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -ADServer1PrivateIP {{ExistingDomainController1IP}} -ADAdminSecParam {{ADAdminSecParamName}} -RestoreModeSecParam {{RestoreModeSecParamName}}"
+        # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
+        - name: "dc1configDC"
+          action: aws:runCommand
+          onFailure: "step:signalfailure"
+          nextStep: "dc2createDCMof"
+          inputs:
+            DocumentName: AWS-RunPowerShellScript
+            InstanceIds: 
+            - "{{dc1InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              commands: 
+                - |     
+                   function DscStatusCheck () {
+                       $LCMState = (Get-DscLocalConfigurationManager).LCMState
+                       if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
+                           'returning 3010, should continue after reboot'
+                           exit 3010
+                       } else {
+                           'Completed'
+                       }
+                   }
+                   
+                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigDC2' -Wait -Verbose -Force
+                   
+                   DscStatusCheck
+        # Generates MOF file on second DC Node to be processed by LCM.
+        - name: "dc2createDCMof"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "dc2configDC"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dc2InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/ConfigDC2.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./ConfigDC2.ps1 -ADServer2NetBIOSName {{ADServer2NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -ADServer1PrivateIP {{ExistingDomainController1IP}} -ADAdminSecParam {{ADAdminSecParamName}} -RestoreModeSecParam {{RestoreModeSecParamName}}"
+        # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
+        - name: "dc2configDC"
+          action: aws:runCommand
+          onFailure: "step:signalfailure"
+          nextStep: "DnsConfig"
+          inputs:
+            DocumentName: AWS-RunPowerShellScript
+            InstanceIds: 
+            - "{{dc2InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              commands: 
+                - |     
+                   function DscStatusCheck () {
+                       $LCMState = (Get-DscLocalConfigurationManager).LCMState
+                       if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
+                           'returning 3010, should continue after reboot'
+                           exit 3010
+                       } else {
+                           'Completed'
+                       }
+                   }
+                   
+                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigDC2' -Wait -Verbose -Force
+                   
+                   DscStatusCheck
+        # Ensure that AD servers point to themselves for DNS
+        - name: "DnsConfig"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: "PostConfig"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{dc2InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: S3
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Dns-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./Dns-Config.ps1 -ADServer1NetBIOSName {{ADServer1NetBIOSName}} -ADServer2NetBIOSName {{ADServer2NetBIOSName}} -ADServer1PrivateIP {{ADServer1PrivateIP}} -ADServer2PrivateIP {{ADServer2PrivateIP}} -DomainDNSName {{DomainDNSName}} -ADAdminSecParam {{ADAdminSecParamName}}"
+        # Cleanup and finalize setup
+        - name: "PostConfig"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+              - "{{dcsInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: S3
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AD2-Post-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./AD2-Post-Config.ps1 -VPCCIDR {{VPCCIDR}}"
+        # Determines if CFN Needs to be Signaled or if Work flow should just end
+        - name: "CFNSignalEnd"
+          action: aws:branch
+          inputs:
+            Choices:
+            - NextStep: signalsuccess
+              Not: 
+                Variable: "{{StackName}}"
+                StringEquals: ""
+            - NextStep: sleepend
+              Variable: "{{StackName}}"
+              StringEquals: ""
+        # If all steps complete successfully signals CFN of Success
+        - name: "signalsuccess"
+          action: "aws:executeAwsApi"
+          isEnd: True
+          inputs:
+            Service: cloudformation
+            Api: SignalResource
+            LogicalResourceId: "DomainController2Promote"
+            StackName: "{{StackName}}"
+            Status: SUCCESS
+            UniqueId: "{{dc2InstanceId.InstanceId}}"
+        # If CFN Signl Not Needed this sleep ends work flow
+        - name: "sleepend"
+          action: "aws:sleep"
+          isEnd: True
+          inputs:
+            Duration: PT1S
+        # If any steps fails signals CFN of Failure
+        - name: "signalfailure"
+          action: "aws:executeAwsApi"
+          inputs:
+            Service: cloudformation
+            Api: SignalResource
+            LogicalResourceId: "DomainController2Promote"
+            StackName: "{{StackName}}"
+            Status: FAILURE
+            UniqueId: "{{dc2InstanceId.InstanceId}}"
   ADServerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -213,17 +969,33 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Action:
-                  - s3:GetObject
                   - s3:ListBucket
-                Resource: !Sub
-                 - arn:${AWS::Partition}:s3:::${BucketName}/${QSS3KeyPrefix}*
-                 - BucketName: !If
-                   - UsingDefaultBucket
-                   - !Sub '${QSS3BucketName}-${AWS::Region}'
-                   - !Ref QSS3BucketName
+                Resource: 
+                  - !Sub ['arn:${AWS::Partition}:s3:::${S3Bucket}', S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]]
                 Effect: Allow
-          PolicyName: aws-quick-start-s3-policy
+              - Action:
+                  - s3:GetObject
+                Resource: 
+                  - !Sub ['arn:${AWS::Partition}:s3:::${S3Bucket}/${QSS3KeyPrefix}*', S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]]
+                Effect: Allow
+              - Action:
+                  - ec2:DescribeInstances
+                  - ssm:DescribeInstanceInformation
+                  - ssm:ListCommands
+                  - ssm:ListCommandInvocations
+                  - ssm:SendCommand
+                  - ssm:StartAutomationExecution
+                Resource: '*'
+                Effect: Allow
+              - Action:
+                  - cloudformation:SignalResource
+                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
+                Effect: Allow
+          PolicyName: AWS-Mgmt-Quick-Start-Policy
       Path: /
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy'
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -239,641 +1011,179 @@ Resources:
       Roles:
         - !Ref 'ADServerRole'
       Path: /
+  SecretRolePolicy:
+    Type: AWS::IAM::Policy
+    Condition: DoJoinAndPromote
+    Properties:
+      PolicyName: AWS-Mgd-AD-Secret-Role
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+              - secretsmanager:DescribeSecret
+            Resource: 
+              - !Ref 'AdministratorSecret'
+              - !Ref 'RestoreModeSecret'
+      Roles:
+        - !Ref 'ADServerRole'
   DomainController1:
     Type: AWS::EC2::Instance
-    Metadata:
-      AWS::CloudFormation::Authentication:
-        S3AccessCreds:
-          type: S3
-          roleName: !Ref 'ADServerRole'
-          buckets: !If
-            - UsingDefaultBucket
-            - !Sub ${QSS3BucketName}-${QSS3BucketRegion}
-            - !Ref QSS3BucketName
-      AWS::CloudFormation::Init:
-        configSets:
-          config:
-            - setup
-            - rename
-            - finalize
-        setup:
-          files:
-            c:\cfn\cfn-hup.conf:
-              content: !Join
-                - ''
-                - - "[main]\n"
-                  - stack=
-                  - !Ref 'AWS::StackName'
-                  - "\n"
-                  - region=
-                  - !Ref 'AWS::Region'
-                  - "\n"
-            c:\cfn\hooks.d\cfn-auto-reloader.conf:
-              content: !Join
-                - ''
-                - - "[cfn-auto-reloader-hook]\n"
-                  - "triggers=post.update\n"
-                  - "path=Resources.DomainController1.Metadata.AWS::CloudFormation::Init\n"
-                  - 'action=cfn-init.exe -v -c config -s '
-                  - !Ref 'AWS::StackId'
-                  - ' -r DomainController1'
-                  - ' --region '
-                  - !Ref 'AWS::Region'
-                  - "\n"
-            c:\cfn\scripts\Set-StaticIP.ps1:
-              content: !Join
-                - ''
-                - - $netip = Get-NetIPConfiguration;
-                  - $ipconfig = Get-NetIPAddress | ?{$_.IpAddress -eq $netip.IPv4Address.IpAddress};
-                  - Get-NetAdapter | Set-NetIPInterface -DHCP Disabled;
-                  - Get-NetAdapter | New-NetIPAddress -AddressFamily IPv4 -IPAddress
-                    $netip.IPv4Address.IpAddress -PrefixLength $ipconfig.PrefixLength
-                    -DefaultGateway $netip.IPv4DefaultGateway.NextHop;
-                  - Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses $netip.DNSServer.ServerAddresses;
-                  - "\n"
-          services:
-            windows:
-              cfn-hup:
-                enabled: 'true'
-                ensureRunning: 'true'
-                files:
-                  - c:\cfn\cfn-hup.conf
-                  - c:\cfn\hooks.d\cfn-auto-reloader.conf
-        rename:
-          commands:
-            a-set-static-ip:
-              command: !Join
-                - ''
-                - - powershell.exe -ExecutionPolicy RemoteSigned -Command c:\cfn\scripts\Set-StaticIP.ps1
-              waitAfterCompletion: '45'
-            b-execute-powershell-script-RenameComputer:
-              command: !Join
-                - ''
-                - - 'powershell.exe Rename-Computer -NewName '
-                  - !Ref 'ADServer1NetBIOSName'
-                  - ' -Restart'
-              waitAfterCompletion: forever
-        finalize:
-          commands:
-            1-signal-success:
-              command: !Join
-                - ''
-                - - cfn-signal.exe -e 0 "
-                  - !Ref 'DomainController1WaitHandle'
-                  - '"'
     Properties:
       ImageId: !Ref 'LatestAmiId'
       IamInstanceProfile: !Ref 'ADServerProfile'
-      InstanceType: !Ref 'ADServer1InstanceType'
-      SubnetId: !Ref 'PrivateSubnet1ID'
+      InstanceType: !Ref 'ADServerInstanceType'
+      SubnetId: !Ref 'Subnet1ID'
       Tags:
         - Key: Name
           Value: !Ref 'ADServer1NetBIOSName'
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 100
+            VolumeSize: 60
+            VolumeType: gp3
+        - DeviceName: /dev/xvdf
+          Ebs:
+            VolumeSize: !Ref 'DataDriveSizeGiB'
             VolumeType: gp3
       SecurityGroupIds:
-        - !Ref 'DomainController1SG'
+        - !Ref 'DomainControllersSG'
       PrivateIpAddress: !Ref 'ADServer1PrivateIP'
       KeyName: !Ref 'KeyPairName'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "<script>\n"
-            - 'cfn-init.exe -v -c config -s '
-            - !Ref 'AWS::StackId'
-            - ' -r DomainController1'
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - "\n"
-            - "</script>\n"
   DomainController2:
     Type: AWS::EC2::Instance
-    DependsOn: DomainController1WaitCondition
-    Metadata:
-      AWS::CloudFormation::Authentication:
-        S3AccessCreds:
-          type: S3
-          roleName: !Ref 'ADServerRole'
-          buckets:
-            - !Ref 'QSS3BucketName'
-      AWS::CloudFormation::Init:
-        configSets:
-          config:
-            - setup
-            - rename
-            - finalize
-        setup:
-          files:
-            c:\cfn\cfn-hup.conf:
-              content: !Join
-                - ''
-                - - "[main]\n"
-                  - stack=
-                  - !Ref 'AWS::StackName'
-                  - "\n"
-                  - region=
-                  - !Ref 'AWS::Region'
-                  - "\n"
-            c:\cfn\hooks.d\cfn-auto-reloader.conf:
-              content: !Join
-                - ''
-                - - "[cfn-auto-reloader-hook]\n"
-                  - "triggers=post.update\n"
-                  - "path=Resources.DomainController2.Metadata.AWS::CloudFormation::Init\n"
-                  - 'action=cfn-init.exe -v -c config -s '
-                  - !Ref 'AWS::StackId'
-                  - ' -r DomainController2'
-                  - ' --region '
-                  - !Ref 'AWS::Region'
-                  - "\n"
-            c:\cfn\scripts\Set-StaticIP.ps1:
-              content: !Join
-                - ''
-                - - $netip = Get-NetIPConfiguration;
-                  - $ipconfig = Get-NetIPAddress | ?{$_.IpAddress -eq $netip.IPv4Address.IpAddress};
-                  - Get-NetAdapter | Set-NetIPInterface -DHCP Disabled;
-                  - Get-NetAdapter | New-NetIPAddress -AddressFamily IPv4 -IPAddress
-                    $netip.IPv4Address.IpAddress -PrefixLength $ipconfig.PrefixLength
-                    -DefaultGateway $netip.IPv4DefaultGateway.NextHop;
-                  - Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses $netip.DNSServer.ServerAddresses;
-                  - "\n"
-          services:
-            windows:
-              cfn-hup:
-                enabled: 'true'
-                ensureRunning: 'true'
-                files:
-                  - c:\cfn\cfn-hup.conf
-                  - c:\cfn\hooks.d\cfn-auto-reloader.conf
-        rename:
-          commands:
-            a-set-static-ip:
-              command: !Join
-                - ''
-                - - powershell.exe -ExecutionPolicy RemoteSigned -Command c:\cfn\scripts\Set-StaticIP.ps1
-              waitAfterCompletion: '45'
-            b-execute-powershell-script-RenameComputer:
-              command: !Join
-                - ''
-                - - 'powershell.exe Rename-Computer -NewName '
-                  - !Ref 'ADServer2NetBIOSName'
-                  - ' -Restart'
-              waitAfterCompletion: forever
-        finalize:
-          commands:
-            1-signal-success:
-              command: !Join
-                - ''
-                - - cfn-signal.exe -e 0 "
-                  - !Ref 'DomainController2WaitHandle'
-                  - '"'
+    Condition: DoNOTJoinAndPromote
+    DependsOn: DomainController1
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT60M
+        Count: 1
     Properties:
       ImageId: !Ref 'LatestAmiId'
       IamInstanceProfile: !Ref 'ADServerProfile'
-      InstanceType: !Ref 'ADServer2InstanceType'
-      SubnetId: !Ref 'PrivateSubnet2ID'
+      InstanceType: !Ref 'ADServerInstanceType'
+      SubnetId: !Ref 'Subnet2ID'
       Tags:
         - Key: Name
           Value: !Ref 'ADServer2NetBIOSName'
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 100
+            VolumeSize: 60
+            VolumeType: gp3
+        - DeviceName: /dev/xvdf
+          Ebs:
+            VolumeSize: !Ref 'DataDriveSizeGiB'
             VolumeType: gp3
       SecurityGroupIds:
-        - !Ref 'DomainController2SG'
+        - !Ref 'DomainControllersSG'
       PrivateIpAddress: !Ref 'ADServer2PrivateIP'
       KeyName: !Ref 'KeyPairName'
       UserData: !Base64
         Fn::Join:
           - ''
-          - - "<script>\n"
-            - 'cfn-init.exe -v -c config -s '
-            - !Ref 'AWS::StackId'
-            - ' -r DomainController2'
-            - ' --region '
-            - !Ref 'AWS::Region'
+          - - "<powershell>\n"
+            - 'Start-SSMAutomationExecution -DocumentName '
+            - !Sub '"${AWSQuickstartActiveDirectoryDS}"'
+            - ' -Parameter @{'
+            - '"VPCCIDR"='
+            - !Sub '"${VPCCIDR}"'
+            - ';"ADServer1NetBIOSName"='
+            - !Sub '"${ADServer1NetBIOSName}"'
+            - ';"ADServer2NetBIOSName"='
+            - !Sub '"${ADServer2NetBIOSName}"'
+            - ';"ExistingDomainController1IP"='
+            - !Sub '"${ExistingDomainController1IP}"'
+            - ';"ExistingDomainController2IP"='
+            - !Sub '"${ExistingDomainController2IP}"'           
+            - ';"DomainDNSName"='
+            - !Sub '"${DomainDNSName}"'
+            - ';"DomainNetBIOSName"='
+            - !Sub '"${DomainNetBIOSName}"'
+            - ';"QSS3BucketName"='
+            - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
+            - ';"QSS3BucketRegion"='
+            - !If [UsingDefaultBucket, !Sub '"${AWS::Region}"', !Sub '"${QSS3BucketRegion}"']
+            - ';"QSS3KeyPrefix"='
+            - !Sub '"${QSS3KeyPrefix}"'
+            - ';"StackName"='
+            - !Sub '"${AWS::StackName}"'
+            - ';"URLSuffix"='
+            - !Sub '"${AWS::URLSuffix}"'
+            - '}'
             - "\n"
-            - "</script>\n"
-  DomainController1WaitCondition:
-    Type: AWS::CloudFormation::WaitCondition
+            - "</powershell>\n"
+  DomainController2Promote:
+    Type: AWS::EC2::Instance
+    Condition: DoJoinAndPromote
     DependsOn: DomainController1
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT60M
+        Count: 1
     Properties:
-      Handle: !Ref 'DomainController1WaitHandle'
-      Timeout: '3600'
-  DomainController1WaitHandle:
-    Type: AWS::CloudFormation::WaitConditionHandle
-  DomainController2WaitCondition:
-    Type: AWS::CloudFormation::WaitCondition
-    DependsOn: DomainController2
-    Properties:
-      Handle: !Ref 'DomainController2WaitHandle'
-      Timeout: '3600'
-  DomainController2WaitHandle:
-    Type: AWS::CloudFormation::WaitConditionHandle
-  DomainController1SG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Domain Controller
-      VpcId: !Ref 'VPCID'
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5985
-          ToPort: 5985
-          CidrIp: !Ref 'VPCCIDR'
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: !Ref 'VPCCIDR'
-        - IpProtocol: udp
-          FromPort: 123
-          ToPort: 123
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 135
-          ToPort: 135
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 9389
-          ToPort: 9389
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 138
-          ToPort: 138
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 464
-          ToPort: 464
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 464
-          ToPort: 464
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 389
-          ToPort: 389
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 389
-          ToPort: 389
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 636
-          ToPort: 636
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 3268
-          ToPort: 3268
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 3269
-          ToPort: 3269
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'VPCCIDR'
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'VPCCIDR'
-        - IpProtocol: tcp
-          FromPort: 9389
-          ToPort: 9389
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 88
-          ToPort: 88
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 88
-          ToPort: 88
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 5355
-          ToPort: 5355
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 137
-          ToPort: 137
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 139
-          ToPort: 139
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: tcp
-          FromPort: 5722
-          ToPort: 5722
-          CidrIp: !Ref 'PrivateSubnet2CIDR'
-        - IpProtocol: udp
-          FromPort: 123
-          ToPort: 123
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 135
-          ToPort: 135
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 9389
-          ToPort: 9389
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 138
-          ToPort: 138
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 445
-          ToPort: 445
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 445
-          ToPort: 445
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 464
-          ToPort: 464
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 464
-          ToPort: 464
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 389
-          ToPort: 389
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 389
-          ToPort: 389
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 636
-          ToPort: 636
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 3268
-          ToPort: 3268
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 3269
-          ToPort: 3269
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 88
-          ToPort: 88
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 88
-          ToPort: 88
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref 'PublicSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref 'PublicSubnet2CIDR'
-        - IpProtocol: icmp
-          FromPort: -1
-          ToPort: -1
-          CidrIp: !Ref 'PublicSubnet1CIDR'
-        - IpProtocol: icmp
-          FromPort: -1
-          ToPort: -1
-          CidrIp: !Ref 'PublicSubnet2CIDR'
-  DomainController2SG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Domain Controller
-      VpcId: !Ref 'VPCID'
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5985
-          ToPort: 5985
-          CidrIp: !Ref 'VPCCIDR'
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: !Ref 'VPCCIDR'
-        - IpProtocol: udp
-          FromPort: 123
-          ToPort: 123
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 135
-          ToPort: 135
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 9389
-          ToPort: 9389
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 138
-          ToPort: 138
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 445
-          ToPort: 445
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 464
-          ToPort: 464
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 464
-          ToPort: 464
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 389
-          ToPort: 389
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 389
-          ToPort: 389
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 636
-          ToPort: 636
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 3268
-          ToPort: 3268
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 3269
-          ToPort: 3269
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'VPCCIDR'
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: !Ref 'VPCCIDR'
-        - IpProtocol: tcp
-          FromPort: 9389
-          ToPort: 9389
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 88
-          ToPort: 88
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 88
-          ToPort: 88
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 5355
-          ToPort: 5355
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 137
-          ToPort: 137
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 139
-          ToPort: 139
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 5722
-          ToPort: 5722
-          CidrIp: !Ref 'PrivateSubnet1CIDR'
-        - IpProtocol: udp
-          FromPort: 123
-          ToPort: 123
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 135
-          ToPort: 135
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 9389
-          ToPort: 9389
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 138
-          ToPort: 138
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 445
-          ToPort: 445
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 445
-          ToPort: 445
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 464
-          ToPort: 464
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 464
-          ToPort: 464
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 49152
-          ToPort: 65535
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 49152
-          ToPort: 65535
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 389
-          ToPort: 389
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 389
-          ToPort: 389
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 636
-          ToPort: 636
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 3268
-          ToPort: 3268
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 3269
-          ToPort: 3269
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 88
-          ToPort: 88
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: udp
-          FromPort: 88
-          ToPort: 88
-          SourceSecurityGroupId: !Ref 'DomainMemberSG'
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref 'PublicSubnet1CIDR'
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref 'PublicSubnet2CIDR'
-        - IpProtocol: icmp
-          FromPort: -1
-          ToPort: -1
-          CidrIp: !Ref 'PublicSubnet1CIDR'
-        - IpProtocol: icmp
-          FromPort: -1
-          ToPort: -1
-          CidrIp: !Ref 'PublicSubnet2CIDR'
-  DomainMemberSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Domain Members
-      VpcId: !Ref 'VPCID'
+      ImageId: !Ref 'LatestAmiId'
+      IamInstanceProfile: !Ref 'ADServerProfile'
+      InstanceType: !Ref 'ADServerInstanceType'
+      SubnetId: !Ref 'Subnet2ID'
+      Tags:
+        - Key: Name
+          Value: !Ref 'ADServer2NetBIOSName'
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 60
+            VolumeType: gp3
+        - DeviceName: /dev/xvdf
+          Ebs:
+            VolumeSize: !Ref 'DataDriveSizeGiB'
+            VolumeType: gp3
+      SecurityGroupIds:
+        - !Ref 'DomainControllersSG'
+      PrivateIpAddress: !Ref 'ADServer2PrivateIP'
+      KeyName: !Ref 'KeyPairName'
+      UserData: !Base64
+        Fn::Join:
+          - ''
+          - - "<powershell>\n"
+            - 'Start-SSMAutomationExecution -DocumentName '
+            - !Sub '"${AWSQuickstartActiveDirectoryDSPromote}"'
+            - ' -Parameter @{'
+            - '"VPCCIDR"='
+            - !Sub '"${VPCCIDR}"'
+            - ';"ADServer1NetBIOSName"='
+            - !Sub '"${ADServer1NetBIOSName}"'
+            - ';"ADServer1PrivateIP"='
+            - !Sub '"${ADServer1PrivateIP}"'
+            - ';"ADServer2NetBIOSName"='
+            - !Sub '"${ADServer2NetBIOSName}"'
+            - ';"ADServer2PrivateIP"='
+            - !Sub '"${ADServer2PrivateIP}"'
+            - ';"ADAdminSecParamName"='
+            - !Sub '"${AdministratorSecret}"'
+            - ';"RestoreModeSecParamName"='
+            - !Sub '"${RestoreModeSecret}"'
+            - ';"ExistingDomainController1IP"='
+            - !Sub '"${ExistingDomainController1IP}"'       
+            - ';"DomainDNSName"='
+            - !Sub '"${DomainDNSName}"'
+            - ';"DomainNetBIOSName"='
+            - !Sub '"${DomainNetBIOSName}"'
+            - ';"QSS3BucketName"='
+            - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
+            - ';"QSS3BucketRegion"='
+            - !If [UsingDefaultBucket, !Sub '"${AWS::Region}"', !Sub '"${QSS3BucketRegion}"']
+            - ';"QSS3KeyPrefix"='
+            - !Sub '"${QSS3KeyPrefix}"'
+            - ';"StackName"='
+            - !Sub '"${AWS::StackName}"'
+            - ';"URLSuffix"='
+            - !Sub '"${AWS::URLSuffix}"'
+            - '}'
+            - "\n"
+            - "</powershell>\n"
 Outputs:
-  DomainMemberSGID:
-    Value: !Ref 'DomainMemberSG'
-    Description: Domain Member Security Group ID
   DC1InstanceId:
     Value: !Ref 'DomainController1'
-    Description: DomainController 1 instance ID
-  DC2InstanceId:
-    Value: !Ref 'DomainController2'
-    Description: DomainController 2 instance ID
+    Description: Domain Controller instance ID

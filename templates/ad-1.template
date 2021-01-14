@@ -1106,6 +1106,15 @@ Resources:
     Properties: 
       GroupDescription: Domain Members
       VpcId: !Ref VPCID
+  DomainMembersIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: RDP 
+      GroupId: !Ref DomainMembersSG
+      IpProtocol: tcp 
+      FromPort: 3389 
+      ToPort: 3389
+      SourceSecurityGroupId: !Ref DomainMembersSG
   DCSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -1167,16 +1176,20 @@ Resources:
         CaHashAlgorithm: !Ref 'CaHashAlgorithm'
         CaKeyLength: !Ref 'CaKeyLength'
         CaServerSubnet: !Ref 'PrivateSubnet1ID'
+        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
         CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
         DirectoryType: 'SelfManaged'
         DomainController1IP: !Ref 'ADServer1PrivateIP'
         DomainController2IP: !Ref 'ADServer2PrivateIP'
         DomainDNSName: !Ref 'DomainDNSName'     
         DomainMembersSG: !Ref 'DomainMembersSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        OrCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'     
         EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
         EntCaServerInstanceType: !Ref 'CaServerInstanceType'
+        OrCaServerInstanceType: !Ref 'CaServerInstanceType'
         EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
+        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
         KeyPairName: !Ref 'KeyPairName'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
@@ -1197,8 +1210,8 @@ Outputs:
     Value: !Ref 'DomainMembersSG'
     Description: Domain Member Security Group ID
   DomainControllersSGID:
-      Value: !Ref 'DomainControllersSG'
-      Description: Domain Controllers Security Group ID
+    Value: !Ref 'DomainControllersSG'
+    Description: Domain Controllers Security Group ID
   ADSecretsArn:
     Value: !Ref 'ADAltUserSecrets'
     Description: Alternate AD User Secrets ARN

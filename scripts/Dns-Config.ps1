@@ -97,4 +97,3 @@ DnsConfig -OutputPath 'C:\AWSQuickstart\DnsConfig'
 # No Reboot Needed, Processing Configuration from Script utilizing pre-created Cim Sessions
 Start-DscConfiguration -Path 'C:\AWSQuickstart\DnsConfig' -CimSession $VMSession1 -Wait -Verbose -Force
 Start-DscConfiguration -Path 'C:\AWSQuickstart\DnsConfig' -CimSession $VMSession2 -wait -Verbose -Force
-
