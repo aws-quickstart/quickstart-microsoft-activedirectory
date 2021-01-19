@@ -12,23 +12,10 @@
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-Write-Output 'Installing NuGet Package Provider'
-Try {
-    $Null = Install-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5' -Force -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed to install NuGet Package Provider $_"
-    Exit 1
-}
+#==================================================
+# Variables
+#==================================================
 
-Write-Output 'Setting PSGallery Respository to trusted'
-Try {
-    Set-PSRepository -Name 'PSGallery' -InstallationPolicy 'Trusted' -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed to set PSGallery Respository to trusted $_"
-    Exit 1
-}
-
-Write-Output 'Installing the needed Powershell DSC modules for this Quick Start'
 $Modules = @(
     @{
         Name = 'NetworkingDsc'
@@ -52,6 +39,27 @@ $Modules = @(
     }
 )
 
+#==================================================
+# Main
+#==================================================
+
+Write-Output 'Installing NuGet Package Provider'
+Try {
+    $Null = Install-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5' -Force -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed to install NuGet Package Provider $_"
+    Exit 1
+}
+
+Write-Output 'Setting PSGallery Respository to trusted'
+Try {
+    Set-PSRepository -Name 'PSGallery' -InstallationPolicy 'Trusted' -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed to set PSGallery Respository to trusted $_"
+    Exit 1
+}
+
+Write-Output 'Installing the needed Powershell DSC modules for this Quick Start'
 Foreach ($Module in $Modules) {
     Try {
         Install-Module -Name $Module.Name -RequiredVersion $Module.Version -ErrorAction Stop
@@ -62,7 +70,12 @@ Foreach ($Module in $Modules) {
 }
 
 Write-Output 'Temporarily disabling Windows Firewall'
-Get-NetFirewallProfile -ErrorAction Stop | Set-NetFirewallProfile -Enabled False -ErrorAction Stop
+Try {
+    Get-NetFirewallProfile -ErrorAction Stop | Set-NetFirewallProfile -Enabled False -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed to disable Windows Firewall $_"
+    Exit 1
+}
 
 Write-Output 'Creating Directory for DSC Public Cert'
 Try {
@@ -91,7 +104,12 @@ Try {
 Write-Output 'Finding RAW Disk'
 $Counter = 0
 Do {
-    $BlankDisk = Get-Disk -ErrorAction Stop | Where-Object { $_.partitionstyle -eq 'raw' }
+    Try {
+        $BlankDisk = Get-Disk -ErrorAction Stop | Where-Object { $_.partitionstyle -eq 'raw' }
+    } Catch [System.Exception] {
+        Write-Output "Failed to get disk $_"
+        $BlankDisk = $Null
+    }    
     If (-not $BlankDisk) {
         $Counter ++
         Write-Output 'RAW Disk not found sleeping 10 seconds and will try again.'

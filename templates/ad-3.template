@@ -22,14 +22,14 @@ Metadata:
           - PrivateSubnet1ID
           - PrivateSubnet2ID
       - Label:
-          default: AWS Managed Microsoft Active Directory configuration
+          default: AWS Managed Microsoft Active Directory Configuration
         Parameters:
           - DomainDNSName
           - DomainNetBIOSName
           - DomainAdminPassword
           - ADEdition
       - Label:
-          default: Microsoft Windows Server management instance
+          default: Microsoft Windows Server Management Instance
         Parameters:
           - MgmtServer
           - MgmtServerInstanceType
@@ -56,8 +56,8 @@ Metadata:
           default: AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
-          - QSS3KeyPrefix
           - QSS3BucketRegion
+          - QSS3KeyPrefix
     ParameterLabels:
       VPCCIDR:
         default: VPC CIDR
@@ -66,37 +66,37 @@ Metadata:
       DHCPOptionSet:
         default: Create a DHCP Options set 
       PrivateSubnet1ID:
-        default: Private Subnet 1 ID
+        default: Subnet 1 ID
       PrivateSubnet2ID:
-        default: Private Subnet 2 ID
+        default: Subnet 2 ID
       DomainDNSName:
-        default: Domain DNS name
+        default: Domain DNS Name
       DomainNetBIOSName:
-        default: Domain NetBIOS name
+        default: Domain NetBIOS Name
       DomainAdminPassword:
-        default: Domain Admin password
+        default: Admin Account Password
       ADEdition:
-        default: AWS Microsoft AD edition
+        default: AWS Microsoft AD Edition
       MgmtServer:
-        default: Deploy management server
+        default: Deploy Management Server
       MgmtServerInstanceType:
-        default: Management instance instance type
+        default: Management Server Instance Type
       MgmtAmi:
-        default: Management instance SSM parameter value to grab the lastest AMI ID
+        default: Management Server SSM Parameter Value for lastest AMI ID
       MgmtDataDriveSizeGiB:
-        default: Size of the data drive in GiB
+        default: Data Drive Size
       MgmtServerNetBIOSName:
-        default: Management instance NetBIOS name
+        default: Management Server NetBIOS Name
       KeyPairName:
-        default: Public/private key pairs allow you to securely connect to your instance
+        default: Key Pair Name
       PKI:
-        default: Do you want to Deploy PKI Infrastructure what kind Two Tier or One Tier
+        default: CA Deployment Type
       CaServerInstanceType:
         default: CA Instance Type
       CaAmi:
-        default: CA SSM Parameter Value to grab the lastest AMI ID
+        default: CA SSM Parameter Value for Lastest AMI ID
       CaDataDriveSizeGiB:
-        default: CA size of the Data Drive in GiB
+        default: CA Data Drive Size
       OrCaServerNetBIOSName:
         default: Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
       EntCaServerNetBIOSName:
@@ -110,9 +110,9 @@ Metadata:
       CaValidityPeriodUnits:
         default: Enterprise Root or Subordinate CA Certificate Validity Period in Years
       UseS3ForCRL:
-        default: Use S3 for Enterprise Root CA CRL location
+        default: Use S3 for CA CRL Location
       S3CRLBucketName:
-        default: S3 bucket name for Enterprise Root CA CRL
+        default: CA CRL S3 Bucket Name
       QSS3BucketName:
         default: Quick Start S3 bucket name
       QSS3BucketRegion:
@@ -134,51 +134,48 @@ Parameters:
       - 'Yes'
       - 'No'
     Default: 'Yes'
-    Description: Do you want to create a new DHCP Options Set
+    Description: Do you want to create and apply a new DHCP Options Set
     Type: String
   PrivateSubnet1ID:
-    Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Description: ID subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PrivateSubnet2ID:
-    Description: ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Description: ID subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   DomainDNSName:
-    Description: Fully qualified domain name (FQDN) of the forest root domain e.g.
-      example.com
+    AllowedPattern: '[a-zA-Z0-9\-]+\..+'
+    Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
     Type: String
     Default: example.com
     MinLength: '2'
     MaxLength: '255'
-    AllowedPattern: '[a-zA-Z0-9\-]+\..+'
   DomainNetBIOSName:
-    Description: NetBIOS name of the domain (upto 15 characters) for users of earlier
-      versions of Windows e.g. EXAMPLE
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Description: NetBIOS name of the domain (upto 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
     Type: String
     Default: example
     MinLength: '1'
     MaxLength: '15'
-    AllowedPattern: '[a-zA-Z0-9\-]+'
   DomainAdminPassword:
-    Description: Password for the domain admin user. Must be at least 8 characters
-      containing letters, numbers and symbols
-    Type: String
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description: Password for the Admin user account. Must be at least 8 characters containing letters, numbers and symbols
+    NoEcho: 'true'
     MinLength: '8'
     MaxLength: '32'
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    NoEcho: 'true'
+    Type: String
   ADEdition:
     AllowedValues:
       - Standard
       - Enterprise
     Default: Enterprise
-    Description: The AWS Microsoft AD edition. Valid values include Standard and Enterprise.
+    Description: The AWS Microsoft AD Edition you wish to deploy
     Type: String
   MgmtServer:
     AllowedValues:
       - 'true'
       - 'false'
     Default: 'true'
-    Description: Deploy a management instance
+    Description: Do you want to deploy a Management Server
     Type: String
   MgmtServerInstanceType:
     AllowedValues:
@@ -189,23 +186,23 @@ Parameters:
       - t2.large
       - t3.large
     Default: t3.medium
-    Description: Amazon EC2 instance type for the Management Instance
+    Description: Amazon EC2 instance type for the Management Server
     Type: String
   MgmtAmi:
     Type: String
-    Description: Management Instance SSM Parameter Value to grab the lastest AMI ID
+    Description: Management Server  SSM Parameter Value to grab the lastest AMI ID
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
   MgmtDataDriveSizeGiB:
-    Type: 'Number'
     Default: '2'
-    Description: Size of the Data Drive in GiB
+    Description: Size of the Managment Server Data Drive in GiB
+    Type: 'Number'
   MgmtServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
-    Description: NetBIOS name of the Management Instance server (up to 15 characters)
+    Default: MGMT1
+    Description: NetBIOS name of the Management Server server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
-    Default: MGMT1
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance
       after it launches
@@ -216,7 +213,7 @@ Parameters:
       - 'Two-Tier'
       - 'No'
     Default: 'No'
-    Description: Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier
+    Description: Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure
     Type: String
   CaServerInstanceType:
     AllowedValues:
@@ -230,36 +227,36 @@ Parameters:
     Description: Amazon EC2 instance type for the CA instance(s)
     Type: String
   CaAmi:
-    Type: String
     Description: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+    Type: String
   CaDataDriveSizeGiB:
-    Type: 'Number'
     Default: '2'
-    Description: Size of the Data Drive in GiB
+    Description: Size of the data drive in GiB for the CA instance(s)
+    Type: 'Number'
   OrCaServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: ORCA1
     Description: NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
-    Default: ORCA1
   EntCaServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: ENTCA1
     Description: NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
-    Default: ENTCA1
   CaKeyLength:
-    Description: CA Key Length
+    Description: CA(s) Cryptographic Provider Key Length
     AllowedValues:
       - '2048'
       - '4096'
     Default: '2048'
     Type: String
   CaHashAlgorithm:
-    Description: CA Hash Algorithm
+    Description: CA(s) Hash Algorithm for Siging Certificates
     AllowedValues:
       - 'SHA256'
       - 'SHA384'
@@ -267,15 +264,15 @@ Parameters:
     Default: 'SHA256'
     Type: String
   OrCaValidityPeriodUnits:
-    Description: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+    Description: Validity Period in Years (Only Used For Two Tier PKI)
     Default: '10'
     Type: String
   CaValidityPeriodUnits:
-    Description: Enterprise Root or Subordinate CA Certificate Validity Period in Years
+    Description: Validity Period in Years
     Default: '5'
     Type: String
   UseS3ForCRL:
-    Description: Use S3 for Enterprise Root CA CRL location
+    Description: Store CA CRL(s) in an S3 bucket
     AllowedValues:
       - 'Yes'
       - 'No'
@@ -284,7 +281,7 @@ Parameters:
   S3CRLBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: examplebucket
-    Description: S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -293,21 +290,18 @@ Parameters:
       (-).
     Default: aws-quickstart
     Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
-      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      can include numbers, lowercase letters, uppercase letters, and hyphens (-)
       It cannot start or end with a hyphen (-).
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
-    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
+    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
     Type: String
   QSS3KeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
-    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
-      uppercase letters, hyphens (-), and forward slash (/).
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
-      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/).
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
 Rules:
   SubnetsInVPC:
@@ -403,8 +397,8 @@ Resources:
         KeyPairName: !Ref 'KeyPairName'
         MgmtAmi: !Ref 'MgmtAmi'
         AdministratorSecret: !Ref 'ADAdminSecrets'
-        MgmtServerNetBIOSName: !Ref 'MgmtServerNetBIOSName'
         DirectoryID: !Ref 'MicrosoftAD'
+        MgmtServerNetBIOSName: !Ref 'MgmtServerNetBIOSName'
         DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainDNSName: !Ref 'DomainDNSName'     
@@ -422,30 +416,30 @@ Resources:
           - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
             S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AdministratorSecret: !Ref 'ADAdminSecrets'
-        AMI: !Ref 'CaAmi'
-        CADeploymentType: 'One-Tier'
-        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        CaKeyLength: !Ref 'CaKeyLength'
+        VPCCIDR: !Ref 'VPCCIDR'
+        VPCID: !Ref 'VPCID'
         CaServerSubnet: !Ref 'PrivateSubnet1ID'
-        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        DirectoryType: 'AWSManaged'
+        DomainMembersSG: !Ref 'DomainMemberSG'
+        EntCaServerInstanceType: !Ref 'CaServerInstanceType'
+        EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        KeyPairName: !Ref 'KeyPairName'
+        AMI: !Ref 'CaAmi'
+        DomainDNSName: !Ref 'DomainDNSName'     
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
         DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
-        DomainDNSName: !Ref 'DomainDNSName'     
-        DomainMembersSG: !Ref 'DomainMemberSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
-        EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        EntCaServerInstanceType: !Ref 'CaServerInstanceType'
+        AdministratorSecret: !Ref 'ADAdminSecrets'
+        DirectoryType: 'AWSManaged'
+        CADeploymentType: 'One-Tier'
         EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
-        KeyPairName: !Ref 'KeyPairName'
+        CaKeyLength: !Ref 'CaKeyLength'
+        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
+        UseS3ForCRL: !Ref 'UseS3ForCRL'
+        S3CRLBucketName: !Ref 'S3CRLBucketName'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/'
-        S3CRLBucketName: !Ref 'S3CRLBucketName'
-        UseS3ForCRL: !Ref 'UseS3ForCRL'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !Ref 'VPCID'
   TwoTierCAStack:
     Type: AWS::CloudFormation::Stack
     Condition: ShouldCreateTwoTierPkiResource
@@ -456,30 +450,34 @@ Resources:
           - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
             S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AdministratorSecret: !Ref 'ADAdminSecrets'
-        AMI: !Ref 'CaAmi'
-        CADeploymentType: 'Two-Tier'
-        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        CaKeyLength: !Ref 'CaKeyLength'
+        VPCCIDR: !Ref 'VPCCIDR'
+        VPCID: !Ref 'VPCID'
         CaServerSubnet: !Ref 'PrivateSubnet1ID'
-        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        DirectoryType: 'AWSManaged'
+        DomainMembersSG: !Ref 'DomainMemberSG'
+        OrCaServerInstanceType: !Ref 'CaServerInstanceType'
+        OrCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        EntCaServerInstanceType: !Ref 'CaServerInstanceType'
+        EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
+        KeyPairName: !Ref 'KeyPairName'
+        AMI: !Ref 'CaAmi'
+        DomainDNSName: !Ref 'DomainDNSName'     
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
         DomainController1IP: !Select [ '0', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
         DomainController2IP: !Select [ '1', !GetAtt 'MicrosoftAD.DnsIpAddresses' ]
-        DomainDNSName: !Ref 'DomainDNSName'     
-        DomainMembersSG: !Ref 'DomainMemberSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'       
-        EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        EntCaServerInstanceType: !Ref 'CaServerInstanceType'
+        AdministratorSecret: !Ref 'ADAdminSecrets'
+        DirectoryType: 'AWSManaged'
+        CADeploymentType: 'Two-Tier'
+        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
         EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
-        KeyPairName: !Ref 'KeyPairName'
+        CaKeyLength: !Ref 'CaKeyLength'
+        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
+        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
+        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
+        UseS3ForCRL: !Ref 'UseS3ForCRL'
+        S3CRLBucketName: !Ref 'S3CRLBucketName'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/'
-        S3CRLBucketName: !Ref 'S3CRLBucketName'
-        UseS3ForCRL: !Ref 'UseS3ForCRL'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !Ref 'VPCID'
 Outputs:
   ADServer1PrivateIP:
     Value: !Select

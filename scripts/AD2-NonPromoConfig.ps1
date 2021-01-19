@@ -1,5 +1,16 @@
+<#
+    .SYNOPSIS
+    AD2-NonPromoConfig.ps1
+
+    .DESCRIPTION
+    This script installs the active directory binaries but does not promote the server to a domain controller.
+
+    .EXAMPLE
+    .\AD2-NonPromoConfig -ADServerNetBIOSName 'DC3' -DomainNetBIOSName 'example' -DomainDNSName 'example.com' -ADServer1PrivateIP '10.0.0.10' -ADServer2PrivateIP '10.32.0.10'
+#>
+
+
 [CmdletBinding()]
-# Incoming Parameters for Script, CloudFormation\SSM Parameters being passed in
 Param (
     [Parameter(Mandatory = $true)][string]$ADServerNetBIOSName,
     [Parameter(Mandatory = $true)][string]$DomainNetBIOSName,
@@ -10,7 +21,11 @@ Param (
 
 #Requires -Modules PSDesiredStateConfiguration, NetworkingDsc, ComputerManagementDsc, xDnsServer, ActiveDirectoryDsc
 
-# Getting Network Configuration
+#==================================================
+# Main
+#==================================================
+
+Write-Output 'Getting network configuration'
 Try {
     $NetIpConfig = Get-NetIPConfiguration
 } Catch [System.Exception] {
@@ -18,15 +33,15 @@ Try {
     Exit 1
 }
 
-# Grabbing the Current Gateway Address in order to Static IP Correctly
+Write-Output 'Grabbing the Current Gateway Address in order to Static IP Correctly'
 $GatewayAddress = $NetIpConfig | Select-Object -ExpandProperty 'IPv4DefaultGateway' | Select-Object -ExpandProperty 'NextHop'
 
-# Formatting IP Address in format needed for IPAdress DSC Resource
+Write-Output 'Formatting IP Address in format needed for IPAdress DSC Resource'
 $IP = $NetIpConfig | Select-Object -ExpandProperty 'IPv4Address' | Select-Object -ExpandProperty 'IpAddress'
 $Prefix = $NetIpConfig | Select-Object -ExpandProperty 'IPv4Address' | Select-Object -ExpandProperty 'PrefixLength'
 $IPADDR = 'IP/CIDR' -replace 'IP', $IP -replace 'CIDR', $Prefix
 
-# Grabbing Mac Address for Primary Interface to Rename Interface
+Write-Output 'Getting MAC address'
 Try {
     $MacAddress = Get-NetAdapter | Select-Object -ExpandProperty 'MacAddress'
 } Catch [System.Exception] {
@@ -34,10 +49,15 @@ Try {
     Exit 1
 }
 
-# Getting the DSC Cert Encryption Thumbprint to Secure the MOF File
-$DscCertThumbprint = Get-ChildItem -Path 'cert:\LocalMachine\My' | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
+Write-Output 'Getting the DSC Cert Encryption Thumbprint to Secure the MOF File'
+Try {
+    $DscCertThumbprint = Get-ChildItem -Path 'cert:\LocalMachine\My' -ErrorAction Stop | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
+} Catch [System.Exception] {
+    Write-Output "Failed to get DSC Cert Encryption Thumbprint $_"
+    Exit 1
+}
 
-# Creating Configuration Data Block that has the Certificate Information for DSC Configuration Processing
+Write-Output 'Creating Configuration Data Block that has the Certificate Information for DSC Configuration Processing'
 $ConfigurationData = @{
     AllNodes = @(
         @{
@@ -59,95 +79,74 @@ Configuration NonPromoConfig {
     
     # Node Configuration block, since processing directly on DC using localhost
     Node LocalHost {
-
-        # Renaming Primary Adapter in order to Static the IP for AD installation
         NetAdapterName RenameNetAdapterPrimary {
             NewName    = 'Primary'
             MacAddress = $MacAddress
         }
-
-        # Disabling DHCP on the Primary Interface
         NetIPInterface DisableDhcp {
             Dhcp           = 'Disabled'
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
             DependsOn      = '[NetAdapterName]RenameNetAdapterPrimary'
         }
-
-        # Setting the IP Address on the Primary Interface
         IPAddress SetIP {
             IPAddress      = $IPADDR
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
             DependsOn      = '[NetAdapterName]RenameNetAdapterPrimary'
         }
-
-        # Setting Default Gateway on Primary Interface
         DefaultGatewayAddress SetDefaultGateway {
             Address        = $GatewayAddress
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
             DependsOn      = '[IPAddress]SetIP'
         }
-
-        # Setting DNS Server on Primary Interface to point to DC1
         DnsServerAddress DnsServerAddress {
             Address        = $ADServer1PrivateIP, $ADServer2PrivateIP, '169.254.169.253'
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
             DependsOn      = '[NetAdapterName]RenameNetAdapterPrimary'
         }
-
         DnsConnectionSuffix DnsConnectionSuffix {
             InterfaceAlias = 'Primary'
             ConnectionSpecificSuffix  = $DomainDNSName
             RegisterThisConnectionsAddress = $True
             UseSuffixWhenRegistering = $False
         }
-        
-        # Rename Computer and Join Domain
         Computer Rename {
             Name       = $ADServerNetBIOSName
             DependsOn   = '[DnsServerAddress]DnsServerAddress'
         }
-        
-        # Adding Needed Windows Features
         WindowsFeature DNS {
             Ensure = 'Present'
             Name   = 'DNS'
         }
-        
         WindowsFeature AD-Domain-Services {
             Ensure    = 'Present'
             Name      = 'AD-Domain-Services'
             DependsOn = '[WindowsFeature]DNS'
         }
-        
         WindowsFeature DnsTools {
             Ensure    = 'Present'
             Name      = 'RSAT-DNS-Server'
             DependsOn = '[WindowsFeature]DNS'
         }
-        
         WindowsFeature RSAT-AD-Tools {
             Ensure    = 'Present'
             Name      = 'RSAT-AD-Tools'
             DependsOn = '[WindowsFeature]AD-Domain-Services'
         }
-
         WindowsFeature RSAT-ADDS {
             Ensure    = 'Present'
             Name      = 'RSAT-ADDS'
             DependsOn = '[WindowsFeature]AD-Domain-Services'
         }
-
         Service ActiveDirectoryWebServices {
             Name        = "ADWS"
             StartupType = "Automatic"
             State       = "Running"
             DependsOn = "[WindowsFeature]AD-Domain-Services"
         }
-
         WindowsFeature GPMC {
             Ensure    = 'Present'
             Name      = 'GPMC'
@@ -156,5 +155,5 @@ Configuration NonPromoConfig {
     }
 }
 
-# Generating MOF File
+Write-Output 'Generating MOF File'
 NonPromoConfig -OutputPath 'C:\AWSQuickstart\NonPromoConfig' -ConfigurationData $ConfigurationData
