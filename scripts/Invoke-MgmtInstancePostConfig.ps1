@@ -7,23 +7,27 @@
     
     .EXAMPLE
     .\Invoke-MgmtInstancePostConfig
-
 #>
 
 [CmdletBinding()]
-# Incoming Parameters for Script, CloudFormation\SSM Parameters being passed in
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$DirectoryID,
-
-    [Parameter(Mandatory = $true)]
-    [string]$VPCCIDR
+    [Parameter(Mandatory = $true)][string]$DirectoryID,
+    [Parameter(Mandatory = $true)][string]$VPCCIDR
 )
 
+#==================================================
+# Variables
+#==================================================
+
+Write-Output 'Getting VPC DNS IP'
 $Ip = $VPCCIDR.Split('/')[0]
 [System.Collections.ArrayList]$IPArray = $IP -Split "\."
 $IPArray[3] = 2
 $VPCDNS = $IPArray -Join "."
+
+#==================================================
+# Main
+#==================================================
 
 Write-Output 'Creating Conditional Forwarder for amazonaws.com'
 Try {
@@ -31,7 +35,6 @@ Try {
 } Catch [System.Exception] {
     Write-Output "Failed to create DNS Conditional Forwarder for amazonaws.com $_"
 }
-
 
 Write-Output 'Removing DSC Configuration'
 Try {    

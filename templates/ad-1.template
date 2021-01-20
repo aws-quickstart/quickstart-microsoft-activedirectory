@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This template creates 2 Windows 2019 Active Directory Domain Controllers
+Description: >-
+  This template creates 2 Windows 2019 Active Directory Domain Controllers
   into private subnets in separate Availability Zones inside a VPC. The default Domain
   Administrator password will be the one retrieved from the instance.  For adding
   members to the domain, ensure that they are launched into the domain member security
@@ -41,13 +42,15 @@ Metadata:
           - DomainDNSName
           - DomainNetBIOSName
           - CreateDefaultOUs
+          - TombstoneLifetime
+          - DeletedObjectLifetime
       - Label:
           default: Microsoft Active Directory Certificate Services Configuration
         Parameters:
           - PKI
           - CaServerInstanceType
-          - CaAmi
           - CaDataDriveSizeGiB
+          - CaAmi
           - OrCaServerNetBIOSName
           - EntCaServerNetBIOSName
           - CaKeyLength
@@ -60,19 +63,19 @@ Metadata:
           default: AWS Quick Start Configuration
         Parameters:
           - QSS3BucketName
-          - QSS3KeyPrefix
           - QSS3BucketRegion
+          - QSS3KeyPrefix
     ParameterLabels:
       VPCCIDR:
         default: VPC CIDR
       VPCID:
         default: VPC ID
       DHCPOptionSet:
-        default: Create a DHCP Options set 
+        default: Create a DHCP Options set
       PrivateSubnet1ID:
-        default: Private Subnet 1 ID
+        default: Subnet 1 ID
       PrivateSubnet2ID:
-        default: Private Subnet 2 ID
+        default: Subnet 2 ID
       ADServer1InstanceType:
         default: Domain Controller 1 Instance Type
       ADServer1NetBIOSName:
@@ -86,29 +89,33 @@ Metadata:
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
       DataDriveSizeGiB:
-        default: Size of Data Drive that contains SYSVOL and NTDS
+        default: SYSVOL and NTDS and Data Drive Size
       KeyPairName:
         default: Key Pair Name
       WINFULLBASE:
-        default: SSM Parameter Value to grab the lastest AMI ID
+        default: SSM Parameter Value for Lastest AMI ID
       DomainAdminUser:
-        default: Domain Admin User Name
+        default: Alternate Domain Admin User Name
       DomainAdminPassword:
-        default: Domain Admin Password
+        default: Alternate Domain Admin Password
       DomainDNSName:
         default: Domain DNS Name
       DomainNetBIOSName:
         default: Domain NetBIOS Name
       CreateDefaultOUs:
-        default: Do you want Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, Domain Groups OUs created
+        default: Create Default OUs
+      TombstoneLifetime:
+        default: Set new Tombstone Lifetime
+      DeletedObjectLifetime:
+        default: Set new Deleted Objects Lifetime
       PKI:
-        default: Do you want to Deploy PKI Infrastructure what kind Two Tier or One Tier
+        default: CA Deployment Type
       CaServerInstanceType:
         default: CA Instance Type
       CaAmi:
-        default: CA SSM Parameter Value to grab the lastest AMI ID
+        default: CA SSM Parameter Value for Lastest AMI ID
       CaDataDriveSizeGiB:
-        default: CA size of the Data Drive in GiB
+        default: CA Data Drive Size
       OrCaServerNetBIOSName:
         default: Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
       EntCaServerNetBIOSName:
@@ -122,15 +129,15 @@ Metadata:
       CaValidityPeriodUnits:
         default: Enterprise Root or Subordinate CA Certificate Validity Period in Years
       UseS3ForCRL:
-        default: Use S3 for Enterprise Root CA CRL location
+        default: Use S3 for CA CRL Location
       S3CRLBucketName:
-        default: S3 bucket name for Enterprise Root CA CRL
+        default: CA CRL S3 Bucket Name
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
-      QSS3KeyPrefix:
-        default: Quick Start S3 Key Prefix
       QSS3BucketRegion:
         default: Quick Start S3 Bucket Region
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
 Parameters:
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
@@ -149,10 +156,10 @@ Parameters:
     Description: Do you want to create and apply a new DHCP Options Set
     Type: String
   PrivateSubnet1ID:
-    Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Description: ID of subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PrivateSubnet2ID:
-    Description: ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Description: ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   ADServer1InstanceType:
     AllowedValues:
@@ -169,20 +176,19 @@ Parameters:
       - m5.2xlarge
       - m5.4xlarge
     Default: m5.large
-    Description: Amazon EC2 instance type for the first Active Directory instance
+    Description: Amazon EC2 instance type for the first Active Directory Domain Controller instance
     Type: String
   ADServer1NetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: DC1
-    Description: NetBIOS name of the first Active Directory server (up to 15 characters)
+    Description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer1PrivateIP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
     Default: 10.0.0.10
-    Description: Fixed private IP for the first Active Directory server located in
-      Availability Zone 1
+    Description: Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1
     Type: String
   ADServer2InstanceType:
     AllowedValues:
@@ -199,44 +205,40 @@ Parameters:
       - m5.2xlarge
       - m5.4xlarge
     Default: m5.large
-    Description: Amazon EC2 instance type for the second Active Directory instance
+    Description: Amazon EC2 instance type for the second Active Directory Domain Controller instance
     Type: String
   ADServer2NetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: DC2
-    Description: NetBIOS name of the second Active Directory server (up to 15 characters)
+    Description: NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer2PrivateIP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
     Default: 10.0.32.10
-    Description: Fixed private IP for the second Active Directory server located in
-      Availability Zone 2
+    Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2
     Type: String
   DataDriveSizeGiB:
-    Type: 'Number'
     Default: '10'
-    Description: Size of Data Drive that contains SYSVOL and NTDS
+    Description: Size of SYSVOL and NTDS data drive in GiB
+    Type: 'Number'
   KeyPairName:
-    Description: Public/private key pairs allow you to securely connect to your instance
-      after it launches
+    Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
   WINFULLBASE:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
   DomainAdminUser:
     AllowedPattern: '[a-zA-Z0-9]*'
     Default: Admin
-    Description: User name for the account that will be added as Domain Administrator.
-      This is separate from the default "Administrator" account
+    Description: User name for the account that will be added as a Domain Administrator. This is separate from the default "Administrator" account
     MaxLength: '25'
     MinLength: '5'
     Type: String
   DomainAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    Description: Password for the domain admin user. Must be at least 8 characters
-      containing letters, numbers and symbols
+    Description: Password for the account named above. Must be at least 8 characters containing letters, numbers and symbols
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
@@ -244,16 +246,14 @@ Parameters:
   DomainDNSName:
     AllowedPattern: '[a-zA-Z0-9\-]+\..+'
     Default: example.com
-    Description: Fully qualified domain name (FQDN) of the forest root domain e.g.
-      example.com
+    Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
     MaxLength: '255'
     MinLength: '2'
     Type: String
   DomainNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: example
-    Description: NetBIOS name of the domain (up to 15 characters) for users of earlier
-      versions of Windows e.g. EXAMPLE
+    Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
     Type: String
@@ -262,15 +262,23 @@ Parameters:
       - 'Yes'
       - 'No'
     Default: 'No'
-    Description: Do you want Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, Domain Groups OUs created
+    Description: Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default users and computers containers to Domain Users and Domain Computers
     Type: String
+  TombstoneLifetime:
+    Default: '180'
+    Description: The number of days before a deleted object is removed from Active Directory, minimum number is 2
+    Type: 'Number'
+  DeletedObjectLifetime:
+    Default: '180'
+    Description: The number of days before a deleted object is removed from the Active Directory recycling bin, minimum number is 2
+    Type: 'Number'
   PKI:
     AllowedValues:
       - 'One-Tier'
       - 'Two-Tier'
       - 'No'
     Default: 'No'
-    Description: Do you want to Deploy PKI Infrastructure if so what kind, Two Tier or One Tier
+    Description: Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure
     Type: String
   CaServerInstanceType:
     AllowedValues:
@@ -284,36 +292,36 @@ Parameters:
     Description: Amazon EC2 instance type for the CA instance(s)
     Type: String
   CaAmi:
-    Type: String
     Description: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+    Type: String
   CaDataDriveSizeGiB:
-    Type: 'Number'
     Default: '2'
-    Description: Size of the Data Drive in GiB
+    Description: Size of the data drive in GiB for the CA instance(s)
+    Type: 'Number'
   OrCaServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: ORCA1
     Description: NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
-    Default: ORCA1
   EntCaServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: ENTCA1
     Description: NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
-    Default: ENTCA1
   CaKeyLength:
-    Description: CA Key Length
+    Description: CA(s) Cryptographic Provider Key Length
     AllowedValues:
       - '2048'
       - '4096'
     Default: '2048'
     Type: String
   CaHashAlgorithm:
-    Description: CA Hash Algorithm
+    Description: CA(s) Hash Algorithm for Siging Certificates
     AllowedValues:
       - 'SHA256'
       - 'SHA384'
@@ -321,15 +329,15 @@ Parameters:
     Default: 'SHA256'
     Type: String
   OrCaValidityPeriodUnits:
-    Description: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+    Description: Validity Period in Years (Only Used For Two Tier PKI)
     Default: '10'
     Type: String
   CaValidityPeriodUnits:
-    Description: Enterprise Root or Subordinate CA Certificate Validity Period in Years
+    Description: Validity Period in Years
     Default: '5'
     Type: String
   UseS3ForCRL:
-    Description: Use S3 for Enterprise Root CA CRL location
+    Description: Store CA CRL(s) in an S3 bucket
     AllowedValues:
       - 'Yes'
       - 'No'
@@ -338,30 +346,24 @@ Parameters:
   S3CRLBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: examplebucket
-    Description: S3 bucket name for Enterprise Root CA CRL. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
-      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
     Default: aws-quickstart
-    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
-      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-).
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
-    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
+    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
     Type: String
   QSS3KeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
-    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
-      uppercase letters, hyphens (-), and forward slash (/).
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
-      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/).
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
 Rules:
   SubnetsInVPC:
@@ -441,32 +443,32 @@ Resources:
         parameters:
           VPCCIDR:
             default: '10.0.0.0/16'
-            description: "CIDR block for private subnet 1 located in Availability Zone 1."
+            description: "CIDR Block for the VPC"
             type: "String"
           ADServer1NetBIOSName:
             default: "DC1"
-            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            description: "NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)"
             type: "String"
           ADServer1PrivateIP:
             default: "10.0.0.10"
-            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            description: "Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1"
             type: "String"
           ADServer2NetBIOSName:
             default: "DC2"
-            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            description: "NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)"
             type: "String"
           ADServer2PrivateIP:
             default: "10.0.32.10"
-            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            description: "Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2"
             type: "String"
           ADAdminSecParamName:
-            description: "AWS Secrets Parameter Name that has Password and User namer for the domain administrator."
+            description: "AWS Secrets Parameter Name that has Password and User namer for the built-in administrator"
             type: "String"
           ADAltUserSecParamName:
-            description: "AWS Secrets Parameter Name for the account that will be added as Domain Administrator. This is separate from the default Administrator account"
+            description: "AWS Secrets Parameter Name for the account that will be added as Domain Administrator. This is separate from the built-in Administrator account"
             type: "String"
           RestoreModeSecParamName:
-            description: "AWS Secrets Parameter Name for the Restore Mode Password"
+            description: "AWS Secrets Parameter Name for the Active Directory Restore Mode Password"
             type: "String"
           DomainDNSName: 
             default: "example.com"
@@ -478,19 +480,27 @@ Resources:
             type: "String"
           CreateDefaultOUs:
             default: "No"
-            description: "o you want Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, Domain Groups OUs created"
+            description: "Create Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs"
             type: "String"
+          TombstoneLifetime:
+            default: '180'
+            description: The number of days before a deleted object is removed from the directory services
+            type: 'String'
+          DeletedObjectLifetime:
+            default: '180'
+            description: The number of days before a deleted object is removed from the directory services recycling bin
+            type: 'String'
           QSS3BucketName:
             default: "aws-quickstart"
-            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)"
             type: "String"
           QSS3BucketRegion:
             default: "us-east-1"
-            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
+            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value"
             type: "String"
           QSS3KeyPrefix:
             default: "quickstart-microsoft-activedirectory/"
-            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)"
             type: "String"
           StackName:
             default: ""
@@ -768,7 +778,7 @@ Resources:
                       - UsingDefaultBucket
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
-              commandLine: "./Post-Config.ps1 -S3BucketName {{QSS3BucketName}} -S3KeyPrefix {{QSS3KeyPrefix}} -VPCCIDR {{VPCCIDR}} -CreateDefaultOUs {{CreateDefaultOUs}}"
+              commandLine: "./Post-Config.ps1 -S3BucketName {{QSS3BucketName}} -S3KeyPrefix {{QSS3KeyPrefix}} -VPCCIDR {{VPCCIDR}} -CreateDefaultOUs {{CreateDefaultOUs}} -TombstoneLifetime {{TombstoneLifetime}} -DeletedObjectLifetime {{DeletedObjectLifetime}}"
         # Determines if CFN Needs to be Signaled or if Work flow should just end
         - name: CFNSignalEnd
           action: aws:branch
@@ -976,6 +986,10 @@ Resources:
             - !Sub '"${DomainNetBIOSName}"'
             - ';"CreateDefaultOUs"='
             - !Sub '"${CreateDefaultOUs}"'
+            - ';"TombstoneLifetime"='
+            - !Sub '"${TombstoneLifetime}"'
+            - ';"DeletedObjectLifetime"='
+            - !Sub '"${DeletedObjectLifetime}"'
             - ';"QSS3BucketName"='
             - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
             - ';"QSS3BucketRegion"='

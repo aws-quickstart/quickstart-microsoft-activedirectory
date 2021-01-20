@@ -3,12 +3,11 @@
     AD2-Post-Config.ps1
 
     .DESCRIPTION
-    This script is run on a domain controller after the final restart of forest creation.
+    This script installs the active directory binaries but does promote the server to a domain controller.
     It sets some minor settings and cleans up the DSC configuration
 
     .EXAMPLE
     .\AD2-Post-Config -VPCCIDR '10.0.0.0/16'
-
 #>
 
 [CmdletBinding()]
@@ -19,6 +18,7 @@ Param(
 #==================================================
 # Main
 #==================================================
+
 Write-Output 'Enabling Certificate Auto-Enrollment Policy'
 Try {
     Set-CertificateAutoEnrollmentPolicy -ExpirationPercentage 10 -PolicyState 'Enabled' -EnableTemplateCheck -EnableMyStoreManagement -StoreName 'MY' -Context 'Machine' -ErrorAction Stop
@@ -69,8 +69,14 @@ Try {
     Write-Output "Failed remove self signed cert $_"
 }
 
-Write-Output 'Running Group Policy update'
-$AmIDomainMember = Get-CimInstance -ClassName 'Win32_ComputerSystem' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'PartOfDomain'
+Write-Output 'Checking domain membership'
+Try {
+    $AmIDomainMember = Get-CimInstance -ClassName 'Win32_ComputerSystem' -ErrorAction Stop | Select-Object -ExpandProperty 'PartOfDomain'
+} Catch [System.Exception] {
+    Write-Output "Failed checking domain membership $_"
+}
+
 If ($AmIDomainMember) {
+    Write-Output 'Running Group Policy update'
     Invoke-GPUpdate -RandomDelayInMinutes '0' -Force
 }

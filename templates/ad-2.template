@@ -57,9 +57,9 @@ Metadata:
       Subnet2ID:
         default: Subnet 2 ID
       DomainControllersSG:
-        default: Security Group ID for Domain Members Security Group.
+        default: Security Group ID for Domain Members Security Group
       ADServerInstanceType:
-        default: Domain Controller Instance Type
+        default: Domain Controllers Instance Type
       ADServer1NetBIOSName:
         default: Domain Controller 1 NetBIOS Name
       ADServer1PrivateIP:
@@ -69,21 +69,21 @@ Metadata:
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
       DataDriveSizeGiB:
-        default: Size of Data Drive that contains SYSVOL and NTDS
+        default: SYSVOL and NTDS and Data Drive Size
       KeyPairName:
         default: Key Pair Name
       LatestAmiId:
-        default: SSM Parameter to Grab Latest AMI ID
+        default: SSM Parameter Value for lastest AMI ID
       JoinAndPromote:
-        default: Do you want to join and promote these instances to domain controllers
+        default: Join and Promote to Domain Controllers
       AdministratorSecret:
-        default: The arn for the Secret containing Administrator credentials which can join and promote domain controllers (Only used if JoinAndPromote is Yes)
+        default: Secret ARN Containing Administrator Credentials
       RestoreModeSecret:
-        default: The arn for the Secret containing Restore Mode password credentials (Only used if JoinAndPromote is Yes)
+        default: Secret ARN Containing Restore Mode Credentials
       ExistingDomainController1IP:
-        default: IP For Domain Controller the Instance will use for DNS (Must be accessible)
+        default: IP the Instance will be used for DNS (Must be accessible)
       ExistingDomainController2IP:
-        default: IP For Domain Controller the Instance will use for DNS (Must be accessible)
+        default: IP the Instance will be used for DNS (Must be accessible)
       DomainDNSName:
         default: Domain DNS Name
       DomainNetBIOSName:
@@ -97,20 +97,21 @@ Metadata:
 Parameters:
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    Description: CIDR block parameter must be in the form x.x.x.x/16-28
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
     Default: 10.0.0.0/16
+    Description: CIDR Block for the VPC
     Type: String
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
   Subnet1ID:
-    Description: ID of the subnet in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Description: ID of subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   Subnet2ID:
-    Description: ID of the subnet in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Description: ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   DomainControllersSG:
-    Description: Security Group ID for Domain Controllers Security Group.  
+    Description: Security Group ID for Domain Controllers
     Type: AWS::EC2::SecurityGroup::Id
   ADServerInstanceType:
     AllowedValues:
@@ -127,35 +128,35 @@ Parameters:
       - m5.2xlarge
       - m5.4xlarge
     Default: m5.large
-    Description: Amazon EC2 instance type for the domain controller instances
+    Description: Amazon EC2 instance type for Active Directory Controller instances
     Type: String
   ADServer1NetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: DC3
-    Description: NetBIOS name of the first additional AD Server (up to 15 characters)
+    Description: NetBIOS name of the first additional Active Directory Domain Controller (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer1PrivateIP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
     Default: 10.0.0.11
-    Description: Fixed private IP for the first additional Active Directory server located in AZ1
+    Description: Fixed private IP for the first additional Active Directory Domain Controller located in subnet 1
     Type: String
   ADServer2NetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: DC4
-    Description: NetBIOS name of the second additional AD Server (up to 15 characters)
+    Description: NetBIOS name of the second additional Active Directory Domain Controller (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer2PrivateIP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
     Default: 10.0.32.11
-    Description: Fixed private IP for the second additional Active Directory server located in AZ2
+    Description: Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2
     Type: String
   DataDriveSizeGiB:
     Default: '10'
-    Description: Size of Data Drive that contains SYSVOL and NTDS
+    Description: Size of SYSVOL and NTDS data drive in GiB
     Type: 'Number'
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
@@ -168,25 +169,25 @@ Parameters:
       - 'Yes'
       - 'No'
     Default: 'No'
-    Description: Do you want to join and promote these instances as additional domain controllers
+    Description: Do you want to join and promote these instances to be Active Directory Domain Controllers
     Type: String
   AdministratorSecret:
     Default: 'arn:aws:secretsmanager:us-east-1:############:secret:admin-creds-example'
-    Description: The arn for the Secret containing Administrator credentials which can join and promote domain controllers (Only used if JoinAndPromote is Yes)
+    Description: ARN for the Administrator credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)
     Type: String
   RestoreModeSecret:
     Default: 'arn:aws:secretsmanager:us-east-1:############:secret:restore-creds-example'
-    Description: The arn for the Secret containing Restore Mode password credentials (Only used if JoinAndPromote is Yes)
+    Description: ARN for the Restore Mode credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)
     Type: String
   ExistingDomainController1IP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
     Default: 10.0.0.10
-    Description: IP1 For Domain Controller the Instance will use for DNS (Must be accessible)
+    Description: IP of DNS server that can resolve domain (Must be accessible)
     Type: String
   ExistingDomainController2IP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
     Default: 10.0.32.10
-    Description: IP2 For Domain Controller the Instance will use for DNS (Must be accessible)
+    Description: IP of DNS server that can resolve domain (Must be accessible)
     Type: String
   DomainDNSName:
     AllowedPattern: '[a-zA-Z0-9\-]+\..+'
@@ -204,26 +205,20 @@ Parameters:
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
-      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
       (-).
     Default: aws-quickstart
-    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
-      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-).
+    Description: S3 bucket name for CA CRL storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
-    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
+    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
     Type: String
   QSS3KeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
-    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
-      uppercase letters, hyphens (-), and forward slash (/).
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
-      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/).
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
 Rules:
   SubnetsInVPC:
@@ -260,41 +255,41 @@ Resources:
         parameters:
           VPCCIDR:
             default: '10.0.0.0/16'
-            description: "CIDR block for private subnet 1 located in Availability Zone 1."
+            description: "CIDR Block for the VPC"
             type: "String"
           ADServer1NetBIOSName:
             default: "DC1"
-            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            description: "NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)"
             type: "String"
           ADServer2NetBIOSName:
             default: "DC2"
-            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            description: "NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)"
             type: "String"
           ExistingDomainController1IP:
-            description: "IP For Domain Controller the Instance will use for DNS"
+            description: "IP of DNS server that can resolve domain (Must be accessible)"
             type: "String"
           ExistingDomainController2IP:
-            description: "IP For Domain Controller the Instance will use for DNS"
+            description: "IP of DNS server that can resolve domain (Must be accessible)"
             type: "String"
           DomainDNSName: 
             default: "example.com"
-            description: "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com"
+            description: "Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com"
             type: "String"
           DomainNetBIOSName: 
             default: "example"
-            description: "NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE"
+            description: "NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g. EXAMPLE"
             type: "String"
           QSS3BucketName:
             default: "aws-quickstart"
-            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)"
             type: "String"
           QSS3BucketRegion:
             default: "us-east-1"
-            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
+            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value"
             type: "String"
           QSS3KeyPrefix:
             default: "quickstart-microsoft-activedirectory/"
-            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)"
             type: "String"
           StackName:
             default: ""
@@ -598,52 +593,52 @@ Resources:
         parameters:
           VPCCIDR:
             default: '10.0.0.0/16'
-            description: "CIDR block for private subnet 1 located in Availability Zone 1."
+            description: "CIDR block for private subnet 1 located in Availability Zone 1"
             type: "String"
           ADServer1NetBIOSName:
             default: "DC1"
-            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            description: "NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)"
             type: "String"
           ADServer1PrivateIP:
             default: "10.0.0.11"
-            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            description: "Fixed private IP for the first additional Active Directory Domain Controller located in subnet 1"
             type: "String"
           ADServer2NetBIOSName:
             default: "DC2"
-            description: "NetBIOS name of the first Active Directory server (up to 15 characters)"
+            description: "NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)"
             type: "String"
           ADServer2PrivateIP:
             default: "10.0.32.11"
-            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            description: "Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2"
             type: "String"
           ADAdminSecParamName:
-            description: "AWS Secrets Parameter Name that has Password and User namer for the domain administrator."
+            description: "ARN for the Administrator credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)"
             type: "String"
           RestoreModeSecParamName:
-            description: "AWS Secrets Parameter Name for the Restore Mode Password"
+            description: "ARN for the Restore Mode credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)"
             type: "String"
           ExistingDomainController1IP:
-            description: "IP For Domain Controller the Instance will use for DNS"
+            description: "IP of DNS server that can resolve domain (Must be accessible)"
             type: "String"
           DomainDNSName: 
             default: "example.com"
-            description: "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com"
+            description: "Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com"
             type: "String"
           DomainNetBIOSName: 
             default: "example"
-            description: "NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE"
+            description: "NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g. EXAMPLE"
             type: "String"
           QSS3BucketName:
             default: "aws-quickstart"
-            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)"
             type: "String"
           QSS3BucketRegion:
             default: "us-east-1"
-            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
+            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value"
             type: "String"
           QSS3KeyPrefix:
             default: "quickstart-microsoft-activedirectory/"
-            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)"
             type: "String"
           StackName:
             default: ""

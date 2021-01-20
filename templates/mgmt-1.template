@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This template creates 1 Windows 2019 Server 
+Description: >-
+  This template creates 1 Windows 2019 Server 
   Enterpsie CA into a private subnet inside a VPC. **WARNING** This template creates Amazon
   EC2 Windows instance and related resources. You will be billed for the AWS resources
   used if you create a stack from this template. (qs-1qup6rae5)
@@ -42,27 +43,27 @@ Metadata:
       VPCID:
         default: VPC ID
       MgmtServerSubnet:
-        default: Management Instance Subnet ID
+        default: Management Server Subnet ID
       DomainMembersSG:
-        default: Security Group ID for Domain Members Security Group.  
+        default: Security Group ID for Domain Members Security Group
       MgmtServerInstanceType:
-        default: Management Instance Instance Type
+        default: Management Server Instance Type
       MgmtDataDriveSizeGiB:
-        default: Size of the Data Drive in GiB
+        default: Data Drive Size
       KeyPairName:
-        default: Public/private key pairs allow you to securely connect to your instance
+        default: Key Pair Name
       MgmtAmi:
-        default: AMI ID passed in from parent stack
+        default: SSM Parameter Value for lastest AMI ID
       AdministratorSecret:
-        default: The arn for the Secret containing the Administrator Credentials
+        default: Secret ARN Containing Administrator Credentials
       DirectoryID:
         default: Directory Services ID
       MgmtServerNetBIOSName:
-        default: Management Instance NetBIOS Name
+        default: Management Server NetBIOS Name
       DomainController1IP:
-        default: IP For Domain Controller that Management Instance Instance will use for DNS
+        default: IP the Instance will be used for DNS (Must be accessible)
       DomainController2IP:
-        default: IP For Domain Controller that Management Instance Instance will use for DNS
+        default: IP the Instance will be used for DNS (Must be accessible)
       DomainDNSName:
         default: Domain DNS Name
       DomainNetBIOSName:
@@ -77,9 +78,9 @@ Parameters:
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
-    Default: 10.0.0.0/16
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
@@ -87,7 +88,7 @@ Parameters:
     Description: ID of the Management Instance subnet (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   DomainMembersSG:
-    Description: Security Group ID for Domain Members Security Group.  
+    Description: Security Group ID for Domain Members Security Group
     Type: String
   MgmtServerInstanceType:
     AllowedValues:
@@ -98,40 +99,39 @@ Parameters:
       - t2.large
       - t3.large
     Default: t3.medium
-    Description: Amazon EC2 instance type for the Management Instance instance
+    Description: Amazon EC2 instance type for the Management Server instances
     Type: String
   MgmtDataDriveSizeGiB:
-    Type: 'Number'
     Default: '2'
-    Description: Size of the Data Drive in GiB
+    Description: Size of the data drive in GiB
+    Type: 'Number'
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance
       after it launches
     Type: AWS::EC2::KeyPair::KeyName
   MgmtAmi:
-    Description: AMI ID passed in from parent stack
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
   AdministratorSecret:
-    Description: The arn for the Secret containing the Administrator Credentials
+    Description: ARN for the Administrator credentials Secret
     Type: String
   DirectoryID:
-    Description: Directory Services ID
+    Description: The Directory Services ID of the AWS Managed Microsoft AD Domain
     Type: String
   MgmtServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
-    Description: NetBIOS name of the Management Instance server (up to 15 characters)
+    Default: MGMT01
+    Description: NetBIOS name of the Management Server (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
-    Default: MGMT01
   DomainController1IP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Description: IP For Domain Controller that Management Instance Instance will use for DNS
+    Description: IP of DNS server that can resolve domain (Must be accessible)
     Type: String
   DomainController2IP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Description: IP For Domain Controller that Management Instance Instance will use for DNS
+    Description: IP of DNS server that can resolve domain (Must be accessible)
     Type: String
   DomainDNSName:
     AllowedPattern: '[a-zA-Z0-9\-]+\..+'
@@ -147,26 +147,19 @@ Parameters:
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
-      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
-      (-).
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Default: aws-quickstart
-    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
-      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-).
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
-    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
+    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
     Type: String
   QSS3KeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
-    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
-      uppercase letters, hyphens (-), and forward slash (/).
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
-      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/).
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and  forward slash (/)
     Type: String
 Rules:
   SubnetsInVPC:
@@ -255,22 +248,22 @@ Resources:
         parameters: 
           VPCCIDR:
             default: '10.0.0.0/16'
-            description: "CIDR block for private subnet 1 located in Availability Zone 1."
-            type: "String"
-          MgmtServerNetBIOSName:
-            description: "NetBIOS name of the Management Instance server (up to 15 characters)"
-            type: "String"
-          DomainController1IP:
-            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
-            type: "String"
-          DomainController2IP:
-            description: "Fixed private IP for the first Active Directory server located in Availability Zone 1"
+            description: "CIDR Block for the VPC"
             type: "String"
           AdministratorSecret:
             description: "AWS Secrets Parameter Name that has Password and User namer for the domain administrator."
             type: "String"
           DirectoryID:
-            description: "Directory ID of the Managed AD Domain."
+            description: "The Directory Services ID of the AWS Managed Microsoft AD Domain"
+            type: "String"
+          MgmtServerNetBIOSName:
+            description: "NetBIOS name of the Management Instance server (up to 15 characters)"
+            type: "String"
+          DomainController1IP:
+            description: "IP of DNS server that can resolve domain (Must be accessible)"
+            type: "String"
+          DomainController2IP:
+            description: "IP of DNS server that can resolve domain (Must be accessible)"
             type: "String"
           DomainDNSName: 
             description: "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com"

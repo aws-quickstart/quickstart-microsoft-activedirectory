@@ -50,6 +50,8 @@ tests:
       EntCaHashAlgorithm: 'SHA256'
       EntCaValidityPeriodUnits: '5'
       CreateDefaultOUs: 'Yes'
+      TombstoneLifetime: '60'
+      DeletedObjectLifetime: '60'
       DHCPOptionSet: 'Yes'
     regions:
     # - eu-west-3
