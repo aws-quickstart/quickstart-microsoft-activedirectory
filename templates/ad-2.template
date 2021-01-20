@@ -105,10 +105,10 @@ Parameters:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
   Subnet1ID:
-    Description: ID subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Description: ID of subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   Subnet2ID:
-    Description: ID subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Description: ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   DomainControllersSG:
     Description: Security Group ID for Domain Controllers

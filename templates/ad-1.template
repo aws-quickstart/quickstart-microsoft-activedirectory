@@ -156,10 +156,10 @@ Parameters:
     Description: Do you want to create and apply a new DHCP Options Set
     Type: String
   PrivateSubnet1ID:
-    Description: ID subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Description: ID of subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PrivateSubnet2ID:
-    Description: ID subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Description: ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   ADServer1InstanceType:
     AllowedValues:
