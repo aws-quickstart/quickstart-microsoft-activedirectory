@@ -1,22 +1,22 @@
 <#
     .SYNOPSIS
-    ConfigDC2.ps1
+    AD2-NonPromoConfig.ps1
 
     .DESCRIPTION
-    This script is run on an additional domain controller after the final restart of forest creation.
+    This script installs the active directory binaries but does not promote the server to a domain controller.
 
     .EXAMPLE
-    .\ConfigDC2 -ADServer2NetBIOSName 'DC2' -DomainNetBIOSName 'example' -DomainDNSName 'example.com' -ADServer1PrivateIP '10.0.0.10' -ADAdminSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example' -RestoreModeSecParam 'arn:aws:secretsmanager:us-west-2:############:secret:example'
+    .\AD2-NonPromoConfig -ADServerNetBIOSName 'DC3' -DomainNetBIOSName 'example' -DomainDNSName 'example.com' -ADServer1PrivateIP '10.0.0.10' -ADServer2PrivateIP '10.32.0.10'
 #>
+
 
 [CmdletBinding()]
 Param (
-    [Parameter(Mandatory = $true)][string]$ADServer2NetBIOSName,
+    [Parameter(Mandatory = $true)][string]$ADServerNetBIOSName,
     [Parameter(Mandatory = $true)][string]$DomainNetBIOSName,
     [Parameter(Mandatory = $true)][string]$DomainDNSName,
     [Parameter(Mandatory = $true)][string]$ADServer1PrivateIP,
-    [Parameter(Mandatory = $true)][string]$ADAdminSecParam,
-    [Parameter(Mandatory = $true)][string]$RestoreModeSecParam
+    [Parameter(Mandatory = $true)][string]$ADServer2PrivateIP
 )
 
 #Requires -Modules PSDesiredStateConfiguration, NetworkingDsc, ComputerManagementDsc, xDnsServer, ActiveDirectoryDsc
@@ -25,7 +25,7 @@ Param (
 # Main
 #==================================================
 
-Write-Output "Getting network configuration $_"
+Write-Output 'Getting network configuration'
 Try {
     $NetIpConfig = Get-NetIPConfiguration
 } Catch [System.Exception] {
@@ -49,54 +49,11 @@ Try {
     Exit 1
 }
 
-Write-Output "Getting $ADAdminSecParam Secret"
-Try {
-    $AdminSecret = Get-SECSecretValue -SecretId $ADAdminSecParam -ErrorAction Stop | Select-Object -ExpandProperty 'SecretString'
-} Catch [System.Exception] {
-    Write-Output "Failed to get $ADAdminSecParam Secret $_"
-    Exit 1
-}
-
-Write-Output "Converting $AdminSecret from JSON"
-Try {
-    $ADAdminPassword = ConvertFrom-Json -InputObject $AdminSecret -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed to convert $AdminSecret from JSON $_"
-    Exit 1
-}
-
-Write-Output 'Creating Credential Object for Administrator'
-$AdminUserName = $ADAdminPassword.UserName
-$AdminUserPW = ConvertTo-SecureString ($ADAdminPassword.Password) -AsPlainText -Force
-$Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ("$DomainNetBIOSName\$AdminUserName", $AdminUserPW)
-
-
-Write-Output "Getting $RestoreModeSecParam Secret"
-Try {
-    $RestoreModeSecret = Get-SECSecretValue -SecretId $RestoreModeSecParam -ErrorAction Stop | Select-Object -ExpandProperty 'SecretString'
-} Catch [System.Exception] {
-    Write-Output "Failed to get $RestoreModeSecParam Secret $_"
-    Exit 1
-}
-
-Write-Output "Converting $RestoreModeSecret from JSON"
-Try {
-    $RestoreModePassword = ConvertFrom-Json -InputObject $RestoreModeSecret -ErrorAction Stop
-} Catch [System.Exception] {
-    Write-Output "Failed to convert $RestoreModeSecret from JSON $_"
-    Exit 1
-}
-
-Write-Output 'Creating Credential Object for Restore Mode Password'
-$RestoreUserName = $RestoreModePassword.UserName
-$RestoreUserPW = ConvertTo-SecureString ($ADAdminPassword.Password) -AsPlainText -Force
-$RestoreCredentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ($RestoreUserName, $RestoreUserPW)
-
 Write-Output 'Getting the DSC Cert Encryption Thumbprint to Secure the MOF File'
 Try {
     $DscCertThumbprint = Get-ChildItem -Path 'cert:\LocalMachine\My' -ErrorAction Stop | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
 } Catch [System.Exception] {
-    Write-Output "Failed to get local machine certificates $_"
+    Write-Output "Failed to get DSC Cert Encryption Thumbprint $_"
     Exit 1
 }
 
@@ -116,14 +73,7 @@ $ConfigurationData = @{
 }
 
 # PowerShell DSC Configuration Block for Domain Controller 2
-Configuration ConfigDC2 {
-    # Credential Objects being passed in
-    Param
-    (
-        [Parameter(Mandatory = $true)][PSCredential]$Credentials,
-        [Parameter(Mandatory = $true)][PSCredential]$RestoreCredentials
-    )
-    
+Configuration NonPromoConfig {   
     # Importing All DSC Resources needed for Configuration
     Import-DscResource -ModuleName 'PSDesiredStateConfiguration', 'NetworkingDsc', 'ComputerManagementDsc', 'xDnsServer', 'ActiveDirectoryDsc'
     
@@ -152,22 +102,20 @@ Configuration ConfigDC2 {
             DependsOn      = '[IPAddress]SetIP'
         }
         DnsServerAddress DnsServerAddress {
-            Address        = $ADServer1PrivateIP
+            Address        = $ADServer1PrivateIP, $ADServer2PrivateIP, '169.254.169.253'
             InterfaceAlias = 'Primary'
             AddressFamily  = 'IPv4'
             DependsOn      = '[NetAdapterName]RenameNetAdapterPrimary'
         }
-        WaitForADDomain WaitForPrimaryDC {
-            DomainName  = $DomainDnsName
-            Credential = $Credentials
-            WaitTimeout = 600
-            DependsOn   = '[DnsServerAddress]DnsServerAddress'
+        DnsConnectionSuffix DnsConnectionSuffix {
+            InterfaceAlias = 'Primary'
+            ConnectionSpecificSuffix  = $DomainDNSName
+            RegisterThisConnectionsAddress = $True
+            UseSuffixWhenRegistering = $False
         }
-        Computer JoinDomain {
-            Name       = $ADServer2NetBIOSName
-            DomainName = $DomainDnsName
-            Credential = $Credentials
-            DependsOn  = '[WaitForADDomain]WaitForPrimaryDC'
+        Computer Rename {
+            Name       = $ADServerNetBIOSName
+            DependsOn   = '[DnsServerAddress]DnsServerAddress'
         }
         WindowsFeature DNS {
             Ensure = 'Present'
@@ -204,17 +152,8 @@ Configuration ConfigDC2 {
             Name      = 'GPMC'
             DependsOn = '[WindowsFeature]AD-Domain-Services'
         }
-        ADDomainController SecondaryDC {
-            DomainName                    = $DomainDnsName
-            Credential                    = $Credentials
-            SafemodeAdministratorPassword = $RestoreCredentials
-            DatabasePath                  = 'D:\NTDS'
-            LogPath                       = 'D:\NTDS'
-            SysvolPath                    = 'D:\SYSVOL'
-            DependsOn                     = @('[WindowsFeature]AD-Domain-Services', '[Computer]JoinDomain', '[Service]ActiveDirectoryWebServices')
-        }
     }
 }
 
 Write-Output 'Generating MOF File'
-ConfigDC2 -OutputPath 'C:\AWSQuickstart\ConfigDC2' -Credentials $Credentials -RestoreCredentials $RestoreCredentials -ConfigurationData $ConfigurationData
+NonPromoConfig -OutputPath 'C:\AWSQuickstart\NonPromoConfig' -ConfigurationData $ConfigurationData

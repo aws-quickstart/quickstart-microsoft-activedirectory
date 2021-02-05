@@ -7,8 +7,7 @@
     It sets some minor settings and cleans up the DSC configuration
 
     .EXAMPLE
-    .\Post-Config
-
+    .\Post-Config -S3BucketName 'example' -S3KeyPrefix 'prefix' -VPCCIDR 10.0.0.0/16 -CreateDefaultOUs 'Yes' -TombstoneLifetime 30 -DeletedObjectLifetime 30
 #>
 
 [CmdletBinding()]
@@ -17,14 +16,25 @@ Param(
     [Parameter(Mandatory = $true)][string]$S3BucketName,
     [Parameter(Mandatory = $true)][string]$S3KeyPrefix,
     [Parameter(Mandatory = $true)][string]$VPCCIDR,
-    [Parameter(Mandatory = $true)][String][ValidateSet('Yes', 'No')][string]$CreateDefaultOUs
+    [Parameter(Mandatory = $true)][ValidateSet('Yes', 'No')][string]$CreateDefaultOUs,
+    [Parameter(Mandatory = $true)][int]$TombstoneLifetime,
+    [Parameter(Mandatory = $true)][int]$DeletedObjectLifetime
 )
 
 #==================================================
 # Variables
 #==================================================
+
 $ComputerName = $Env:ComputerName
-$Domain = Get-ADDomain
+
+Write-Output 'Getting AD domain'
+Try {
+    $Domain = Get-ADDomain -ErrorAction Stop
+} Catch [System.Exception] {
+    Write-Output "Failed to get AD domain $_"
+    Exit 1
+}
+
 $BaseDn = $Domain | Select-Object -ExpandProperty 'DistinguishedName'
 $WMIFilters = @(
     @{
@@ -64,21 +74,29 @@ $GPOs = @(
         )
     }
 )
+$OUs = @(
+    'Domain Elevated Accounts',
+    'Domain Users',
+    'Domain Computers',
+    'Domain Servers',
+    'Domain Service Accounts',
+    'Domain Groups'
+)
 
 #==================================================
 # Functions
 #==================================================
-Function Set-DnsScavengingAllZones {
-    Trap [System.Exception] {
-        Write-Output "Failed set scavenging $_.FullyQualifiedErrorId"
-        Write-Output "Failed set scavenging $_.Exception.Message"
-        Write-Output "Failed set scavenging $_.ScriptStackTrace"
-        Break
-    }
 
+Function Set-DnsScavengingAllZones {
     Import-Module -Name 'DnsServer'
-    Set-DnsServerScavenging -ScavengingState $true -ScavengingInterval '7.00:00:00'
-    Set-DnsServerScavenging -ApplyOnAllZones -RefreshInterval '7.00:00:00' -NoRefreshInterval '7.00:00:00' -ScavengingState $True -ScavengingInterval '7.00:00:00'
+    
+    Try {
+        Set-DnsServerScavenging -ScavengingState $true -ScavengingInterval '7.00:00:00' -ErrorAction Stop
+        Set-DnsServerScavenging -ApplyOnAllZones -RefreshInterval '7.00:00:00' -NoRefreshInterval '7.00:00:00' -ScavengingState $True -ScavengingInterval '7.00:00:00' -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to set DNS Scavenging $_"
+        Exit 1
+    }
 }
 
 Function Get-GPWmiFilter {
@@ -86,19 +104,20 @@ Function Get-GPWmiFilter {
     Param
     (
         [Parameter(Mandatory = $True)][string]$Name
-    )
-    Trap [System.Exception] {
-        Write-Output "Failed to get WMI Filter $_.FullyQualifiedErrorId"
-        Write-Output "Failed to get WMI Filter $_.Exception.Message"
-        Write-Output "Failed to get WMI Filter $_.ScriptStackTrace"
-        Break
-    }
-    
+    )  
+
     $Properties = 'msWMI-Name', 'msWMI-Parm1', 'msWMI-Parm2', 'msWMI-ID'
     $ldapFilter = "(&(objectClass=msWMI-Som)(msWMI-Name=$Name))"
-    $WmiObject = Get-ADObject -LDAPFilter $ldapFilter -Properties $Properties -ErrorAction Stop
+    
+    Try {
+        $WmiObject = Get-ADObject -LDAPFilter $ldapFilter -Properties $Properties -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to get WMI Object $_"
+        Exit 1
+    }
+
     If ($WmiObject) { 
-        $GpoDomain = New-Object -Type Microsoft.GroupPolicy.GPDomain
+        $GpoDomain = New-Object -Type 'Microsoft.GroupPolicy.GPDomain'
         $WmiObject | ForEach-Object {
             $Path = 'MSFT_SomFilter.Domain="' + $GpoDomain.DomainName + '",ID="' + $WmiObject.Name + '"'
             $Filter = $GpoDomain.GetWmiFilter($Path)
@@ -118,13 +137,14 @@ Function New-GPWmiFilter {
         [Parameter(Mandatory = $True)][string]$Expression,
         [Parameter(Mandatory = $False)][string]$Description
     )
-    Trap [System.Exception] {
-        Write-Output "Failed to create WMI Filter $_.FullyQualifiedErrorId"
-        Write-Output "Failed to create WMI Filter $_.Exception.Message"
-        Write-Output "Failed to create WMI Filter $_.ScriptStackTrace"
-        Break
+
+    Try {
+        $DefaultNamingContext = Get-ADRootDSE -ErrorAction Stop | Select-Object -ExpandProperty 'DefaultNamingContext'
+    } Catch [System.Exception] {
+        Write-Output "Failed to get RootDSE $_"
+        Exit 1
     }
-    $DefaultNamingContext = (Get-ADRootDSE -ErrorAction Stop).DefaultNamingContext 
+
     $CreationDate = (Get-Date).ToUniversalTime().ToString('yyyyMMddhhmmss.ffffff-000')
     $GUID = "{$([System.Guid]::NewGuid())}"
     $DistinguishedName = "CN=$GUID,CN=SOM,CN=WMIPolicy,CN=System,$DefaultNamingContext"
@@ -143,8 +163,14 @@ Function New-GPWmiFilter {
         'msWMI-CreationDate'     = $CreationDate
     }
     $Path = ("CN=SOM,CN=WMIPolicy,CN=System,$DefaultNamingContext")
+
     If ($GUID -and $DefaultNamingContext) {
-        New-ADObject -Name $GUID -Type 'msWMI-Som' -Path $Path -OtherAttributes $Attributes -ErrorAction Stop
+        Try {
+            New-ADObject -Name $GUID -Type 'msWMI-Som' -Path $Path -OtherAttributes $Attributes -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to create WMI Filter $_"
+            Exit 1
+        }
     }
 }
 
@@ -169,19 +195,25 @@ Function Import-GroupPolicy {
         [String]$WmiFilterName,
         [String]$BackUpGpoPath
     )
-    Trap [System.Exception] {
-        Write-Output "Failed to import GPO $_.FullyQualifiedErrorId"
-        Write-Output "Failed to import GPO $_.Exception.Message"
-        Write-Output "Failed to import GPO $_.ScriptStackTrace"
-        Break
+  
+    Try {
+        $Gpo = Get-GPO -Name $BackupGpoName -ErrorAction SilentlyContinue
+    } Catch [System.Exception] {
+        Write-Output "Failed to get Group Policy $BackupGpoName $_"
+        Exit 1
     }
-    
-    $Gpo = Get-GPO -Name $BackupGpoName -ErrorAction SilentlyContinue
+
     If (-Not $Gpo) {
-        $Gpo = New-GPO $BackupGpoName -ErrorAction Stop
+        Try {
+            $Gpo = New-GPO $BackupGpoName -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to create Group Policy $BackupGpoName $_"
+            Exit 1
+        }
     } Else {
         Write-Output "GPO '$BackupGpoName' already exists. Skipping creation."
     }
+
     If ($WmiFilterName) {
         $WmiFilter = Get-GPWmiFilter -Name $WmiFilterName -ErrorAction SilentlyContinue
         If ($WmiFilter) {
@@ -190,7 +222,13 @@ Function Import-GroupPolicy {
             Write-Output "WMI Filter '$WmiFilterName' does not exist."
         }
     }
-    Import-GPO -BackupGpoName $BackupGpoName -TargetName $BackupGpoName -Path $BackUpGpoPath -ErrorAction Stop
+
+    Try {
+        Import-GPO -BackupGpoName $BackupGpoName -TargetName $BackupGpoName -Path $BackUpGpoPath -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to import Group Policy $BackupGpoName $_"
+        Exit 1
+    }
 }
 
 Function Set-GroupPolicyLink {
@@ -200,27 +238,93 @@ Function Set-GroupPolicyLink {
         [String][ValidateSet('Yes', 'No')]$LinkEnabled = 'Yes',
         [Parameter(Mandatory = $True)][Int32][ValidateRange(0, 10)]$Order
     )
-    Trap [System.Exception] {
-        Write-Output "Failed to set GPO link $_.FullyQualifiedErrorId"
-        Write-Output "Failed to set GPO link $_.Exception.Message"
-        Write-Output "Failed to set GPO link $_.ScriptStackTrace"
-        Break
+
+    Try {
+        $GpLinks = Get-ADObject -Filter { DistinguishedName -eq $Target } -Properties 'gplink' -ErrorAction SilentlyContinue
+    } Catch [System.Exception] {
+        Write-Output "Failed to get Group Policy Links for $Target $_"
+        Exit 1
     }
-    $DomainInfo = Get-ADDomain -ErrorAction Stop
-    $BaseDn = $DomainInfo.DistinguishedName
-    $GpLinks = Get-ADObject -Filter { DistinguishedName -eq $Target } -Properties 'gplink' -ErrorAction SilentlyContinue
-    $BackupGpo = Get-GPO -Name $BackupGpoName -ErrorAction Stop
+
+    Try {
+        $BackupGpo = Get-GPO -Name $BackupGpoName -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to get GPO $BackupGpoName $_"
+        Exit 1
+    }
+
     $BackupGpoId = $BackupGpo.ID.Guid
+
     If ($GpLinks.gplink -notlike "*CN={$BackupGpoId},CN=Policies,CN=System,$BaseDn*") {
-        New-GPLink -Name $BackupGpoName -Target $Target -Order $Order -ErrorAction Stop 
+        Try {
+            New-GPLink -Name $BackupGpoName -Target $Target -Order $Order -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to create Group Policy Link for $BackupGpoName $_"
+            Exit 1
+        }
     } Else {
-        Set-GPLink -Name $BackupGpoName -Target $Target -LinkEnabled $LinkEnabled -Order $Order -ErrorAction Stop
+        Try {
+            Set-GPLink -Name $BackupGpoName -Target $Target -LinkEnabled $LinkEnabled -Order $Order -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to set Group Policy Link for $BackupGpoName $_"
+            Exit 1
+        }
     }
+}
+
+Function Set-DefaultContainer {
+    [CmdletBinding()]
+    Param (
+        [String]$ComputerDN,
+        [String]$UserDN,
+        [String]$DomainDn
+    )
+    Try {
+        $WellKnownObjects = Get-ADObject -Identity $DomainDn -Properties 'wellKnownObjects' -ErrorAction Stop | Select-Object -ExpandProperty 'wellKnownObjects'
+    } Catch [System.Exception] {
+        Write-Output "Failed to get get Well Known Objects $_"
+        Exit 1
+    }
+    $CurrentUserWko = $WellKnownObjects | Where-Object { $_ -match 'Users' }
+    $CurrentComputerWko = $WellKnownObjects | Where-Object { $_ -match 'Computer' }
+    If ($CurrentUserWko -and $CurrentComputerWko) {
+        $DataUsers = $CurrentUserWko.split(':')
+        $DataComputers = $CurrentComputerWko.split(':')
+        $NewUserWko = $DataUsers[0] + ':' + $DataUsers[1] + ':' + $DataUsers[2] + ':' + $UserDN 
+        $NewComputerWko = $DataComputers[0] + ':' + $DataComputers[1] + ':' + $DataComputers[2] + ':' + $ComputerDN
+        Try {
+            Set-ADObject $DomainDn -add @{wellKnownObjects = $NewUserWko } -Remove @{wellKnownObjects = $CurrentUserWko } -ErrorAction Stop
+            Set-ADObject $DomainDn -add @{wellKnownObjects = $NewComputerWko } -Remove @{wellKnownObjects = $CurrentComputerWko } -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to get set default user and or computer container $_"
+            Exit 1
+        }
+    } Else {
+        & redircmp.exe $ComputerDN
+        & redirusr.exe $UserDN
+    }
+}
+
+Function Update-PolMigTable {
+    $FQDN = $Domain | Select-Object -ExpandProperty 'Forest'
+    $PolMigTablePath = 'C:\AWSQuickstart\GPOs\PolMigTable.migtable'
+
+    Write-Output "Getting GPO Migration Table content $_"
+    Try {
+        [xml]$PolMigTable = Get-Content -Path $PolMigTablePath -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to get GPO Migration Table content $_"
+        Exit 1
+    }
+    #$PolMigTableContentExample = $PolMigTable.MigrationTable.Mapping | Where-Object { $_.Source -eq 'Example@model.com' }
+    #$PolMigTableContentExample.destination = "Example@$FQDN"
+    $PolMigTable.Save($PolMigTablePath)
 }
 
 #==================================================
 # Main
 #==================================================
+
 Write-Output 'Enabling Certificate Auto-Enrollment Policy'
 Try {
     Set-CertificateAutoEnrollmentPolicy -ExpirationPercentage 10 -PolicyState 'Enabled' -EnableTemplateCheck -EnableMyStoreManagement -StoreName 'MY' -Context 'Machine' -ErrorAction Stop
@@ -254,6 +358,9 @@ If ($ComputerName -eq $Pdce) {
     Write-Output 'Enabling DNS Scavenging on all DNS zones'
     Set-DnsScavengingAllZones 
 
+    # Future Use Write-Output 'Updating GPO Migration Table'
+    # Future Use Update-PolMigTable
+
     Write-Output 'Importing GPO WMI filters'
     Foreach ($WMIFilter in $WMIFilters) {
         Import-WMIFilter @WMIFilter
@@ -284,14 +391,7 @@ If ($ComputerName -eq $Pdce) {
     }
 
     If ($CreateDefaultOUs -eq 'Yes') {
-        $OUs = @(
-            'Domain Elevated Accounts',
-            'Domain Users',
-            'Domain Computers',
-            'Domain Servers',
-            'Domain Service Accounts',
-            'Domain Groups'
-        )
+        Write-Output 'Creating Default OUs'
         Foreach ($OU in $OUs) {
             Try {
                 $OuPresent = Get-ADOrganizationalUnit -Identity "OU=$OU,$BaseDn" -ErrorAction SilentlyContinue
@@ -306,8 +406,40 @@ If ($ComputerName -eq $Pdce) {
                 }
             }
         }
+        Write-Output 'Setting Default User and Computers Container to Domain Users and Domain Computers OUs'
+        Set-DefaultContainer -ComputerDN "OU=Domain Computers,$BaseDn" -UserDN "OU=Domain Users,$BaseDn" -DomainDn $BaseDn
+    }
+
+    If ($TombstoneLifetime -ne 180) {
+        Write-Output "Setting TombstoneLifetime to $TombstoneLifetime"
+        Try {
+            Set-ADObject -Identity "CN=Directory Service,CN=Windows NT,CN=Services,CN=Configuration,$BaseDN" -Partition "CN=Configuration,$BaseDN" -Replace:@{'tombstonelifetime' = $TombstoneLifetime } -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to set TombstoneLifetime $_"
+        }
+    }
+
+    If ($DeletedObjectLifetime -ne 180) {
+        Write-Output "Setting DeletedObjectLifetime to $DeletedObjectLifetime"
+        Try {
+            Set-ADObject -Identity "CN=Directory Service,CN=Windows NT,CN=Services,CN=Configuration,$BaseDN" -Partition "CN=Configuration,$BaseDN" -Replace:@{'msDS-DeletedObjectLifetime' = $DeletedObjectLifetime } -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to set DeletedObjectLifetime $_"
+        }
     }
 }
+
+Write-Output 'Running Group Policy update'
+Invoke-GPUpdate -RandomDelayInMinutes '0' -Force
+
+Write-Output 'Restarting Time Service'
+Restart-Service -Name 'W32Time'
+
+Write-Output 'Resyncing Time Service'
+& w32tm.exe /resync > $null
+
+Write-Output 'Registering DNS Client'
+Register-DnsClient
 
 Write-Output 'Re-enabling Windows Firewall'
 Try {
@@ -344,12 +476,3 @@ Try {
 } Catch [System.Exception] {
     Write-Output "Failed remove self signed cert $_"
 }
-
-Write-Output 'Running Group Policy update'
-Invoke-GPUpdate -RandomDelayInMinutes '0' -Force
-
-Write-Output 'Restarting Time Service'
-Restart-Service -Name 'W32Time'
-
-Write-Output 'Resyncing Time Service'
-& w32tm.exe /resync > $null
