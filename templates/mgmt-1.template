@@ -160,7 +160,7 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
-  VPCID:
+  VPCID: # VPCID is required as it is being used in the Assertion Rule
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
 Rules:
@@ -208,13 +208,26 @@ Resources:
                   - 'arn:${AWS::Partition}:s3:::${S3Bucket}/${QSS3KeyPrefix}*'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
               - Effect: Allow
+                Action: ssm:StartAutomationExecution
+                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${AWSQuickstartMgmt}:$DEFAULT
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:*:document/AWS-RunRemoteScript
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:*:document/AWS-RunPowerShellScript
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+                Condition:
+                  StringEquals:
+                    'ssm:ResourceTag/aws:cloudformation:stack-name': !Ref AWS::StackName
+              - Sid: ReadOperations
+                Effect: Allow
                 Action:
                   - ec2:DescribeInstances
                   - ssm:DescribeInstanceInformation
                   - ssm:ListCommands
                   - ssm:ListCommandInvocations
-                  - ssm:SendCommand
-                  - ssm:StartAutomationExecution
                 Resource: '*'
               - Effect: Allow
                 Action: cloudformation:SignalResource

@@ -941,13 +941,31 @@ Resources:
                   - 'arn:${AWS::Partition}:s3:::${S3Bucket}/${QSS3KeyPrefix}*'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
               - Effect: Allow
+                Action: ssm:StartAutomationExecution
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${AWSQuickstartActiveDirectoryDS}:$DEFAULT
+                  - !If
+                    - DoJoinAndPromote
+                    - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${AWSQuickstartActiveDirectoryDSPromote}:$DEFAULT
+                    - !Ref AWS::NoValue
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:*:document/AWS-RunRemoteScript
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:*:document/AWS-RunPowerShellScript
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+                Condition:
+                  StringEquals:
+                    'ssm:ResourceTag/aws:cloudformation:stack-name': !Ref AWS::StackName
+              - Sid: ReadOperations
+                Effect: Allow
                 Action:
                   - ec2:DescribeInstances
                   - ssm:DescribeInstanceInformation
                   - ssm:ListCommands
                   - ssm:ListCommandInvocations
-                  - ssm:SendCommand
-                  - ssm:StartAutomationExecution
                 Resource: '*'
               - Effect: Allow
                 Action: cloudformation:SignalResource
