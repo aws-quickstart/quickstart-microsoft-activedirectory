@@ -77,7 +77,7 @@ Try {
     Exit 1
 }
 
-Write-Output "Converting $AdminSecret from JSON"
+Write-Output 'Converting AdminSecret from JSON'
 Try {
     $ADAdminPassword = ConvertFrom-Json -InputObject $AdminSecret -ErrorAction Stop
 } Catch [System.Exception] {
