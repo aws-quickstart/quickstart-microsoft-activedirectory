@@ -608,7 +608,8 @@ Resources:
               InstanceIds:
                 - '{{dc1InstanceId.InstanceId}}'
               CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'false'
+                CloudWatchOutputEnabled: 'true'
+                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
               Parameters:
                 sourceType: 'S3'
                 sourceInfo: !Sub
@@ -676,7 +677,8 @@ Resources:
               InstanceIds:
                 - '{{dc2InstanceId.InstanceId}}'
               CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'false'
+                CloudWatchOutputEnabled: 'true'
+                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
               Parameters:
                 sourceType: 'S3'
                 sourceInfo: !Sub
@@ -725,7 +727,8 @@ Resources:
               InstanceIds:
                 - '{{dc2InstanceId.InstanceId}}'
               CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'false'
+                CloudWatchOutputEnabled: 'true'
+                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
               Parameters:
                 sourceType: S3
                 sourceInfo: !Sub
