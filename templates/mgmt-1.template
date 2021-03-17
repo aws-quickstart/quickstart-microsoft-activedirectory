@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  This template creates 1 Windows 2019 Server Enterpsie CA into a private subnet inside a VPC. **WARNING** This template creates Amazon EC2 Windows
+  This template creates 1 Windows Server 2019 Enterprise CA in a private subnet inside a VPC. **WARNING** This template creates an Amazon EC2 Windows
   instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6rae5)
 Metadata:
   AWS::CloudFormation::Interface:
