@@ -3,7 +3,7 @@ Description: >-
   This template creates a managed Microsoft AD Directory Service into private subnets in separate Availability Zones inside a VPC. The default Domain
   Administrator user is 'admin'. For adding members to the domain, ensure that they are launched into the domain member security group created by this
   template and then configure them to use the AD instances fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2
-  Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6rad4)
+  Windows instances and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6rad4)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Launch AWS Managed Active Directory into an existing VPC'
@@ -344,7 +344,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub 'ADAdminSecret-${AWS::StackName}'
-      Description: Admin User Seccrets for Manged AD Quick Start
+      Description: Admin User Secrets for Managed AD Quick Start
       SecretString: !Sub '{"username":"Admin","password":"${DomainAdminPassword}"}'
   MicrosoftAD:
     Type: AWS::DirectoryService::MicrosoftAD
