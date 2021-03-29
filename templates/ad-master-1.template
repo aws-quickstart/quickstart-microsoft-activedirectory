@@ -217,8 +217,7 @@ Parameters:
     Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2 Availability Zone 2
     Type: String
   AvailabilityZones:
-    Description:
-      'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
+    Description: 'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
     Type: List<AWS::EC2::AvailabilityZone::Name>
   CaDataDriveSizeGiB:
     Default: '2'
@@ -230,7 +229,7 @@ Parameters:
       - SHA384
       - SHA512
     Default: SHA256
-    Description: CA(s) Hash Algorithm for Siging Certificates
+    Description: CA(s) Hash Algorithm for Signing Certificates
     Type: String
   CaKeyLength:
     AllowedValues:
@@ -259,9 +258,7 @@ Parameters:
       - 'Yes'
       - 'No'
     Default: 'No'
-    Description:
-      Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default
-      users and computers containers to Domain Users and Domain Computers
+    Description: Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default users and computers containers to Domain Users and Domain Computers
     Type: String
   DHCPOptionSet:
     AllowedValues:
@@ -386,12 +383,9 @@ Parameters:
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription:
-      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Default: aws-quickstart
-    Description:
-      S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-)
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
@@ -401,9 +395,7 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description:
-      S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/)
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
   RDGWCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
@@ -428,9 +420,7 @@ Parameters:
   S3CRLBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: examplebucket
-    Description:
-      S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or
-      end with a hyphen (-)
+    Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   TombstoneLifetime:
     Default: '180'
