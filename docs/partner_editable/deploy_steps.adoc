@@ -31,22 +31,22 @@ Deploying self-managed Active Directory takes about {deployment_time}. Deploying
 +
 [cols="3,1"]
 |===
-^|http://qs_launch_permalink[Deploy self-managed AD into a new VPC on AWS^]
-^|http://https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-master-1.template[View template^]
+^|https://fwd.aws/EdwmE[Deploy self-managed AD into a new VPC on AWS^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-1.template[View template^]
 
-^|http://qs_launch_permalink[Deploy self-managed AD into an existing VPC on AWS^]
+^|https://fwd.aws/eKBrm[Deploy self-managed AD into an existing VPC on AWS^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-1.template[View template^]
 
-^|http://qs_launch_permalink[Deploy EC2 instances to extend on-premises AD into a new VPC on AWS^]
-^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-master-2.template[View template^]
+^|https://fwd.aws/AEBD7[Deploy EC2 instances to extend on-premises AD into a new VPC on AWS^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-2.template[View template^]
 
-^|http://qs_launch_permalink[Deploy EC2 instances to extend on-premises AD into an existing VPC on AWS^]
+^|https://fwd.aws/KGgYW[Deploy EC2 instances to extend on-premises AD into an existing VPC on AWS^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-2.template[View template^]
 
-^|http://qs_launch_permalink[Deploy AWS Managed Directory Service into a new VPC on AWS^]
-^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-master-3.template[View template^]
+^|https://fwd.aws/EqwrE[Deploy AWS Managed Directory Service into a new VPC on AWS^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-3.template[View template^]
 
-^|http://qs_launch_permalink[Deploy AWS Managed Directory Service into an existing VPC on AWS^]
+^|https://fwd.aws/RgvXr[Deploy AWS Managed Directory Service into an existing VPC on AWS^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-3.template[View template^]
 |===
 +

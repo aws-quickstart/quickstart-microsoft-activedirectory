@@ -4,7 +4,7 @@
 
 AWS provides a comprehensive set of services and tools for deploying Microsoft Windows-based workloads on its reliable and secure cloud infrastructure. Microsoft Active Directory Domain Services (AD DS) and Domain Name System (DNS) are core Windows services that provide the foundation for many enterprise class Microsoft-based solutions, including Microsoft SharePoint, Microsoft Exchange, and .NET applications.
 
-This Quick Start is for organizations running workloads in the AWS Cloud that require secure, low-latency connectivity to AD DS and DNS services. After reading this guide, IT infrastructure personnel should have a good understanding of how to design and deploy a solution to launch AD DS in the AWS Cloud, or extend their on-premises AD DS into the AWS Cloud.
+This Quick Start is for organizations running workloads in the AWS Cloud that require secure, low-latency connectivity to AD DS and DNS services. After reading this guide, IT infrastructure personnel should have a good understanding of how to design and deploy a solution to launch AD DS in the AWS Cloud, or extend their on-premises AD DS into the AWS Cloud. The Quick Start optionally deploys a one- or two-tier https://aws-quickstart.github.io/quickstart-microsoft-pki/[Microsoft Public Key Infrastructure].
 
 This Quick Start assumes that you’re already familiar with Active Directory and DNS. For details, consult the Microsoft product documentation.
 

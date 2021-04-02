@@ -1,12 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
   This template creates a VPC infrastructure for a multi-AZ, multi-tier deployment of a Windows based Application infrastructure. It installs 2
-  Windows 2019 Active Directory Domain Controllers into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway
-  instances and managed NAT gateways into the public subnet for each Availability Zone. The default Domain Administrator password will be the one
-  retrieved from the instance.  For adding members to the domain, ensure that they are launched into the domain member security group created by this
-  template and then configure them to use the AD instances fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2
-  Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.
+  Windows Server instances into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway instances and managed
+  NAT gateways into the public subnet for each Availability Zone. After extending your on-premises network to the VPC, you can promote the Windows
+  Server instances to Domain Controllers in your AD forest. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You
+  will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: 'Parameters for extenting on-premises Active Directory into a new VPC'
+    Order: '3'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -15,7 +17,6 @@ Metadata:
           - AvailabilityZones
           - NumberOfAZs
           - VPCCIDR
-          - DHCPOptionSet
           - PrivateSubnet1CIDR
           - PrivateSubnet2CIDR
           - PrivateSubnet3CIDR
@@ -25,10 +26,9 @@ Metadata:
       - Label:
           default: Amazon EC2 configuration
         Parameters:
-          - ADServer1InstanceType
+          - ADServerInstanceType
           - ADServer1NetBIOSName
           - ADServer1PrivateIP
-          - ADServer2InstanceType
           - ADServer2NetBIOSName
           - ADServer2PrivateIP
           - DataDriveSizeGiB
@@ -36,30 +36,15 @@ Metadata:
       - Label:
           default: Microsoft Active Directory Domain Services configuration
         Parameters:
-          - DomainAdminUser
-          - DomainAdminPassword
+          - ExistingDomainController1IP
+          - ExistingDomainController2IP
           - DomainDNSName
           - DomainNetBIOSName
-          - CreateDefaultOUs
-          - TombstoneLifetime
-          - DeletedObjectLifetime
-      - Label:
-          default: Microsoft Active Directory Certificate Services configuration
-        Parameters:
-          - PKI
-          - CaServerInstanceType
-          - CaDataDriveSizeGiB
-          - OrCaServerNetBIOSName
-          - EntCaServerNetBIOSName
-          - CaKeyLength
-          - CaHashAlgorithm
-          - OrCaValidityPeriodUnits
-          - CaValidityPeriodUnits
-          - UseS3ForCRL
-          - S3CRLBucketName
       - Label:
           default: Microsoft Remote Desktop Gateway configuration
         Parameters:
+          - AdminUser
+          - AdminPassword
           - NumberOfRDGWHosts
           - RDGWInstanceType
           - RDGWCIDR
@@ -70,60 +55,38 @@ Metadata:
           - QSS3BucketRegion
           - QSS3KeyPrefix
     ParameterLabels:
-      ADServer1InstanceType:
-        default: Domain Controller 1 Instance Type
       ADServer1NetBIOSName:
         default: Domain Controller 1 NetBIOS Name
       ADServer1PrivateIP:
         default: Domain Controller 1 Private IP Address
-      ADServer2InstanceType:
-        default: Domain Controller 2 Instance Type
       ADServer2NetBIOSName:
         default: Domain Controller 2 NetBIOS Name
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
+      ADServerInstanceType:
+        default: Domain Controllers Instance Type
+      AdminPassword:
+        default: Local Administrator Password
+      AdminUser:
+        default: Local Administrator User Name
       AvailabilityZones:
         default: Availability Zones
-      CaDataDriveSizeGiB:
-        default: CA Data Drive Size
-      CaHashAlgorithm:
-        default: CA Hash Algorithm
-      CaKeyLength:
-        default: CA Key Length
-      CaServerInstanceType:
-        default: CA Instance Type
-      CaValidityPeriodUnits:
-        default: Enterprise Root or Subordinate CA Certificate Validity Period in Years
-      CreateDefaultOUs:
-        default: Create Default OUs
-      DHCPOptionSet:
-        default: Create a DHCP Options set
       DataDriveSizeGiB:
         default: SYSVOL and NTDS and Data Drive Size
-      DeletedObjectLifetime:
-        default: Set new Deleted Objects Lifetime
-      DomainAdminPassword:
-        default: Alternate Domain Admin Password
-      DomainAdminUser:
-        default: Alternate Domain Admin User Name
       DomainDNSName:
         default: Domain DNS Name
       DomainNetBIOSName:
         default: Domain NetBIOS Name
-      EntCaServerNetBIOSName:
-        default: Enterprise Root or Subordinate CA NetBIOS Name
+      ExistingDomainController1IP:
+        default: IP the Instance will be used for DNS (Must be accessible)
+      ExistingDomainController2IP:
+        default: IP the Instance will be used for DNS (Must be accessible)
       KeyPairName:
         default: Key Pair Name
       NumberOfAZs:
         default: Number of Availability Zones
       NumberOfRDGWHosts:
         default: Number of RDGW Hosts
-      OrCaServerNetBIOSName:
-        default: Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
-      OrCaValidityPeriodUnits:
-        default: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
-      PKI:
-        default: Deploy PKI Infrastructure
       PrivateSubnet1CIDR:
         default: Private Subnet 1 CIDR
       PrivateSubnet2CIDR:
@@ -146,45 +109,34 @@ Metadata:
         default: Allowed Remote Desktop Gateway External Access CIDR
       RDGWInstanceType:
         default: Remote Desktop Gateway Instance Type
-      S3CRLBucketName:
-        default: CA CRL S3 Bucket Name
-      TombstoneLifetime:
-        default: Set new Tombstone Lifetime
-      UseS3ForCRL:
-        default: Use S3 for CA CRL Location
       VPCCIDR:
         default: VPC CIDR
 Parameters:
-  ADServer1InstanceType:
-    AllowedValues:
-      - t2.medium
-      - t3.medium
-      - t2.large
-      - t3.large
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
-      - m5.large
-      - m5.xlarge
-      - m5.2xlarge
-      - m5.4xlarge
-    Default: m5.large
-    Description: Amazon EC2 instance type for the first Active Directory Domain Controller instance
-    Type: String
   ADServer1NetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: DC1
-    Description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
+    Default: DC3
+    Description: NetBIOS name of the first additional Active Directory Domain Controller (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer1PrivateIP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Default: 10.0.0.10
-    Description: Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1
+    Default: 10.0.0.11
+    Description: Fixed private IP for the first additional Active Directory Domain Controller located in subnet 1
     Type: String
-  ADServer2InstanceType:
+  ADServer2NetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: DC4
+    Description: NetBIOS name of the second additional Active Directory Domain Controller (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  ADServer2PrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.32.11
+    Description: Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2
+    Type: String
+  ADServerInstanceType:
     AllowedValues:
       - t2.medium
       - t3.medium
@@ -199,116 +151,54 @@ Parameters:
       - m5.2xlarge
       - m5.4xlarge
     Default: m5.large
-    Description: Amazon EC2 instance type for the second Active Directory Domain Controller instance
+    Description: Amazon EC2 instance type for Active Directory Controller instances
     Type: String
-  ADServer2NetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: DC2
-    Description: NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)
-    MaxLength: '15'
-    MinLength: '1'
+  AdminPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description: Password for for the new local administrator account containing letters, numbers and symbols
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
     Type: String
-  ADServer2PrivateIP:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Default: 10.0.32.10
-    Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2 Availability Zone 2
+  AdminUser:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: StackAdmin
+    Description: User name for the new local administrator account This is separate from the default "Administrator" account
+    MaxLength: '25'
+    MinLength: '5'
     Type: String
   AvailabilityZones:
     Description:
       'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
     Type: List<AWS::EC2::AvailabilityZone::Name>
-  CaDataDriveSizeGiB:
-    Default: '2'
-    Description: Size of the data drive in GiB for the CA instance(s)
-    Type: Number
-  CaHashAlgorithm:
-    AllowedValues:
-      - SHA256
-      - SHA384
-      - SHA512
-    Default: SHA256
-    Description: CA(s) Hash Algorithm for Siging Certificates
-    Type: String
-  CaKeyLength:
-    AllowedValues:
-      - '2048'
-      - '4096'
-    Default: '2048'
-    Description: CA(s) Cryptographic Provider Key Length
-    Type: String
-  CaServerInstanceType:
-    AllowedValues:
-      - t2.small
-      - t3.small
-      - t2.medium
-      - t3.medium
-      - t2.large
-      - t3.large
-    Default: t3.medium
-    Description: Amazon EC2 instance type for the CA instance(s)
-    Type: String
-  CaValidityPeriodUnits:
-    Default: '5'
-    Description: Validity Period in Years
-    Type: String
-  CreateDefaultOUs:
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-    Default: 'No'
-    Description:
-      Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default
-      users and computers containers to Domain Users and Domain Computers
-    Type: String
-  DHCPOptionSet:
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-    Default: 'Yes'
-    Description: Do you want to create and apply a new DHCP Options Set
-    Type: String
   DataDriveSizeGiB:
     Default: '10'
     Description: Size of SYSVOL and NTDS data drive in GiB
     Type: Number
-  DeletedObjectLifetime:
-    Default: '180'
-    Description: The number of days before a deleted object is removed from the Active Directory recycling bin, minimum number is 2
-    Type: Number
-  DomainAdminPassword:
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    Description: Password for the account named above. Must be at least 8 characters containing letters, numbers and symbols
-    MaxLength: '32'
-    MinLength: '8'
-    NoEcho: 'true'
-    Type: String
-  DomainAdminUser:
-    AllowedPattern: '[a-zA-Z0-9]*'
-    Default: Admin
-    Description: User name for the account that will be added as a Domain Administrator. This is separate from the default "Administrator" account
-    MaxLength: '25'
-    MinLength: '5'
-    Type: String
   DomainDNSName:
     AllowedPattern: '[a-zA-Z0-9\-]+\..+'
     Default: example.com
-    Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
+    Description: Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com example.com
     MaxLength: '255'
     MinLength: '2'
     Type: String
   DomainNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: example
-    Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
+    Description:
+      NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
     Type: String
-  EntCaServerNetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: ENTCA1
-    Description: NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)
-    MaxLength: '15'
-    MinLength: '1'
+  ExistingDomainController1IP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.10
+    Description: IP of DNS server that can resolve domain (Must be accessible)
+    Type: String
+  ExistingDomainController2IP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.32.10
+    Description: IP of DNS server that can resolve domain (Must be accessible)
     Type: String
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
@@ -328,26 +218,7 @@ Parameters:
       - '3'
       - '4'
     Default: '1'
-    Description: Enter the number of Remote Desktop Gateway instances to create
-    Type: String
-  OrCaServerNetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: ORCA1
-    Description: NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)
-    MaxLength: '15'
-    MinLength: '1'
-    Type: String
-  OrCaValidityPeriodUnits:
-    Default: '10'
-    Description: Validity Period in Years (Only Used For Two Tier PKI)
-    Type: String
-  PKI:
-    AllowedValues:
-      - One-Tier
-      - Two-Tier
-      - 'No'
-    Default: 'No'
-    Description: Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure
+    Description: Enter the number of Remote Desktop Gateway hosts to create
     Type: String
   PrivateSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
@@ -384,11 +255,11 @@ Parameters:
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription:
-      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Default: aws-quickstart
     Description:
-      S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-)
+      S3 bucket name for CA CRL storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or
+      end with a hyphen (-)
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
@@ -422,24 +293,6 @@ Parameters:
     Default: t3.large
     Description: Amazon EC2 instance type for the Remote Desktop Gateway instances
     Type: String
-  S3CRLBucketName:
-    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    Default: examplebucket
-    Description:
-      S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or
-      end with a hyphen (-)
-    Type: String
-  TombstoneLifetime:
-    Default: '180'
-    Description: The number of days before a deleted object is removed from Active Directory, minimum number is 2
-    Type: Number
-  UseS3ForCRL:
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-    Default: 'No'
-    Description: Store CA CRL(s) in an S3 bucket
-    Type: String
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
@@ -450,21 +303,6 @@ Conditions:
   IncludeRDGW: !Not [!Equals [!Ref NumberOfRDGWHosts, '0']]
   IsTwoAz: !Equals [!Ref 'NumberOfAZs', '2']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
-Rules:
-  CheckSupportedInstances:
-    RuleCondition: !Or
-      - !Contains [[m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge], !Ref 'ADServer1InstanceType']
-      - !Contains [[m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge], !Ref 'ADServer2InstanceType']
-    Assertions:
-      - Assert: !Not [!Contains [[eu-west-3], !Ref 'AWS::Region']]
-        AssertDescription: M4 instances are not available in the Paris region
-  S3CRLBucketNameValidation:
-    RuleCondition: !And
-      - !Equals [!Ref UseS3ForCRL, 'Yes']
-      - !Not [!Equals [!Ref PKI, 'No']]
-    Assertions:
-      - AssertDescription: CRL BucketName cannot must be valid BucketName
-        Assert: !Not [!Equals [!Ref S3CRLBucketName, 'examplebucket']]
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -488,58 +326,42 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-1.template'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-2.template'
         - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        ADServer1InstanceType: !Ref 'ADServer1InstanceType'
         ADServer1NetBIOSName: !Ref 'ADServer1NetBIOSName'
         ADServer1PrivateIP: !Ref 'ADServer1PrivateIP'
-        ADServer2InstanceType: !Ref 'ADServer2InstanceType'
         ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
         ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
-        CaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        CaKeyLength: !Ref 'CaKeyLength'
-        CaServerInstanceType: !Ref 'CaServerInstanceType'
-        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        CreateDefaultOUs: !Ref 'CreateDefaultOUs'
-        DHCPOptionSet: !Ref 'DHCPOptionSet'
+        ADServerInstanceType: !Ref 'ADServerInstanceType'
         DataDriveSizeGiB: !Ref 'DataDriveSizeGiB'
-        DeletedObjectLifetime: !Ref 'DeletedObjectLifetime'
-        DomainAdminPassword: !Ref 'DomainAdminPassword'
-        DomainAdminUser: !Ref 'DomainAdminUser'
         DomainDNSName: !Ref 'DomainDNSName'
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
+        ExistingDomainController1IP: !Ref 'ExistingDomainController1IP'
+        ExistingDomainController2IP: !Ref 'ExistingDomainController2IP'
+        JoinAndPromote: 'No'
         KeyPairName: !Ref 'KeyPairName'
-        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
-        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
-        PKI: !Ref 'PKI'
-        PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
-        PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
-        S3CRLBucketName: !Ref 'S3CRLBucketName'
-        TombstoneLifetime: !Ref 'TombstoneLifetime'
-        UseS3ForCRL: !Ref 'UseS3ForCRL'
+        Subnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
+        Subnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
   RDGWStack:
     Condition: IncludeRDGW
+    DependsOn: ADStack
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/templates/rdgw-domain.template'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/templates/rdgw-standalone.template'
         - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        DomainAdminPassword: !Ref 'DomainAdminPassword'
-        DomainAdminUser: !Ref 'DomainAdminUser'
+        AdminPassword: !Ref 'AdminPassword'
+        AdminUser: !Ref 'AdminUser'
         DomainDNSName: !Ref 'DomainDNSName'
-        DomainMemberSGID: !GetAtt 'ADStack.Outputs.DomainMemberSGID'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
         KeyPairName: !Ref 'KeyPairName'
         NumberOfRDGWHosts: !Ref 'NumberOfRDGWHosts'
         PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
@@ -547,6 +369,6 @@ Resources:
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/'
-        RDGWCIDR: !Ref 'RDGWCIDR'
         RDGWInstanceType: !Ref 'RDGWInstanceType'
+        RDGWCIDR: !Ref 'RDGWCIDR'
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'

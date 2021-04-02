@@ -7,9 +7,6 @@ Description: >-
   fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be
   billed for the AWS resources used if you create a stack from this template.
 Metadata:
-  QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying AWS Managed AD into a new VPC'
-    Order: '6'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:

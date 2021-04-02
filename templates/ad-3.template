@@ -7,7 +7,7 @@ Description: >-
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying AWS Managed AD into an existing VPC'
-    Order: '5'
+    Order: '6'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:

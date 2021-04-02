@@ -6,9 +6,6 @@ Description: >-
   Server instances to Domain Controllers in your AD forest. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You
   will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
-  QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying AD on EC2 into a new VPC'
-    Order: '3'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
