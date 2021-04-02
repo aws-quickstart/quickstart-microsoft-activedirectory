@@ -8,7 +8,7 @@ Description: >-
   billed for the AWS resources used if you create a stack from this template.
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Launch AWS Managed Active Directory into a new VPC'
+    EntrypointName: 'Parameters for deploying AWS Managed AD into a new VPC'
     Order: '6'
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -44,7 +44,7 @@ Metadata:
           - MgmtDataDriveSizeGiB
           - MgmtServerNetBIOSName
       - Label:
-          default: Microsoft Active Directory Certificate Services Configuration
+          default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
           - CaServerInstanceType

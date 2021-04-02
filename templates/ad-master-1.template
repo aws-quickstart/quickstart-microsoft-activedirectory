@@ -8,12 +8,12 @@ Description: >-
   Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Launch Active Directory on EC2 into a new VPC'
+    EntrypointName: 'Parameters for deploying AD on EC2 into a new VPC'
     Order: '1'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Network Configuration
+          default: Network configuration
         Parameters:
           - AvailabilityZones
           - NumberOfAZs
@@ -26,7 +26,7 @@ Metadata:
           - PublicSubnet2CIDR
           - PublicSubnet3CIDR
       - Label:
-          default: Amazon EC2 Configuration
+          default: Amazon EC2 configuration
         Parameters:
           - ADServer1InstanceType
           - ADServer1NetBIOSName
@@ -37,7 +37,7 @@ Metadata:
           - DataDriveSizeGiB
           - KeyPairName
       - Label:
-          default: Microsoft Active Directory Domain Services Configuration
+          default: Microsoft Active Directory Domain Services configuration
         Parameters:
           - DomainAdminUser
           - DomainAdminPassword
@@ -47,7 +47,7 @@ Metadata:
           - TombstoneLifetime
           - DeletedObjectLifetime
       - Label:
-          default: Microsoft Active Directory Certificate Services Configuration
+          default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
           - CaServerInstanceType
@@ -61,13 +61,13 @@ Metadata:
           - UseS3ForCRL
           - S3CRLBucketName
       - Label:
-          default: Microsoft Remote Desktop Gateway Configuration
+          default: Microsoft Remote Desktop Gateway configuration
         Parameters:
           - NumberOfRDGWHosts
           - RDGWInstanceType
           - RDGWCIDR
       - Label:
-          default: AWS Quick Start Configuration
+          default: AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3BucketRegion

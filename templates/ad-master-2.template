@@ -7,12 +7,12 @@ Description: >-
   will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Launch Active Directory on EC2 into a new VPC'
+    EntrypointName: 'Parameters for deploying AD on EC2 into a new VPC'
     Order: '3'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Network Configuration
+          default: Network configuration
         Parameters:
           - AvailabilityZones
           - NumberOfAZs
@@ -24,7 +24,7 @@ Metadata:
           - PublicSubnet2CIDR
           - PublicSubnet3CIDR
       - Label:
-          default: Amazon EC2 Configuration
+          default: Amazon EC2 configuration
         Parameters:
           - ADServerInstanceType
           - ADServer1NetBIOSName
@@ -34,14 +34,14 @@ Metadata:
           - DataDriveSizeGiB
           - KeyPairName
       - Label:
-          default: Microsoft Active Directory Domain Services Configuration
+          default: Microsoft Active Directory Domain Services configuration
         Parameters:
           - ExistingDomainController1IP
           - ExistingDomainController2IP
           - DomainDNSName
           - DomainNetBIOSName
       - Label:
-          default: Microsoft Remote Desktop Gateway Configuration
+          default: Microsoft Remote Desktop Gateway configuration
         Parameters:
           - AdminUser
           - AdminPassword
@@ -49,7 +49,7 @@ Metadata:
           - RDGWInstanceType
           - RDGWCIDR
       - Label:
-          default: AWS Quick Start Configuration
+          default: AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3BucketRegion
