@@ -1,4 +1,6 @@
-This Quick Start provides separate AWS CloudFormation templates to support three deployment scenarios. For each scenario, you also have the option to create a new VPC or use your existing VPC infrastructure. Choose the scenario that best fits your needs.
+:xrefstyle: short
+
+This Quick Start provides separate AWS CloudFormation templates to support three deployment scenarios. For each scenario, you also have the option to create a new virtual private cloud (VPC) or use your existing VPC infrastructure. Choose the scenario that best fits your needs.
 
 * *Scenario 1: Deploy and manage your own AD DS installation on the Amazon EC2 instances.* The AWS CloudFormation template for this scenario builds the AWS Cloud infrastructure, and sets up and configures AD DS and AD-integrated DNS on the AWS Cloud. It doesn’t include AWS Directory Service, so you handle all AD DS maintenance and monitoring tasks yourself. You can also choose to deploy the Quick Start into your existing VPC infrastructure.
 * *Scenario 2: Extend your on-premises AD DS to AWS on Amazon EC2 instances.* The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure for AD DS, and you perform several manual steps to extend your existing network to AWS and to promote your domain controllers. As in scenario 1, you manage all AD DS tasks yourself. You can also choose to deploy the Quick Start into your existing VPC infrastructure.
@@ -6,9 +8,9 @@ This Quick Start provides separate AWS CloudFormation templates to support three
 
 The following sections discuss the Quick Start architecture for each scenario, and explain the automation provided by the Quick Start template.
 
-=== Scenario 1: Deploy and Manage Your Own AD DS on AWS
+=== Scenario 1: Deploy and manage your own AD DS on AWS
 
-This scenario is based on a new installation of AD DS in the AWS Cloud without AWS Directory Service. The AWS CloudFormation templates that automate this deployment perform the following tasks to set up the architecture illustrated in Figure 1.
+This scenario is based on a new installation of AD DS in the AWS Cloud without AWS Directory Service. The AWS CloudFormation templates that automate this deployment perform the following tasks to set up the architecture illustrated in <<architecture2>>.
 
 * Sets up the VPC, including private and public subnets in two Availability Zones.*
 * Configures two NAT gateways in the public subnets.*
@@ -21,13 +23,11 @@ This scenario is based on a new installation of AD DS in the AWS Cloud without A
 * Configures security groups and rules for traffic between instances.
 * Sets up and configures Active Directory sites and subnets.
 
-*The template that deploys the Quick Start into an existing VPC skips the tasks marked by asterisks.
+[.small]#* The template that deploys the Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
-// Replace this example diagram with your own. Send us your source PowerPoint file. Be sure to follow our guidelines here : http://(we should include these points on our contributors giude)
-:xrefstyle: short
-[#architecture2]
-.Quick Start architecture for highly available AD DS on AWS
-image::../images/image2.png[Architecture,width=100%,height=100%]
+[#architecture1]
+.Scenario 1—Quick Start architecture for highly available AD DS on AWS
+image::../images/image2.png[Architecture scenario 1]
 
 In this architecture:
 
@@ -40,7 +40,7 @@ Windows Server 2019 is used for the Remote Desktop Gateway instances and the dom
 
 To deploy this stack, follow the step-by-step instructions in the Deployment Steps section. After deploying this stack, you can move on to deploying your AD DS-dependent servers into the VPC. The DNS settings for new instances will be ready via the updated DHCP options set that is associated with the VPC. You’ll also need to associate the new instances with the domain member security group that is created as part of this deployment.
 
-=== Scenario 2: Extend On-Premises AD DS Installation to the AWS Cloud
+=== Scenario 2: Extend on-premises AD DS installation to the AWS Cloud
 
 This scenario is for users who want to use their existing installation of AD DS and extend their on-premises network to the VPC. In this scenario, the newly-created Windows Server instances are not automatically promoted to domain controllers, and you will need to perform post-deployment tasks. The AWS CloudFormation templates that automate this deployment perform these tasks:
 
@@ -51,13 +51,13 @@ This scenario is for users who want to use their existing installation of AD DS 
 * Launches instances using the Windows Server 2019 AMI.
 * Configures security groups and rules for traffic between instances.
 
-*The template that deploys the Quick Start into an existing VPC skips the tasks marked by asterisks.
+[.small]#* The template that deploys the Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
 The AWS CloudFormation template deploys the architecture shown below, except for the virtual private gateway and VPN connection, which you can create manually.
 
-[#architecture3]
-.Quick Start architecture for extending your on-premises AD DS to AWS
-image::../images/image3.png[Architecture,width=100%,height=100%]
+[#architecture2]
+.Scenario 2—Quick Start architecture for extending your on-premises AD DS to AWS
+image::../images/image3.png[Architecture scenario 2]
 
 This scenario provides an example of using a VPC and a virtual private gateway to enable communication with your own network over an IPsec VPN tunnel. Active Directory is deployed in the customer data center, and Windows servers are deployed into two VPC subnets. After deploying the VPN connection, you can promote the Windows instances to domain controllers in the on-premises Active Directory forest, making AD DS highly available in the AWS Cloud.
 
@@ -67,7 +67,7 @@ After you deploy the VPN connection and promote your servers to domain controlle
 
 This scenario is similar to scenario 1, except that it includes AWS Directory Service to provision and manage AD DS on the AWS Cloud. Instead of fully managing AD DS yourself, you rely on AWS Directory Service for tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots.
 
-AWS Directory Service deploys AD DS across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. AWS Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information about AWS Directory Service, see https://aws.amazon.com/directoryservice/[product details] and the http://aws.amazon.com/documentation/directory-service/[AWS documentation].
+AWS Directory Service deploys AD DS across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. AWS Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information about AWS Directory Service, see https://aws.amazon.com/directoryservice/[product details^] and the http://aws.amazon.com/documentation/directory-service/[AWS documentation^].
 
 The AWS CloudFormation templates that automate this deployment perform these tasks:
 
@@ -79,10 +79,10 @@ The AWS CloudFormation templates that automate this deployment perform these tas
 * Sets up AWS Directory Service to provision and manage AD DS in the private subnets.
 * Optionally deploys a Windows EC2 instance to act as a management instance.
 
-*The template that deploys the Quick Start into an existing VPC skips the tasks marked by asterisks.
+[.small]#* The template that deploys the Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
-The architecture for this scenario is illustrated below.
+The architecture for this scenario is illustrated in <<architecture3>>.
 
-[#architecture4]
-.Quick Start architecture for deploying AD DS with AWS Directory Service
-image::../images/image4.png[Architecture,width=100%,height=100%]
+[#architecture3]
+.Scenario 3—Quick Start architecture for deploying AD DS with AWS Directory Service
+image::../images/image4.png[Architecture scenario 3]

@@ -1,5 +1,5 @@
 // We need to work around Step numbers here if we are going to potentially exclude the AMI subscription
-=== Sign in to your AWS account
+=== Confirm your AWS account configuration
 
 . Sign in to your AWS account at https://aws.amazon.com with an IAM user role that has the necessary permissions. For details, see link:#_planning_the_deployment[Planning the deployment] earlier in this guide.
 . Make sure that your AWS account is configured correctly, as discussed in the link:#_technical_requirements[Technical requirements] section.
@@ -25,22 +25,22 @@ WARNING: If you’re deploying {partner-product-short-name} into an existing VPC
 
 NOTE: You are responsible for the cost of the AWS services used while running this Quick Start reference deployment. There is no additional cost for using this Quick Start. For full details, see the pricing pages for each AWS service used by this Quick Start. Prices are subject to change.
 
-Deploying self-managed Active Directory takes about an hour to complete; deploying EC2 instances to extend on-premises Active Directory to AWS takes about 20 minutes to complete; and deploying AWS Managed Directory Service takes about a half hour to complete.
+Deploying self-managed Active Directory takes about {deployment_time}. Deploying EC2 instances to extend on-premises Active Directory to AWS takes about 20 minutes. Deploying AWS Managed Directory Service takes about 30 minutes.
 
 . Sign in to your AWS account, and choose one of the following options to launch the AWS CloudFormation template. For help with choosing an option, see link:#_deployment_options[Deployment options] earlier in this guide.
-
-[cols=2*]
++
+[cols="3,1"]
 |===
-^|http://qs_launch_permalink[Deploy self-managed Active Directory into a new VPC on AWS^]
+^|http://qs_launch_permalink[Deploy self-managed AD into a new VPC on AWS^]
 ^|http://https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-master-1.template[View template^]
 
-^|http://qs_launch_permalink[Deploy self-managed Active Directory into an existing VPC on AWS^]
+^|http://qs_launch_permalink[Deploy self-managed AD into an existing VPC on AWS^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-1.template[View template^]
 
-^|http://qs_launch_permalink[Deploy EC2 instances to extend on-premises Active Directory into a new VPC on AWS^]
+^|http://qs_launch_permalink[Deploy EC2 instances to extend on-premises AD into a new VPC on AWS^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-master-2.template[View template^]
 
-^|http://qs_launch_permalink[Deploy EC2 instances to extend on-premises Active Directory into an existing VPC on AWS^]
+^|http://qs_launch_permalink[Deploy EC2 instances to extend on-premises AD into an existing VPC on AWS^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-2.template[View template^]
 
 ^|http://qs_launch_permalink[Deploy AWS Managed Directory Service into a new VPC on AWS^]
@@ -49,12 +49,7 @@ Deploying self-managed Active Directory takes about an hour to complete; deployi
 ^|http://qs_launch_permalink[Deploy AWS Managed Directory Service into an existing VPC on AWS^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-3.template[View template^]
 |===
-
-[start=2]
-. Check the AWS Region that’s displayed in the upper-right corner of the navigation bar, and change it if necessary. This Region is where the network infrastructure for {partner-product-short-name} is built. The template is launched in the {default_deployment_region} Region by default.
-
-// *Note:* This deployment includes Amazon EFS, which isn’t currently supported in all AWS Regions. For a current list of supported Regions, see the https://docs.aws.amazon.com/general/latest/gr/elasticfilesystem.html[endpoints and quotas webpage].
-
-[start=3]
++
+. Check the AWS Region that’s displayed in the upper-right corner of the navigation bar, and change it if necessary. This Region is where the network infrastructure for {partner-product-short-name} is built. The template is launched in the {default_deployment_region} Region by default. See link:#_supported_regions[Supported Regions] earlier in this guide.
 . On the *Create stack* page, keep the default setting for the template URL, and then choose *Next*.
-. On the *Specify stack details* page, change the stack name if needed. Review the parameters for the template. Provide values for the parameters that require input. For all other parameters, review the default settings and customize them as necessary. For details on each parameter, see the link:#_parameter_reference[Parameter reference] section of this guide. When you finish reviewing and customizing the parameters, choose *Next*.
+. On the *Specify stack details* page, change the stack name if needed. Review the parameters for the template. Provide values for the parameters that require input. For all other parameters, review the default settings and customize them as necessary. For details on each parameter, see the link:#_parameter_reference[Parameter reference] section of this guide. When you finish reviewing and customizing the parameters, choose *Next*. 

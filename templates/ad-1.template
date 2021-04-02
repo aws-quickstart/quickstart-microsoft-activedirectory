@@ -7,12 +7,12 @@ Description: >-
   create a stack from this template. (qs-1qup6rae5)
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Launch Active Directory on EC2 into an existing VPC'
+    EntrypointName: 'Parameters for deploying AD on EC2 into an existing VPC'
     Order: '2'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Network Configuration
+          default: Network configuration
         Parameters:
           - VPCCIDR
           - VPCID
@@ -20,7 +20,7 @@ Metadata:
           - PrivateSubnet1ID
           - PrivateSubnet2ID
       - Label:
-          default: Amazon EC2 Configuration
+          default: Amazon EC2 configuration
         Parameters:
           - ADServer1InstanceType
           - ADServer1NetBIOSName
@@ -32,7 +32,7 @@ Metadata:
           - KeyPairName
           - WINFULLBASE
       - Label:
-          default: Microsoft Active Directory Domain Services Configuration
+          default: Microsoft Active Directory Domain Services configuration
         Parameters:
           - DomainAdminUser
           - DomainAdminPassword
@@ -42,7 +42,7 @@ Metadata:
           - TombstoneLifetime
           - DeletedObjectLifetime
       - Label:
-          default: Microsoft Active Directory Certificate Services Configuration
+          default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
           - CaServerInstanceType
@@ -57,7 +57,7 @@ Metadata:
           - UseS3ForCRL
           - S3CRLBucketName
       - Label:
-          default: AWS Quick Start Configuration
+          default: AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3BucketRegion

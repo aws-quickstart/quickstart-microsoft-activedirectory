@@ -6,7 +6,7 @@ Description: >-
   Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6rad4)
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Launch AWS Managed Active Directory into an existing VPC'
+    EntrypointName: 'Parameters for deploying AWS Managed AD into an existing VPC'
     Order: '5'
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -19,14 +19,14 @@ Metadata:
           - PrivateSubnet1ID
           - PrivateSubnet2ID
       - Label:
-          default: AWS Managed Microsoft Active Directory Configuration
+          default: AWS Managed Microsoft Active Directory configuration
         Parameters:
           - DomainDNSName
           - DomainNetBIOSName
           - DomainAdminPassword
           - ADEdition
       - Label:
-          default: Microsoft Windows Server Management Instance
+          default: Microsoft Windows Server management instance
         Parameters:
           - MgmtServer
           - MgmtServerInstanceType
@@ -35,7 +35,7 @@ Metadata:
           - MgmtServerNetBIOSName
           - KeyPairName
       - Label:
-          default: Microsoft Active Directory Certificate Services Configuration
+          default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
           - CaServerInstanceType
