@@ -5,19 +5,19 @@ Description: >-
   **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6radg)
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Extend on-premises Active Directory into an existing VPC'
-    Order: '3'
+    EntrypointName: 'Parameters for extending on-premises AD into an existing VPC'
+    Order: '4'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Network Configuration
+          default: Network configuration
         Parameters:
           - VPCCIDR
           - VPCID
           - Subnet1ID
           - Subnet2ID
       - Label:
-          default: Amazon EC2 Configuration
+          default: Amazon EC2 configuration
         Parameters:
           - ADServerInstanceType
           - ADServer1NetBIOSName
@@ -28,7 +28,7 @@ Metadata:
           - KeyPairName
           - LatestAmiId
       - Label:
-          default: Microsoft Active Directory Domain Services Configuration
+          default: Microsoft Active Directory Domain Services configuration
         Parameters:
           - JoinAndPromote
           - AdministratorSecret
@@ -38,7 +38,7 @@ Metadata:
           - DomainDNSName
           - DomainNetBIOSName
       - Label:
-          default: AWS Quick Start Configuration
+          default: AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3BucketRegion

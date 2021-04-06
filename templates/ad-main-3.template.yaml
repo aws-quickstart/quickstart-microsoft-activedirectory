@@ -1,12 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  This template creates a VPC infrastructure for a multi-AZ, multi-tier deployment of a Windows based Application infrastructure. It installs 2
-  Windows 2019 Active Directory Domain Controllers into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway
-  instances and managed NAT gateways into the public subnet for each Availability Zone. The default Domain Administrator password will be the one
-  retrieved from the instance.  For adding members to the domain, ensure that they are launched into the domain member security group created by this
-  template and then configure them to use the AD instances fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2
-  Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.
+  This template creates a VPC infrastructure for a multi-AZ, multi-tier deployment of a Windows based Application infrastructure. It deploys a managed
+  Microsoft AD Directory Service into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway instances and
+  managed NAT gateways into the public subnet for each Availability Zone. The default Domain Administrator user is 'admin'.  For adding members to the
+  domain, ensure that they are launched into the domain member security group created by this template and then configure them to use the AD instances
+  fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be
+  billed for the AWS resources used if you create a stack from this template.
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into a new VPC'
+    Order: '5'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -25,24 +28,21 @@ Metadata:
       - Label:
           default: Amazon EC2 configuration
         Parameters:
-          - ADServer1InstanceType
-          - ADServer1NetBIOSName
-          - ADServer1PrivateIP
-          - ADServer2InstanceType
-          - ADServer2NetBIOSName
-          - ADServer2PrivateIP
-          - DataDriveSizeGiB
           - KeyPairName
       - Label:
-          default: Microsoft Active Directory Domain Services configuration
+          default: Microsoft Active Directory configuration
         Parameters:
-          - DomainAdminUser
-          - DomainAdminPassword
           - DomainDNSName
           - DomainNetBIOSName
-          - CreateDefaultOUs
-          - TombstoneLifetime
-          - DeletedObjectLifetime
+          - DomainAdminPassword
+          - ADEdition
+      - Label:
+          default: Microsoft Windows Server management instance
+        Parameters:
+          - MgmtServer
+          - MgmtServerInstanceType
+          - MgmtDataDriveSizeGiB
+          - MgmtServerNetBIOSName
       - Label:
           default: Microsoft Active Directory Certificate Services configuration
         Parameters:
@@ -58,7 +58,7 @@ Metadata:
           - UseS3ForCRL
           - S3CRLBucketName
       - Label:
-          default: Microsoft Remote Desktop Gateway configuration
+          default: Microsoft Remote Desktop Gateway Configuration
         Parameters:
           - NumberOfRDGWHosts
           - RDGWInstanceType
@@ -70,18 +70,8 @@ Metadata:
           - QSS3BucketRegion
           - QSS3KeyPrefix
     ParameterLabels:
-      ADServer1InstanceType:
-        default: Domain Controller 1 Instance Type
-      ADServer1NetBIOSName:
-        default: Domain Controller 1 NetBIOS Name
-      ADServer1PrivateIP:
-        default: Domain Controller 1 Private IP Address
-      ADServer2InstanceType:
-        default: Domain Controller 2 Instance Type
-      ADServer2NetBIOSName:
-        default: Domain Controller 2 NetBIOS Name
-      ADServer2PrivateIP:
-        default: Domain Controller 2 Private IP Address
+      ADEdition:
+        default: AWS Microsoft AD Edition
       AvailabilityZones:
         default: Availability Zones
       CaDataDriveSizeGiB:
@@ -94,18 +84,10 @@ Metadata:
         default: CA Instance Type
       CaValidityPeriodUnits:
         default: Enterprise Root or Subordinate CA Certificate Validity Period in Years
-      CreateDefaultOUs:
-        default: Create Default OUs
       DHCPOptionSet:
         default: Create a DHCP Options set
-      DataDriveSizeGiB:
-        default: SYSVOL and NTDS and Data Drive Size
-      DeletedObjectLifetime:
-        default: Set new Deleted Objects Lifetime
       DomainAdminPassword:
-        default: Alternate Domain Admin Password
-      DomainAdminUser:
-        default: Alternate Domain Admin User Name
+        default: Admin Account Password
       DomainDNSName:
         default: Domain DNS Name
       DomainNetBIOSName:
@@ -114,6 +96,14 @@ Metadata:
         default: Enterprise Root or Subordinate CA NetBIOS Name
       KeyPairName:
         default: Key Pair Name
+      MgmtDataDriveSizeGiB:
+        default: Data Drive Size
+      MgmtServer:
+        default: Deploy Management Server
+      MgmtServerInstanceType:
+        default: Management Server Instance Type
+      MgmtServerNetBIOSName:
+        default: Management Server NetBIOS Name
       NumberOfAZs:
         default: Number of Availability Zones
       NumberOfRDGWHosts:
@@ -137,84 +127,32 @@ Metadata:
       PublicSubnet3CIDR:
         default: (Optional) Public Subnet 3 CIDR
       QSS3BucketName:
-        default: Quick Start S3 Bucket Name
+        default: Quick Start S3 bucket name
       QSS3BucketRegion:
-        default: Quick Start S3 Bucket Region
+        default: Quick Start S3 bucket region
       QSS3KeyPrefix:
-        default: Quick Start S3 Key Prefix
+        default: Quick Start S3 key prefix
       RDGWCIDR:
         default: Allowed Remote Desktop Gateway External Access CIDR
       RDGWInstanceType:
         default: Remote Desktop Gateway Instance Type
       S3CRLBucketName:
         default: CA CRL S3 Bucket Name
-      TombstoneLifetime:
-        default: Set new Tombstone Lifetime
       UseS3ForCRL:
         default: Use S3 for CA CRL Location
       VPCCIDR:
         default: VPC CIDR
 Parameters:
-  ADServer1InstanceType:
+  ADEdition:
     AllowedValues:
-      - t2.medium
-      - t3.medium
-      - t2.large
-      - t3.large
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
-      - m5.large
-      - m5.xlarge
-      - m5.2xlarge
-      - m5.4xlarge
-    Default: m5.large
-    Description: Amazon EC2 instance type for the first Active Directory Domain Controller instance
-    Type: String
-  ADServer1NetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: DC1
-    Description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
-    MaxLength: '15'
-    MinLength: '1'
-    Type: String
-  ADServer1PrivateIP:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Default: 10.0.0.10
-    Description: Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1
-    Type: String
-  ADServer2InstanceType:
-    AllowedValues:
-      - t2.medium
-      - t3.medium
-      - t2.large
-      - t3.large
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
-      - m5.large
-      - m5.xlarge
-      - m5.2xlarge
-      - m5.4xlarge
-    Default: m5.large
-    Description: Amazon EC2 instance type for the second Active Directory Domain Controller instance
-    Type: String
-  ADServer2NetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: DC2
-    Description: NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)
-    MaxLength: '15'
-    MinLength: '1'
-    Type: String
-  ADServer2PrivateIP:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
-    Default: 10.0.32.10
-    Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2 Availability Zone 2
+      - Standard
+      - Enterprise
+    Default: Enterprise
+    Description: The AWS Microsoft AD Edition you wish to deploy
     Type: String
   AvailabilityZones:
-    Description: 'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
+    Description:
+      'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
     Type: List<AWS::EC2::AvailabilityZone::Name>
   CaDataDriveSizeGiB:
     Default: '2'
@@ -226,7 +164,7 @@ Parameters:
       - SHA384
       - SHA512
     Default: SHA256
-    Description: CA(s) Hash Algorithm for Signing Certificates
+    Description: CA(s) Hash Algorithm for Siging Certificates
     Type: String
   CaKeyLength:
     AllowedValues:
@@ -250,13 +188,6 @@ Parameters:
     Default: '5'
     Description: Validity Period in Years
     Type: String
-  CreateDefaultOUs:
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-    Default: 'No'
-    Description: Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default users and computers containers to Domain Users and Domain Computers
-    Type: String
   DHCPOptionSet:
     AllowedValues:
       - 'Yes'
@@ -264,27 +195,12 @@ Parameters:
     Default: 'Yes'
     Description: Do you want to create and apply a new DHCP Options Set
     Type: String
-  DataDriveSizeGiB:
-    Default: '10'
-    Description: Size of SYSVOL and NTDS data drive in GiB
-    Type: Number
-  DeletedObjectLifetime:
-    Default: '180'
-    Description: The number of days before a deleted object is removed from the Active Directory recycling bin, minimum number is 2
-    Type: Number
   DomainAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    Description: Password for the account named above. Must be at least 8 characters containing letters, numbers and symbols
+    Description: Password for the Admin user account. Must be at least 8 characters containing letters, numbers and symbols
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
-    Type: String
-  DomainAdminUser:
-    AllowedPattern: '[a-zA-Z0-9]*'
-    Default: Admin
-    Description: User name for the account that will be added as a Domain Administrator. This is separate from the default "Administrator" account
-    MaxLength: '25'
-    MinLength: '5'
     Type: String
   DomainDNSName:
     AllowedPattern: '[a-zA-Z0-9\-]+\..+'
@@ -296,7 +212,7 @@ Parameters:
   DomainNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: example
-    Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
+    Description: NetBIOS name of the domain (upto 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
     Type: String
@@ -310,6 +226,35 @@ Parameters:
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
+  MgmtDataDriveSizeGiB:
+    Default: '2'
+    Description: Size of the Managment Server Data Drive in GiB
+    Type: Number
+  MgmtServer:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: Do you want to deploy a Management Server
+    Type: String
+  MgmtServerInstanceType:
+    AllowedValues:
+      - t2.small
+      - t3.small
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+    Default: t3.medium
+    Description: Amazon EC2 instance type for the Management Server
+    Type: String
+  MgmtServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: MGMT1
+    Description: NetBIOS name of the Management Server server (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
   NumberOfAZs:
     AllowedValues:
       - '2'
@@ -380,9 +325,12 @@ Parameters:
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    ConstraintDescription:
+      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Default: aws-quickstart
-    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    Description:
+      S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
@@ -392,7 +340,9 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
+    Description:
+      S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/)
     Type: String
   RDGWCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
@@ -417,12 +367,10 @@ Parameters:
   S3CRLBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: examplebucket
-    Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    Description:
+      S3 bucket name for CA CRL(s) storage. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It
+      cannot start or end with a hyphen (-)
     Type: String
-  TombstoneLifetime:
-    Default: '180'
-    Description: The number of days before a deleted object is removed from Active Directory, minimum number is 2
-    Type: Number
   UseS3ForCRL:
     AllowedValues:
       - 'Yes'
@@ -441,13 +389,6 @@ Conditions:
   IsTwoAz: !Equals [!Ref 'NumberOfAZs', '2']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Rules:
-  CheckSupportedInstances:
-    RuleCondition: !Or
-      - !Contains [[m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge], !Ref 'ADServer1InstanceType']
-      - !Contains [[m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge], !Ref 'ADServer2InstanceType']
-    Assertions:
-      - Assert: !Not [!Contains [[eu-west-3], !Ref 'AWS::Region']]
-        AssertDescription: M4 instances are not available in the Paris region
   S3CRLBucketNameValidation:
     RuleCondition: !And
       - !Equals [!Ref UseS3ForCRL, 'Yes']
@@ -478,31 +419,26 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-1.template'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-3.template'
         - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        ADServer1InstanceType: !Ref 'ADServer1InstanceType'
-        ADServer1NetBIOSName: !Ref 'ADServer1NetBIOSName'
-        ADServer1PrivateIP: !Ref 'ADServer1PrivateIP'
-        ADServer2InstanceType: !Ref 'ADServer2InstanceType'
-        ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
-        ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
+        ADEdition: !Ref 'ADEdition'
         CaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
         CaHashAlgorithm: !Ref 'CaHashAlgorithm'
         CaKeyLength: !Ref 'CaKeyLength'
         CaServerInstanceType: !Ref 'CaServerInstanceType'
         CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        CreateDefaultOUs: !Ref 'CreateDefaultOUs'
         DHCPOptionSet: !Ref 'DHCPOptionSet'
-        DataDriveSizeGiB: !Ref 'DataDriveSizeGiB'
-        DeletedObjectLifetime: !Ref 'DeletedObjectLifetime'
         DomainAdminPassword: !Ref 'DomainAdminPassword'
-        DomainAdminUser: !Ref 'DomainAdminUser'
         DomainDNSName: !Ref 'DomainDNSName'
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'
         EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
         KeyPairName: !Ref 'KeyPairName'
+        MgmtDataDriveSizeGiB: !Ref 'MgmtDataDriveSizeGiB'
+        MgmtServer: !Ref 'MgmtServer'
+        MgmtServerInstanceType: !Ref 'MgmtServerInstanceType'
+        MgmtServerNetBIOSName: !Ref 'MgmtServerNetBIOSName'
         OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
         OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
         PKI: !Ref 'PKI'
@@ -512,7 +448,6 @@ Resources:
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
         S3CRLBucketName: !Ref 'S3CRLBucketName'
-        TombstoneLifetime: !Ref 'TombstoneLifetime'
         UseS3ForCRL: !Ref 'UseS3ForCRL'
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
@@ -526,7 +461,7 @@ Resources:
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         DomainAdminPassword: !Ref 'DomainAdminPassword'
-        DomainAdminUser: !Ref 'DomainAdminUser'
+        DomainAdminUser: admin
         DomainDNSName: !Ref 'DomainDNSName'
         DomainMemberSGID: !GetAtt 'ADStack.Outputs.DomainMemberSGID'
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'
