@@ -4,7 +4,9 @@
 // You don't need to list AWS services or point to general info about AWS; the boilerplate already covers this.
 :xrefstyle: short 
 
-Deploying a functional AD DS deployment in the AWS Cloud requires a good understanding of specific AWS services. In this section, we discuss key considerations for both new AD DS deployments and extensions of existing AD DC deployments to the AWS Cloud. We discuss how to use Amazon VPC to define your networks in the cloud, and cover domain controller placement, Active Directory Sites and Services configuration, and how DNS and DHCP work in Amazon VPC.
+This Quick Start assumes that you’re familiar with Active Directory and DNS. For details, consult the Microsoft product documentation.
+
+Deploying a functional AD DS deployment in the AWS Cloud requires a good understanding of specific AWS services. In this section, we discuss key considerations for both new AD DS deployments and extensions of existing AD DC deployments to the AWS Cloud. We discuss how to use Amazon VPC to define your networks in the cloud. We also cover domain controller placement, Active Directory Sites and Services configuration, and how DNS and DHCP work in Amazon VPC.
 
 ==== VPC configuration
 
@@ -43,15 +45,15 @@ We provide an example of how to implement these rules for each application tier 
 
 For a complete list of ports, see http://technet.microsoft.com/library/dd772723(v=ws.10).aspx[Active Directory and Active Directory Domain Services Port Requirements^] in the Microsoft TechNet library. For step-by-step guidance for implementing rules, see http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html#adding-security-group-rule[Adding Rules to a Security Group^] in the _Amazon EC2 User Guide_.
 
-==== Setting up secure administrative access using Remote Desktop Gateway
+==== Help set up secure administrative access using Remote Desktop Gateway
 
-As you design your architecture for highly available AD DS, you should also design for highly available and secure remote access. The Quick Start templates handle this by deploying Remote Desktop (RD) Gateway in each Availability Zone. In case of an Availability Zone outage, this architecture allows access to the resources that may have failed over to the other Availability Zone.
+As you design your architecture for highly available AD DS, also design for highly available and secure remote access. The Quick Start templates help with this by deploying Remote Desktop (RD) Gateway in each Availability Zone. In case of an Availability Zone outage, this architecture allows access to the resources that may have failed over to the other Availability Zone.
 
-RD Gateway uses the Remote Desktop Protocol (RDP) over HTTPS to establish a secure, encrypted connection between remote administrators on the internet and Windows-based Amazon EC2 instances without the need for a virtual private network (VPN) connection. This configuration helps reduce the attack surface on your Windows-based Amazon EC2 instances while providing a remote administration solution for administrators.
+RD Gateway uses the Remote Desktop Protocol (RDP) over HTTPS to help establish a secure, encrypted connection between remote administrators on the internet and Windows-based Amazon EC2 instances without the need for a virtual private network (VPN) connection. This configuration helps reduce the attack surface on your Windows-based Amazon EC2 instances while providing a remote administration solution for administrators.
 
 The AWS CloudFormation templates provided with this Quick Start automatically deploy the architecture and configuration outlined in the https://fwd.aws/5VrKP[Remote Desktop Gateway Quick Start].
 
-After you’ve launched your AD infrastructure by following the deployment steps in this guide, you will initially connect to your instances by using a standard RDP TCP port 3389 connection. You can then follow the steps in the https://fwd.aws/5VrKP[Remote Desktop Gateway Quick Start] to secure future connections via HTTPS.
+After you’ve launched your AD infrastructure by following the deployment steps in this guide, you will initially connect to your instances by using a standard RDP TCP port 3389 connection. You can then follow the steps in the https://fwd.aws/5VrKP[Remote Desktop Gateway Quick Start] to help secure future connections via HTTPS.
 
 ==== Active Directory design
 
