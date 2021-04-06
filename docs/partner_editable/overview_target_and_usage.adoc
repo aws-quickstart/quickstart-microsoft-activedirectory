@@ -5,3 +5,7 @@
 This Quick Start reference deployment guide discusses architectural considerations and configuration steps for deploying a highly available Microsoft Active Directory Domain Services (AD DS) environment on the AWS Cloud. It also provides links for viewing and launching http://aws.amazon.com/cloudformation/[AWS CloudFormation^] templates that automate the deployment.
 
 The guide is for IT infrastructure architects and administrators who want to design and deploy a solution to launch AD DS in the AWS Cloud, or extend their on-premises AD DS into the AWS Cloud.
+
+If you have questions about this Quick Start, contact AWS Premier Consulting Partner https://partners.amazonaws.com/partners/001E000000NaBHNIA3/Cloudreach[Cloudreach^]. 
+
+NOTE: Amazon may share user-deployment information with this partner.
