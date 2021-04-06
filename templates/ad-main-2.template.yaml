@@ -1,0 +1,374 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  This template creates a VPC infrastructure for a multi-AZ, multi-tier deployment of a Windows based Application infrastructure. It installs 2
+  Windows Server instances into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway instances and managed
+  NAT gateways into the public subnet for each Availability Zone. After extending your on-premises network to the VPC, you can promote the Windows
+  Server instances to Domain Controllers in your AD forest. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You
+  will be billed for the AWS resources used if you create a stack from this template.
+Metadata:
+  QuickStartDocumentation:
+    EntrypointName: 'Parameters for extending on-premises AD into a new VPC'
+    Order: '3'
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Network configuration
+        Parameters:
+          - AvailabilityZones
+          - NumberOfAZs
+          - VPCCIDR
+          - PrivateSubnet1CIDR
+          - PrivateSubnet2CIDR
+          - PrivateSubnet3CIDR
+          - PublicSubnet1CIDR
+          - PublicSubnet2CIDR
+          - PublicSubnet3CIDR
+      - Label:
+          default: Amazon EC2 configuration
+        Parameters:
+          - ADServerInstanceType
+          - ADServer1NetBIOSName
+          - ADServer1PrivateIP
+          - ADServer2NetBIOSName
+          - ADServer2PrivateIP
+          - DataDriveSizeGiB
+          - KeyPairName
+      - Label:
+          default: Microsoft Active Directory Domain Services configuration
+        Parameters:
+          - ExistingDomainController1IP
+          - ExistingDomainController2IP
+          - DomainDNSName
+          - DomainNetBIOSName
+      - Label:
+          default: Microsoft Remote Desktop Gateway configuration
+        Parameters:
+          - AdminUser
+          - AdminPassword
+          - NumberOfRDGWHosts
+          - RDGWInstanceType
+          - RDGWCIDR
+      - Label:
+          default: AWS Quick Start configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3BucketRegion
+          - QSS3KeyPrefix
+    ParameterLabels:
+      ADServer1NetBIOSName:
+        default: Domain Controller 1 NetBIOS Name
+      ADServer1PrivateIP:
+        default: Domain Controller 1 Private IP Address
+      ADServer2NetBIOSName:
+        default: Domain Controller 2 NetBIOS Name
+      ADServer2PrivateIP:
+        default: Domain Controller 2 Private IP Address
+      ADServerInstanceType:
+        default: Domain Controllers Instance Type
+      AdminPassword:
+        default: Local Administrator Password
+      AdminUser:
+        default: Local Administrator User Name
+      AvailabilityZones:
+        default: Availability Zones
+      DataDriveSizeGiB:
+        default: SYSVOL and NTDS and Data Drive Size
+      DomainDNSName:
+        default: Domain DNS Name
+      DomainNetBIOSName:
+        default: Domain NetBIOS Name
+      ExistingDomainController1IP:
+        default: IP the Instance will be used for DNS (Must be accessible)
+      ExistingDomainController2IP:
+        default: IP the Instance will be used for DNS (Must be accessible)
+      KeyPairName:
+        default: Key Pair Name
+      NumberOfAZs:
+        default: Number of Availability Zones
+      NumberOfRDGWHosts:
+        default: Number of RDGW Hosts
+      PrivateSubnet1CIDR:
+        default: Private Subnet 1 CIDR
+      PrivateSubnet2CIDR:
+        default: Private Subnet 2 CIDR
+      PrivateSubnet3CIDR:
+        default: (Optional) Private Subnet 3 CIDR
+      PublicSubnet1CIDR:
+        default: Public Subnet 1 CIDR
+      PublicSubnet2CIDR:
+        default: Public Subnet 2 CIDR
+      PublicSubnet3CIDR:
+        default: (Optional) Public Subnet 3 CIDR
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3BucketRegion:
+        default: Quick Start S3 Bucket Region
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+      RDGWCIDR:
+        default: Allowed Remote Desktop Gateway External Access CIDR
+      RDGWInstanceType:
+        default: Remote Desktop Gateway Instance Type
+      VPCCIDR:
+        default: VPC CIDR
+Parameters:
+  ADServer1NetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: DC3
+    Description: NetBIOS name of the first additional Active Directory Domain Controller (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  ADServer1PrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.11
+    Description: Fixed private IP for the first additional Active Directory Domain Controller located in subnet 1
+    Type: String
+  ADServer2NetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: DC4
+    Description: NetBIOS name of the second additional Active Directory Domain Controller (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  ADServer2PrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.32.11
+    Description: Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2
+    Type: String
+  ADServerInstanceType:
+    AllowedValues:
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: m5.large
+    Description: Amazon EC2 instance type for Active Directory Controller instances
+    Type: String
+  AdminPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description: Password for for the new local administrator account containing letters, numbers and symbols
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  AdminUser:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: StackAdmin
+    Description: User name for the new local administrator account This is separate from the default "Administrator" account
+    MaxLength: '25'
+    MinLength: '5'
+    Type: String
+  AvailabilityZones:
+    Description:
+      'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
+    Type: List<AWS::EC2::AvailabilityZone::Name>
+  DataDriveSizeGiB:
+    Default: '10'
+    Description: Size of SYSVOL and NTDS data drive in GiB
+    Type: Number
+  DomainDNSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+\..+'
+    Default: example.com
+    Description: Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com example.com
+    MaxLength: '255'
+    MinLength: '2'
+    Type: String
+  DomainNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: example
+    Description:
+      NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g. EXAMPLE
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  ExistingDomainController1IP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.10
+    Description: IP of DNS server that can resolve domain (Must be accessible)
+    Type: String
+  ExistingDomainController2IP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.32.10
+    Description: IP of DNS server that can resolve domain (Must be accessible)
+    Type: String
+  KeyPairName:
+    Description: Public/private key pairs allow you to securely connect to your instance after it launches
+    Type: AWS::EC2::KeyPair::KeyName
+  NumberOfAZs:
+    AllowedValues:
+      - '2'
+      - '3'
+    Default: '2'
+    Description: Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter
+    Type: String
+  NumberOfRDGWHosts:
+    AllowedValues:
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+    Default: '1'
+    Description: Enter the number of Remote Desktop Gateway hosts to create
+    Type: String
+  PrivateSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/19
+    Description: CIDR block for private subnet 1 located in Availability Zone 1
+    Type: String
+  PrivateSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.32.0/19
+    Description: CIDR block for private subnet 2 located in Availability Zone 2
+    Type: String
+  PrivateSubnet3CIDR:
+    Default: ''
+    Description: CIDR block for private subnet 3 located in Availability Zone 3
+    Type: String
+  PublicSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.128.0/20
+    Description: CIDR Block for the public subnet 1 located in Availability Zone 1
+    Type: String
+  PublicSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.144.0/20
+    Description: CIDR Block for the public subnet 2 located in Availability Zone 2
+    Type: String
+  PublicSubnet3CIDR:
+    Default: ''
+    Description: CIDR Block for the public subnet 3 located in Availability Zone 3
+    Type: String
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription:
+      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Default: aws-quickstart
+    Description:
+      S3 bucket name for CA CRL storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or
+      end with a hyphen (-)
+    Type: String
+  QSS3BucketRegion:
+    Default: us-east-1
+    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
+    Default: quickstart-microsoft-activedirectory/
+    Description:
+      S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/)
+    Type: String
+  RDGWCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
+    Description: Allowed CIDR Block for external access to the Remote Desktop Gateways
+    Type: String
+  RDGWInstanceType:
+    AllowedValues:
+      - t2.small
+      - t2.medium
+      - t2.large
+      - t3.small
+      - t3.medium
+      - t3.large
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: t3.large
+    Description: Amazon EC2 instance type for the Remote Desktop Gateway instances
+    Type: String
+  VPCCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/16
+    Description: CIDR Block for the VPC
+    Type: String
+Conditions:
+  IncludeRDGW: !Not [!Equals [!Ref NumberOfRDGWHosts, '0']]
+  IsTwoAz: !Equals [!Ref 'NumberOfAZs', '2']
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+      Parameters:
+        AvailabilityZones: !Join [',', !Ref 'AvailabilityZones']
+        KeyPairName: !Ref 'KeyPairName'
+        NumberOfAZs: !If [IsTwoAz, '2', '3']
+        PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
+        PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'
+        PrivateSubnet3ACIDR: !If [IsTwoAz, !Ref 'AWS::NoValue', !Ref 'PrivateSubnet3CIDR']
+        PublicSubnet1CIDR: !Ref 'PublicSubnet1CIDR'
+        PublicSubnet2CIDR: !Ref 'PublicSubnet2CIDR'
+        PublicSubnet3CIDR: !If [IsTwoAz, !Ref 'AWS::NoValue', !Ref 'PublicSubnet3CIDR']
+        VPCCIDR: !Ref 'VPCCIDR'
+  ADStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-2.template'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+      Parameters:
+        ADServer1NetBIOSName: !Ref 'ADServer1NetBIOSName'
+        ADServer1PrivateIP: !Ref 'ADServer1PrivateIP'
+        ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
+        ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
+        ADServerInstanceType: !Ref 'ADServerInstanceType'
+        DataDriveSizeGiB: !Ref 'DataDriveSizeGiB'
+        DomainDNSName: !Ref 'DomainDNSName'
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        ExistingDomainController1IP: !Ref 'ExistingDomainController1IP'
+        ExistingDomainController2IP: !Ref 'ExistingDomainController2IP'
+        JoinAndPromote: 'No'
+        KeyPairName: !Ref 'KeyPairName'
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
+        Subnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
+        Subnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
+        VPCCIDR: !Ref 'VPCCIDR'
+        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+  RDGWStack:
+    Condition: IncludeRDGW
+    DependsOn: ADStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/templates/rdgw-standalone.template'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+      Parameters:
+        AdminPassword: !Ref 'AdminPassword'
+        AdminUser: !Ref 'AdminUser'
+        DomainDNSName: !Ref 'DomainDNSName'
+        KeyPairName: !Ref 'KeyPairName'
+        NumberOfRDGWHosts: !Ref 'NumberOfRDGWHosts'
+        PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
+        PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/'
+        RDGWInstanceType: !Ref 'RDGWInstanceType'
+        RDGWCIDR: !Ref 'RDGWCIDR'
+        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'

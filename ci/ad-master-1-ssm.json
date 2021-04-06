@@ -1,0 +1,94 @@
+[
+    {
+        "ParameterKey": "ADServer1InstanceType",
+        "ParameterValue": "t3.large"
+    },
+    {
+        "ParameterKey": "ADServer1NetBIOSName",
+        "ParameterValue": "DCMaster1"
+    },
+    {
+        "ParameterKey": "ADServer1PrivateIP",
+        "ParameterValue": "10.0.0.10"
+    },
+    {
+        "ParameterKey": "ADServer2InstanceType",
+        "ParameterValue": "t3.large"
+    },
+    {
+        "ParameterKey": "ADServer2NetBIOSName",
+        "ParameterValue": "DCMaster2"
+    },
+    {
+        "ParameterKey": "ADServer2PrivateIP",
+        "ParameterValue": "10.0.32.10"
+    },
+    {
+        "ParameterKey": "AvailabilityZones",
+        "ParameterValue": "$[taskcat_genaz_2]"
+    },
+    {
+        "ParameterKey": "DomainAdminPassword",
+        "ParameterValue": "$[taskcat_genpass_16]"
+    },
+    {
+        "ParameterKey": "RestoreModePassword",
+        "ParameterValue": "$[taskcat_genpass_16]"
+    },
+    {
+        "ParameterKey": "AdministratorPassword",
+        "ParameterValue": "$[taskcat_genpass_16]"
+    },
+    {
+        "ParameterKey": "DomainAdminUser",
+        "ParameterValue": "StackAdmin"
+    },
+    {
+        "ParameterKey": "DomainDNSName",
+        "ParameterValue": "example.com"
+    },
+    {
+        "ParameterKey": "DomainNetBIOSName",
+        "ParameterValue": "example"
+    },
+    {
+        "ParameterKey": "KeyPairName",
+        "ParameterValue": "$[taskcat_getkeypair]"
+    },
+    {
+        "ParameterKey": "NumberOfRDGWHosts",
+        "ParameterValue": "1"
+    },
+    {
+        "ParameterKey": "PrivateSubnet1CIDR",
+        "ParameterValue": "10.0.0.0/19"
+    },
+    {
+        "ParameterKey": "PrivateSubnet2CIDR",
+        "ParameterValue": "10.0.32.0/19"
+    },
+    {
+        "ParameterKey": "PublicSubnet1CIDR",
+        "ParameterValue": "10.0.128.0/20"
+    },
+    {
+        "ParameterKey": "PublicSubnet2CIDR",
+        "ParameterValue": "10.0.144.0/20"
+    },
+    {
+        "ParameterKey": "RDGWInstanceType",
+        "ParameterValue": "t2.large"
+    },
+    {
+        "ParameterKey": "RDGWCIDR",
+        "ParameterValue": "10.0.0.0/16"
+    },
+    {
+        "ParameterKey": "VPCCIDR",
+        "ParameterValue": "10.0.0.0/16"
+    },
+    {
+        "ParameterKey": "QSS3BucketName",
+        "ParameterValue": "$[taskcat_autobucket]"
+    }
+]

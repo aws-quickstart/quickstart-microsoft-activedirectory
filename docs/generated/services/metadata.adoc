@@ -1,7 +1,5 @@
 
 :template_aws_cloudformation_stack:
-:template_aws_cloudformation_waitcondition:
-:template_aws_cloudformation_waitconditionhandle:
 :template_aws_directoryservice_microsoftad:
 :template_aws_ec2_dhcpoptions:
 :template_aws_ec2_instance:
@@ -14,6 +12,7 @@
 :template_aws_secretsmanager_secret:
 :template_aws_ssm_document:
 :template_cloudformation:
+:template_deterministic_ec2_instances:
 :template_directoryservice:
 :template_ec2:
 :template_iam:

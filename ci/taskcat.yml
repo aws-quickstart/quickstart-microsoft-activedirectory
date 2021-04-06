@@ -1,0 +1,69 @@
+global:
+  marketplace-ami: false
+  owner: quickstart-eng@amazon.com
+  qsname: quickstart-microsoft-activedirectory
+  regions:
+    - ap-northeast-1
+    - ap-northeast-2
+    - ap-south-1
+    - ap-southeast-1
+    - ap-southeast-2
+    - ca-central-1
+    - eu-central-1
+    - eu-west-1
+    - eu-west-2
+    - eu-west-3
+    - sa-east-1
+    - us-east-1
+    - us-east-2
+    - us-west-1
+    - us-west-2
+  reporting: true
+tests:
+  master1-ad:
+    parameter_input: ad-master-1.json
+    regions:
+      - ap-northeast-2
+#      - ca-central-1
+      - eu-west-1
+      - ap-south-1
+      - us-east-2
+      - ap-northeast-1
+      - eu-west-2
+      - eu-central-1
+      - us-east-1
+      - us-west-2
+    template_file: ad-master-1.template
+  master2-ad:
+    parameter_input: ad-master-2.json
+    regions:
+      - ap-northeast-1
+      - ap-south-1
+      - ap-southeast-2
+      - eu-central-1
+      - eu-west-2
+      - us-east-1
+      - us-west-1
+    template_file: ad-master-2.template
+  master3-ad-ent:
+    parameter_input: ad-master-3-Ent.json
+    regions:
+      - us-east-1
+#      - ca-central-1
+#      - eu-west-2
+      - ap-southeast-2
+    template_file: ad-master-3.template
+  master3-ad-std:
+    parameter_input: ad-master-3-Std.json
+    regions:
+      - us-east-2
+      - ap-south-1
+      - eu-west-1
+      - ap-southeast-1
+    template_file: ad-master-3.template
+#  master1-ad-ssm:
+#    parameter_input: ad-master-1-ssm.json
+#    regions:
+#      - eu-west-3
+#      - us-east-1
+#    template_file: ad-master-1-ssm.template

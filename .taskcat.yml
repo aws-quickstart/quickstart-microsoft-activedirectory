@@ -1,0 +1,116 @@
+project:
+  name: quickstart-microsoft-activedirectory
+  owner: quickstart-eng@amazon.com
+  package_lambda: false
+  regions:
+  - ap-northeast-1
+  - ap-northeast-2
+  - ap-south-1
+  - ap-southeast-1
+  - ap-southeast-2
+  - ca-central-1
+  - eu-central-1
+  - eu-west-1
+  - eu-west-2
+  # - eu-west-3
+  - sa-east-1
+  - us-east-1
+  - us-east-2
+  - us-west-1
+  - us-west-2
+tests:
+  ad-1:
+    parameters:
+      ADServer1InstanceType: t3.large
+      ADServer1NetBIOSName: DC1
+      ADServer1PrivateIP: 10.0.0.10
+      ADServer2NetBIOSName: DC2
+      ADServer2PrivateIP: 10.0.32.10
+      AvailabilityZones: $[taskcat_genaz_2]
+      DomainAdminPassword: $[taskcat_genpass_16]
+      DomainAdminUser: Admin
+      DomainDNSName: example.com
+      DomainNetBIOSName: example
+      KeyPairName: $[taskcat_getkeypair]
+      NumberOfRDGWHosts: '0'
+      PrivateSubnet1CIDR: 10.0.0.0/19
+      PrivateSubnet2CIDR: 10.0.32.0/19
+      PublicSubnet1CIDR: 10.0.128.0/20
+      PublicSubnet2CIDR: 10.0.144.0/20
+      RDGWInstanceType: t2.large
+      RDGWCIDR: 10.0.0.0/16
+      VPCCIDR: 10.0.0.0/16
+      QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
+      PKI: 'One-Tier'
+      EntCaServerInstanceType: t3.large
+      EntCaDataDriveSizeGiB: '2'
+      EntCaServerNetBIOSName: 'EntCa1'
+      EntCaKeyLength: '2048'
+      EntCaHashAlgorithm: 'SHA256'
+      EntCaValidityPeriodUnits: '5'
+      CreateDefaultOUs: 'Yes'
+      TombstoneLifetime: '60'
+      DeletedObjectLifetime: '60'
+      DHCPOptionSet: 'Yes'
+    regions:
+    # - eu-west-3
+    - sa-east-1
+    - us-east-1
+    - us-east-2
+    template: templates/ad-main-1.template.yaml
+  ad-2:
+    parameters:
+      ADServer1NetBIOSName: DC1
+      ADServer1PrivateIP: 10.0.0.10
+      ADServer2NetBIOSName: DC2
+      ADServer2PrivateIP: 10.0.32.10
+      AdminPassword: $[taskcat_genpass_16]
+      AdminUser: StackAdmin
+      AvailabilityZones: $[taskcat_genaz_2]
+      DomainDNSName: example.com
+      KeyPairName: $[taskcat_getkeypair]
+      NumberOfRDGWHosts: '0'
+      PrivateSubnet1CIDR: 10.0.0.0/19
+      PrivateSubnet2CIDR: 10.0.32.0/19
+      PublicSubnet1CIDR: 10.0.128.0/20
+      PublicSubnet2CIDR: 10.0.144.0/20
+      RDGWInstanceType: t2.large
+      RDGWCIDR: 10.0.0.0/16
+      VPCCIDR: 10.0.0.0/16
+      QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
+    regions:
+    - ap-northeast-1
+    - ca-central-1
+    - eu-central-1
+    template: templates/ad-main-2.template.yaml
+  ad-3:
+    parameters:
+      AvailabilityZones: $[taskcat_genaz_2]
+      DomainAdminPassword: $[taskcat_genpass_16]
+      DomainDNSName: example.com
+      DomainNetBIOSName: example
+      ADEdition: Standard
+      KeyPairName: $[taskcat_getkeypair]
+      NumberOfRDGWHosts: '0'
+      PrivateSubnet1CIDR: 10.0.0.0/19
+      PrivateSubnet2CIDR: 10.0.32.0/19
+      PublicSubnet1CIDR: 10.0.128.0/20
+      PublicSubnet2CIDR: 10.0.144.0/20
+      PKI: 'Two-Tier'
+      RDGWInstanceType: t2.large
+      RDGWCIDR: 10.0.0.0/16
+      VPCCIDR: 10.0.0.0/16
+      QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
+      MgMtServerInstanceType: t3.medium
+      MgmtDataDriveSizeGiB: '2'
+      MgmtServerNetBIOSName: 'Mgmt01'
+      DHCPOptionSet: 'No'
+    regions:
+    - us-west-1
+    - us-west-2
+    - eu-west-1
+    - eu-west-2
+    template: templates/ad-main-3.template.yaml

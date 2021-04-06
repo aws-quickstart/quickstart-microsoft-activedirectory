@@ -1,0 +1,42 @@
+[
+    {
+        "ParameterKey": "KeyPairName",
+        "ParameterValue": "cikey"
+    },
+    {
+        "ParameterKey": "RDGWInstanceType",
+        "ParameterValue": "m4.xlarge"
+    },
+    {
+        "ParameterKey": "DomainDNSName",
+        "ParameterValue": "example.com"
+    },
+    {
+        "ParameterKey": "DomainNetBIOSName",
+        "ParameterValue": "example"
+    },
+    {
+        "ParameterKey": "DomainAdminPassword",
+        "ParameterValue": "$[alfred_genpass_32]"
+    },
+    {
+        "ParameterKey": "PublicSubnet1CIDR",
+        "ParameterValue": "10.0.32.0/20"
+    },
+    {
+        "ParameterKey": "PublicSubnet2CIDR",
+        "ParameterValue": "10.0.96.0/20"
+    },
+    {
+        "ParameterKey": "PrivateSubnet1CIDR",
+        "ParameterValue": "10.0.0.0/19"
+    },
+    {
+        "ParameterKey": "PrivateSubnet2CIDR",
+        "ParameterValue": "10.0.64.0/19"
+    },
+    {
+        "ParameterKey": "VPCCIDR",
+        "ParameterValue": "10.0.0.0/16"
+    }
+]

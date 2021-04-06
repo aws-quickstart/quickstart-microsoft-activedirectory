@@ -1,0 +1,54 @@
+[
+    {
+        "ParameterKey": "KeyPairName",
+        "ParameterValue": "cikey"
+    },
+    {
+        "ParameterKey": "ADServer1InstanceType",
+        "ParameterValue": "m4.xlarge"
+    },
+    {
+        "ParameterKey": "ADServer2InstanceType",
+        "ParameterValue": "m4.xlarge"
+    },
+    {
+        "ParameterKey": "RDGWInstanceType",
+        "ParameterValue": "m4.xlarge"
+    },
+    {
+        "ParameterKey": "ADServer1NetBIOSName",
+        "ParameterValue": "DC1"
+    },
+    {
+        "ParameterKey": "ADServer2NetBIOSName",
+        "ParameterValue": "DC2"
+    },
+    {
+        "ParameterKey": "PublicSubnet1CIDR",
+        "ParameterValue": "10.0.32.0/20"
+    },
+    {
+        "ParameterKey": "PublicSubnet2CIDR",
+        "ParameterValue": "10.0.96.0/20"
+    },
+    {
+        "ParameterKey": "PrivateSubnet1CIDR",
+        "ParameterValue": "10.0.0.0/19"
+    },
+    {
+        "ParameterKey": "PrivateSubnet2CIDR",
+        "ParameterValue": "10.0.64.0/19"
+    },
+    {
+        "ParameterKey": "VPCCIDR",
+        "ParameterValue": "10.0.0.0/16"
+    },
+    {
+        "ParameterKey": "ADServer1PrivateIP",
+        "ParameterValue": "10.0.0.10"
+    },
+    {
+        "ParameterKey": "ADServer2PrivateIP",
+        "ParameterValue": "10.0.64.10"
+    }
+]
