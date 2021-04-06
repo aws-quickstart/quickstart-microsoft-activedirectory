@@ -58,7 +58,7 @@ tests:
     - sa-east-1
     - us-east-1
     - us-east-2
-    template: templates/ad-master-1.template
+    template: templates/ad-main-1.template.yaml
   ad-2:
     parameters:
       ADServer1NetBIOSName: DC1
@@ -84,7 +84,7 @@ tests:
     - ap-northeast-1
     - ca-central-1
     - eu-central-1
-    template: templates/ad-master-2.template
+    template: templates/ad-main-2.template.yaml
   ad-3:
     parameters:
       AvailabilityZones: $[taskcat_genaz_2]
@@ -113,4 +113,4 @@ tests:
     - us-west-2
     - eu-west-1
     - eu-west-2
-    template: templates/ad-master-3.template
+    template: templates/ad-main-3.template.yaml
