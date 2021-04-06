@@ -4,10 +4,10 @@
 
 If you’re extending your on-premises AD DS to the AWS Cloud—scenario 2, as described in the link:#_architecture[Architecture] section of this guide—the Quick Start does not promote the newly created Windows servers to domain controllers. You need to perform the following tasks manually after the stack has been successfully created:
 
-1.  Connect your on-premises network to the VPC using AWS Direct Connect or a VPN connection and verify that the new Windows Server instances that were created by the Quick Start can resolve the domain DNS name.
-2.  Promote the new Windows Server instances that were created by the Quick Start to domain controllers in your Active Directory domain.
-3.  Configure your on-premises Active Directory Sites and Services to include sites and subnets that represent the Availability Zones within your VPC, and place the newly-promoted Domain Controllers in their associated sites.
-4.  Ensure that instances can resolve names via AD DNS by using one of these methods:
+.  Connect your on-premises network to the VPC using AWS Direct Connect or a VPN connection and verify that the new Windows Server instances that were created by the Quick Start can resolve the domain DNS name.
+.  Promote the new Windows Server instances that were created by the Quick Start to domain controllers in your Active Directory domain.
+.  Configure your on-premises Active Directory Sites and Services to include sites and subnets that represent the Availability Zones within your VPC, and place the newly promoted Domain Controllers in their associated sites.
+.  Ensure that instances can resolve names via AD DNS by using one of these methods:
 
 * Statically assign AD DNS servers on Windows instances.
 +

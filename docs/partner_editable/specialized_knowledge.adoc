@@ -8,7 +8,7 @@ Deploying a functional AD DS deployment in the AWS Cloud requires a good underst
 
 ==== VPC configuration
 
-With Amazon VPC, you can define a virtual network topology closely resembling a traditional network that you might operate on your own premises. A VPC can span multiple Availability Zones, which enables you to place independent infrastructure in physically separate locations. A Multi-AZ deployment provides high availability and fault tolerance. In the scenarios in this guide, we place domain controllers in two Availability Zones to provide highly available, low latency access to AD DS services in the AWS Cloud.
+With Amazon VPC, you can define a virtual network topology closely resembling a traditional network that you might operate on your own premises. A VPC can span multiple Availability Zones so that you can place independent infrastructure in physically separate locations. A Multi-AZ deployment provides high availability and fault tolerance. In the scenarios in this guide, we place domain controllers in two Availability Zones to provide highly available, low-latency access to AD DS services in the AWS Cloud.
 
 Each scenario is automated by two templates: one that builds a new VPC for the deployment, and the other that deploys into an existing VPC. To accommodate highly available AD DS in the AWS Cloud, the Quick Start builds (or requires, in the case of the existing VPC template) a base VPC configuration that complies with the following AWS best practices:
 
@@ -162,7 +162,7 @@ The following figure shows an example script that you can use to change the conf
 .Sample script to configure the LCM
 image::../images/image10.png[Sample script to configure the LCM,width=511]
 
-The script is available in this Quick Start’s GitHub repo. Note the use of the DSCLocalConfigurationManager attribute and the Set-DscLocalConfigurationManager cmdlet to specifically configure the LCM. For more information on settings and options, see the https://docs.microsoft.com/en-us/powershell/dsc/metaconfig[Microsoft documentation^].
+The script is available in this Quick Start’s GitHub repo. Note the use of the DSCLocalConfigurationManager attribute and the Set-DscLocalConfigurationManager cmdlet to specifically configure the LCM. For more information on settings and options, see https://devblogs.microsoft.com/powershell/understanding-meta-configuration-in-windows-powershell-desired-state-configuration/[Understanding Meta Configuration in Windows PowerShell Desired State Configuration^].
 
 In the GitHub repo you can also review the ConfigDC1.ps1 and ConfigDC2.ps1 scripts, which are used to generate the MOF file for each node of the Quick Start. These scripts have been annotated for documentation purposes.
 
