@@ -16,7 +16,7 @@ Scenario 1 is based on a new installation of AD DS in the AWS Cloud without AWS 
 
 [#architecture1]
 .Scenario 1—Quick Start architecture for highly available AD DS on AWS
-image::../images/AD-architecture-scenario1.png[Architecture scenario 1]
+image::../images/AD-architecture-scenario1.png[Architecture scenario 1, 75%]
 
 As illustrated in <<architecture1>>, the AWS CloudFormation templates that automate this deployment set up the following (with an option to deploy a certificate authority in Availability Zone 1):
 
@@ -43,7 +43,7 @@ Scenario 2 is for users who want to use their existing installation of AD DS and
 
 [#architecture2]
 .Scenario 2—Quick Start architecture for extending your on-premises AD DS to AWS
-image::../images/AD-architecture-scenario2.png[Architecture scenario 2] 
+image::../images/AD-architecture-scenario2.png[Architecture scenario 2]
 
 As shown in <<architecture2>>, the AWS CloudFormation templates that automate this deployment set up the following (except for the virtual private network (VPN) gateway, VPN connection, and customer gateway, which you create manually):
 
@@ -70,7 +70,7 @@ AWS Directory Service deploys AD DS across multiple Availability Zones, and auto
 
 [#architecture3]
 .Scenario 3—Quick Start architecture for deploying AD DS with AWS Directory Service
-image::../images/AD-architecture-scenario3.png[Architecture scenario 3]
+image::../images/AD-architecture-scenario3.png[Architecture scenario 3, 75%]
 
 As shown in <<architecture3>>, the AWS CloudFormation templates that automate this deployment set up the following:
 
