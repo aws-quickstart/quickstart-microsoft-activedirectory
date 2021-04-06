@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  This template creates a managed Microsoft AD Directory Service into private subnets in separate Availability Zones inside a VPC. The default Domain
+  This template creates a AWS Managed Microsoft AD Directory into private subnets in separate Availability Zones inside a VPC. The default Domain
   Administrator user is 'admin'. For adding members to the domain, ensure that they are launched into the domain member security group created by this
   template and then configure them to use the AD instances fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2
-  Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6rad4)
+  Windows instances and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6rad4)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into an existing VPC'
@@ -11,7 +11,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Network configuration
+          default: Network Configuration
         Parameters:
           - VPCCIDR
           - VPCID
@@ -50,16 +50,16 @@ Metadata:
           - UseS3ForCRL
           - S3CRLBucketName
       - Label:
-          default: AWS Quick Start configuration
+          default: AWS Quick Start Configuration
         Parameters:
           - QSS3BucketName
           - QSS3BucketRegion
           - QSS3KeyPrefix
     ParameterLabels:
       ADEdition:
-        default: AWS Microsoft AD Edition
+        default: AWS Managed Microsoft AD Edition
       CaAmi:
-        default: CA SSM Parameter Value for Lastest AMI ID
+        default: CA SSM Parameter Value for latest AMI ID
       CaDataDriveSizeGiB:
         default: CA Data Drive Size
       CaHashAlgorithm:
@@ -83,7 +83,7 @@ Metadata:
       KeyPairName:
         default: Key Pair Name
       MgmtAmi:
-        default: Management Server SSM Parameter Value for lastest AMI ID
+        default: Management Server SSM Parameter Value for latest AMI ID
       MgmtDataDriveSizeGiB:
         default: Data Drive Size
       MgmtServer:
@@ -122,7 +122,7 @@ Parameters:
       - Standard
       - Enterprise
     Default: Enterprise
-    Description: The AWS Microsoft AD Edition you wish to deploy
+    Description: The AWS Managed Microsoft AD Edition you wish to deploy
     Type: String
   CaAmi:
     Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
@@ -138,7 +138,7 @@ Parameters:
       - SHA384
       - SHA512
     Default: SHA256
-    Description: CA(s) Hash Algorithm for Siging Certificates
+    Description: CA(s) Hash Algorithm for Signing Certificates
     Type: String
   CaKeyLength:
     AllowedValues:
@@ -202,11 +202,11 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
   MgmtAmi:
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
-    Description: Management Server SSM Parameter Value to grab the lastest AMI ID
+    Description: Management Server SSM Parameter Value to grab the latest AMI ID
     Type: String
   MgmtDataDriveSizeGiB:
     Default: '2'
-    Description: Size of the Managment Server Data Drive in GiB
+    Description: Size of the Management Server Data Drive in GiB
     Type: Number
   MgmtServer:
     AllowedValues:
@@ -260,12 +260,9 @@ Parameters:
     Type: AWS::EC2::Subnet::Id
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription:
-      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Default: aws-quickstart
-    Description:
-      S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-) It
-      cannot start or end with a hyphen (-).
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-) It cannot start or end with a hyphen (-).
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
@@ -275,16 +272,12 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description:
-      S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/)
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
   S3CRLBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: examplebucket
-    Description:
-      S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or
-      end with a hyphen (-)
+    Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   UseS3ForCRL:
     AllowedValues:
@@ -344,7 +337,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub 'ADAdminSecret-${AWS::StackName}'
-      Description: Admin User Seccrets for Manged AD Quick Start
+      Description: Admin User Secrets for Managed AD Quick Start
       SecretString: !Sub '{"username":"Admin","password":"${DomainAdminPassword}"}'
   MicrosoftAD:
     Type: AWS::DirectoryService::MicrosoftAD
@@ -365,8 +358,8 @@ Resources:
       VpcId: !Ref 'VPCID'
       Tags:
         - Key: Name
-          Value: DomainMemberSG
-  DomainMembersIngress:
+          Value: DomainMembersSecurityGroup
+  DomainMembersIngressRDP:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       Description: RDP
@@ -374,6 +367,24 @@ Resources:
       IpProtocol: tcp
       FromPort: 3389
       ToPort: 3389
+      SourceSecurityGroupId: !Ref DomainMemberSG
+  DomainMembersIngressWinRMHTTP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: WinRM-HTTP
+      GroupId: !Ref DomainMemberSG
+      IpProtocol: tcp
+      FromPort: 5985
+      ToPort: 5985
+      SourceSecurityGroupId: !Ref DomainMemberSG
+  DomainMembersIngressWinRMHTTPS:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: WinRM-HTTPS
+      GroupId: !Ref DomainMemberSG
+      IpProtocol: tcp
+      FromPort: 5986
+      ToPort: 5986
       SourceSecurityGroupId: !Ref DomainMemberSG
   MgmtStack:
     Condition: ShouldCreateMgmtServer
