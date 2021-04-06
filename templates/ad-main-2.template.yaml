@@ -7,7 +7,7 @@ Description: >-
   will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for extenting on-premises Active Directory into a new VPC'
+    EntrypointName: 'Parameters for extending on-premises AD into a new VPC'
     Order: '3'
   AWS::CloudFormation::Interface:
     ParameterGroups:

@@ -25,28 +25,28 @@ WARNING: If you’re deploying {partner-product-short-name} into an existing VPC
 
 NOTE: You are responsible for the cost of the AWS services used while running this Quick Start reference deployment. There is no additional cost for using this Quick Start. For full details, see the pricing pages for each AWS service used by this Quick Start. Prices are subject to change.
 
-Deploying self-managed Active Directory takes about 60 minutes. Deploying EC2 instances to extend on-premises Active Directory to AWS takes about 20 minutes. Deploying AWS Managed Directory Service takes about 30 minutes.
+Scenario 1 takes about 60 minutes. Scenario 2 takes about 20 minutes. Scenario 3 takes about 30 minutes.
 
 . Sign in to your AWS account, and choose one of the following options to launch the AWS CloudFormation template. For help with choosing an option, see link:#_deployment_options[Deployment options] earlier in this guide.
 +
 [cols="3,1"]
 |===
-^|https://fwd.aws/EdwmE[Deploy self-managed AD into a new VPC on AWS^]
+^|https://fwd.aws/EdwmE[Deploy scenario 1 (self-managed AD) into a new VPC)^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-1.template[View template^]
 
-^|https://fwd.aws/eKBrm[Deploy self-managed AD into an existing VPC on AWS^]
+^|https://fwd.aws/eKBrm[Deploy scenario 1 (self-managed AD) into an existing VPC^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-1.template[View template^]
 
-^|https://fwd.aws/AEBD7[Deploy EC2 instances to extend on-premises AD into a new VPC on AWS^]
+^|https://fwd.aws/AEBD7[Deploy scenario 2 (extending on-premises AD) into a new VPC^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-2.template[View template^]
 
-^|https://fwd.aws/KGgYW[Deploy EC2 instances to extend on-premises AD into an existing VPC on AWS^]
+^|https://fwd.aws/KGgYW[Deploy scenario 2 (extending on-premises AD) into an existing VPC^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-2.template[View template^]
 
-^|https://fwd.aws/EqwrE[Deploy AWS Managed Directory Service into a new VPC on AWS^]
+^|https://fwd.aws/EqwrE[Deploy scenario 3 (AWS Managed Microsoft AD) into a new VPC^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-3.template[View template^]
 
-^|https://fwd.aws/RgvXr[Deploy AWS Managed Directory Service into an existing VPC on AWS^]
+^|https://fwd.aws/RgvXr[Deploy scenario 3 (AWS Managed Microsoft AD) into an existing VPC^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-3.template[View template^]
 |===
 +

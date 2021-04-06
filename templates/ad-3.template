@@ -6,7 +6,7 @@ Description: >-
   Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6rad4)
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying AWS Managed AD into an existing VPC'
+    EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into an existing VPC'
     Order: '6'
   AWS::CloudFormation::Interface:
     ParameterGroups:

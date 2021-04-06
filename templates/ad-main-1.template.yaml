@@ -8,7 +8,7 @@ Description: >-
   Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying AD on EC2 into a new VPC'
+    EntrypointName: 'Parameters for deploying self-managed AD into a new VPC'
     Order: '1'
   AWS::CloudFormation::Interface:
     ParameterGroups:
