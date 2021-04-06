@@ -8,7 +8,7 @@ Description: >-
   billed for the AWS resources used if you create a stack from this template.
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying AWS Managed AD into a new VPC'
+    EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into a new VPC'
     Order: '5'
   AWS::CloudFormation::Interface:
     ParameterGroups:

@@ -7,7 +7,7 @@ Description: >-
   create a stack from this template. (qs-1qup6rae5)
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying AD on EC2 into an existing VPC'
+    EntrypointName: 'Parameters for deploying self-managed AD into an existing VPC'
     Order: '2'
   AWS::CloudFormation::Interface:
     ParameterGroups:
