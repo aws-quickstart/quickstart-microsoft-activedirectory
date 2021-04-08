@@ -7,12 +7,12 @@ Description: >-
   create a stack from this template. (qs-1qup6rae5)
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Launch Active Directory on EC2 into an existing VPC'
+    EntrypointName: 'Parameters for deploying self-managed AD into an existing VPC'
     Order: '2'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Network Configuration
+          default: Network configuration
         Parameters:
           - VPCCIDR
           - VPCID
@@ -20,7 +20,7 @@ Metadata:
           - PrivateSubnet1ID
           - PrivateSubnet2ID
       - Label:
-          default: Amazon EC2 Configuration
+          default: Amazon EC2 configuration
         Parameters:
           - ADServer1InstanceType
           - ADServer1NetBIOSName
@@ -32,7 +32,7 @@ Metadata:
           - KeyPairName
           - WINFULLBASE
       - Label:
-          default: Microsoft Active Directory Domain Services Configuration
+          default: Microsoft Active Directory Domain Services configuration
         Parameters:
           - DomainAdminUser
           - DomainAdminPassword
@@ -42,7 +42,7 @@ Metadata:
           - TombstoneLifetime
           - DeletedObjectLifetime
       - Label:
-          default: Microsoft Active Directory Certificate Services Configuration
+          default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
           - CaServerInstanceType
@@ -57,7 +57,7 @@ Metadata:
           - UseS3ForCRL
           - S3CRLBucketName
       - Label:
-          default: AWS Quick Start Configuration
+          default: AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3BucketRegion
@@ -76,7 +76,7 @@ Metadata:
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
       CaAmi:
-        default: CA SSM Parameter Value for Lastest AMI ID
+        default: CA SSM Parameter Value for latest AMI ID
       CaDataDriveSizeGiB:
         default: CA Data Drive Size
       CaHashAlgorithm:
@@ -134,7 +134,7 @@ Metadata:
       VPCID:
         default: VPC ID
       WINFULLBASE:
-        default: SSM Parameter Value for Lastest AMI ID
+        default: SSM Parameter Value for latest AMI ID
 Parameters:
   ADServer1InstanceType:
     AllowedValues:
@@ -196,7 +196,7 @@ Parameters:
     Type: String
   CaAmi:
     Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
-    Description: Enterprise Root CA SSM Parameter Value to grab the lastest AMI ID
+    Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
     Type: String
   CaDataDriveSizeGiB:
     Default: '2'
@@ -208,7 +208,7 @@ Parameters:
       - SHA384
       - SHA512
     Default: SHA256
-    Description: CA(s) Hash Algorithm for Siging Certificates
+    Description: CA(s) Hash Algorithm for Signing Certificates
     Type: String
   CaKeyLength:
     AllowedValues:
@@ -237,9 +237,7 @@ Parameters:
       - 'Yes'
       - 'No'
     Default: 'No'
-    Description:
-      Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default
-      users and computers containers to Domain Users and Domain Computers
+    Description: Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default users and computers containers to Domain Users and Domain Computers
     Type: String
   DHCPOptionSet:
     AllowedValues:
@@ -254,7 +252,7 @@ Parameters:
     Type: Number
   DeletedObjectLifetime:
     Default: '180'
-    Description: The number of days before a deleted object is removed from the Active Directory recycling bin, minimum number is 2
+    Description: The number of days before a deleted object is removed from the Active Directory recycle bin, minimum number is 2
     Type: Number
   DomainAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
@@ -321,12 +319,9 @@ Parameters:
     Type: AWS::EC2::Subnet::Id
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription:
-      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Default: aws-quickstart
-    Description:
-      S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-).
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
@@ -336,16 +331,12 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description:
-      S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/)
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
   S3CRLBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: examplebucket
-    Description:
-      S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or
-      end with a hyphen (-)
+    Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   TombstoneLifetime:
     Default: '180'
@@ -1137,7 +1128,7 @@ Resources:
           SourceSecurityGroupId: !Ref DomainMembersSG
       Tags:
         - Key: Name
-          Value: DomainControllersSG
+          Value: DomainControllersSecurityGroup
   DomainMembersSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -1145,8 +1136,8 @@ Resources:
       VpcId: !Ref VPCID
       Tags:
         - Key: Name
-          Value: DomainMembersSG
-  DomainMembersIngress:
+          Value: DomainMembersSecurityGroup
+  DomainMembersIngressRDP:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       Description: RDP
@@ -1154,6 +1145,24 @@ Resources:
       IpProtocol: tcp
       FromPort: 3389
       ToPort: 3389
+      SourceSecurityGroupId: !Ref DomainMembersSG
+  DomainMembersIngressWinRMHTTP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: WinRM-HTTP
+      GroupId: !Ref DomainMembersSG
+      IpProtocol: tcp
+      FromPort: 5985
+      ToPort: 5985
+      SourceSecurityGroupId: !Ref DomainMembersSG
+  DomainMembersIngressWinRMHTTPS:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: WinRM-HTTPS
+      GroupId: !Ref DomainMembersSG
+      IpProtocol: tcp
+      FromPort: 5986
+      ToPort: 5986
       SourceSecurityGroupId: !Ref DomainMembersSG
   DCSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress

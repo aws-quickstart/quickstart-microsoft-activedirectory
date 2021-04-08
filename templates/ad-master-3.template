@@ -7,9 +7,6 @@ Description: >-
   fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be
   billed for the AWS resources used if you create a stack from this template.
 Metadata:
-  QuickStartDocumentation:
-    EntrypointName: 'Launch AWS Managed Active Directory into a new VPC'
-    Order: '6'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -44,7 +41,7 @@ Metadata:
           - MgmtDataDriveSizeGiB
           - MgmtServerNetBIOSName
       - Label:
-          default: Microsoft Active Directory Certificate Services Configuration
+          default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
           - CaServerInstanceType
@@ -71,7 +68,7 @@ Metadata:
           - QSS3KeyPrefix
     ParameterLabels:
       ADEdition:
-        default: AWS Microsoft AD Edition
+        default: AWS Managed Microsoft AD Edition
       AvailabilityZones:
         default: Availability Zones
       CaDataDriveSizeGiB:
@@ -148,11 +145,10 @@ Parameters:
       - Standard
       - Enterprise
     Default: Enterprise
-    Description: The AWS Microsoft AD Edition you wish to deploy
+    Description: The AWS Managed Microsoft AD Edition you wish to deploy
     Type: String
   AvailabilityZones:
-    Description:
-      'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
+    Description: 'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
     Type: List<AWS::EC2::AvailabilityZone::Name>
   CaDataDriveSizeGiB:
     Default: '2'
@@ -164,7 +160,7 @@ Parameters:
       - SHA384
       - SHA512
     Default: SHA256
-    Description: CA(s) Hash Algorithm for Siging Certificates
+    Description: CA(s) Hash Algorithm for Signing Certificates
     Type: String
   CaKeyLength:
     AllowedValues:
@@ -325,12 +321,9 @@ Parameters:
     Type: String
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription:
-      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Default: aws-quickstart
-    Description:
-      S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-)
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
@@ -340,9 +333,7 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description:
-      S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/)
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
   RDGWCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
@@ -368,8 +359,7 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: examplebucket
     Description:
-      S3 bucket name for CA CRL(s) storage. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It
-      cannot start or end with a hyphen (-)
+      S3 bucket name for CA CRL(s) storage. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   UseS3ForCRL:
     AllowedValues:

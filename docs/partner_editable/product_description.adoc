@@ -2,10 +2,8 @@
 // Briefly describe the software. Use consistent and clear branding. 
 // Include the benefits of using the software on AWS, and provide details on usage scenarios.
 
-Amazon Web Services (AWS) provides a comprehensive set of services and tools for deploying Microsoft Windows-based workloads on its reliable and secure cloud infrastructure. Microsoft Active Directory Domain Services (AD DS) and Domain Name System (DNS) are core Windows services that provide the foundation for many enterprise class Microsoft-based solutions, including Microsoft SharePoint, Microsoft Exchange, and .NET applications.
+AWS provides a comprehensive set of services and tools for deploying Microsoft Windows-based workloads on its cloud infrastructure. Microsoft AD DS and Domain Name System (DNS) are core Windows services that provide the foundation for many enterprise class Microsoft-based solutions, including Microsoft SharePoint, Microsoft Exchange, and .NET applications.
 
-This Quick Start is for organizations running workloads in the AWS Cloud that require secure, low-latency connectivity to AD DS and DNS services. After reading this guide, IT infrastructure personnel should have a good understanding of how to design and deploy a solution to launch AD DS in the AWS Cloud, or extend their on-premises AD DS into the AWS Cloud.
-
-This Quick Start assumes that you’re already familiar with Active Directory and DNS. For details, please consult the Microsoft product documentation.
+This Quick Start is for organizations running workloads in the AWS Cloud to help set up secure, low-latency connectivity to AD DS and DNS services. After reading this guide, IT infrastructure personnel should have a good understanding of how to design and deploy a solution to launch AD DS in the AWS Cloud, or extend their on-premises AD DS into the AWS Cloud. The Quick Start optionally deploys a one- or two-tier https://fwd.aws/a4Rdx[Microsoft Public Key Infrastructure^].
 
 This guide focuses on infrastructure configuration topics that require careful consideration when you are planning and deploying AD DS, domain controller instances, and DNS services in the AWS Cloud. We don’t cover general Windows Server installation and software configuration tasks. For general software configuration guidance and best practices, consult the Microsoft product documentation.
