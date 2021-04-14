@@ -814,12 +814,10 @@ p.footer-text a{color:#d7d8d8}
 <li><a href="#_launch_the_quick_start">Launch the Quick Start</a></li>
 </ul>
 </li>
-<li><a href="#_post_deployment_tasks_scenario_2_only">Post-deployment tasks (scenario 2 only)</a>
+<li><a href="#_post_deployment_steps">Post-deployment steps</a>
 <ul class="sectlevel2">
-<li><a href="#connecting-your-on-premises-network-to-the-vpc">Connect your on-premises network to the VPC</a></li>
-<li><a href="#deploying-additional-domain-controllers-in-the-aws-cloud">Deploy additional domain controllers in the AWS Cloud</a></li>
-<li><a href="#configuring-active-directory-sites-and-services">Configure Active Directory Sites and Services</a></li>
-<li><a href="#configuring-dns-resolution">Configure DNS resolution</a></li>
+<li><a href="#_run_windows_updates">Run Windows Updates</a></li>
+<li><a href="#_post_deployment_tasks_scenario_2_only">Post-deployment tasks (scenario 2 only)</a></li>
 </ul>
 </li>
 <li><a href="#_security">Security</a></li>
@@ -1824,8 +1822,35 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 </div>
 </div>
 <div class="sect1">
-<h2 id="_post_deployment_tasks_scenario_2_only">Post-deployment tasks (scenario 2 only)</h2>
+<h2 id="_post_deployment_steps">Post-deployment steps</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_run_windows_updates">Run Windows Updates</h3>
+<div class="paragraph">
+<p>In order to ensure the deployed servers' operating systems and installed applications have the latest Microsoft updates, run Windows Update on each server.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create an RDP session from the Remote Desktop Gateway server to each deployed server.</p>
+</li>
+<li>
+<p>Open the <strong>Settings</strong> application.</p>
+</li>
+<li>
+<p>Open <strong>Update &amp; Security</strong>.</p>
+</li>
+<li>
+<p>Click <strong>Check for updates</strong>.</p>
+</li>
+<li>
+<p>Install any updates and reboot if necessary.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_post_deployment_tasks_scenario_2_only">Post-deployment tasks (scenario 2 only)</h3>
 <div class="paragraph">
 <p>If you’re extending your on-premises AD DS to the AWS Cloud—scenario 2, as described in the <a href="#_architecture">Architecture</a> section of this guide—the Quick Start does not promote the newly created Windows servers to domain controllers. You need to perform the following tasks manually after the stack has been successfully created:</p>
 </div>
@@ -1861,13 +1886,13 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <div class="paragraph">
 <p>The following sections provide more information about these post-deployment tasks.</p>
 </div>
-<div class="sect2">
-<h3 id="connecting-your-on-premises-network-to-the-vpc">Connect your on-premises network to the VPC</h3>
+<div class="sect3">
+<h4 id="connecting-your-on-premises-network-to-the-vpc">Connect your on-premises network to the VPC</h4>
 <div class="paragraph">
 <p>By default, instances that you launch into a virtual private cloud can&#8217;t communicate with your own network. To extend your existing AD DS into the AWS Cloud, you’ll need to extend your on-premises network to the VPC. We’ll discuss two ways to do this: by using IPsec virtual private network (VPN) tunnels or by using AWS Direct Connect.</p>
 </div>
-<div class="sect3">
-<h4 id="using-ipsec-vpn-tunnels">Use IPsec VPN tunnels</h4>
+<div class="sect4">
+<h5 id="using-ipsec-vpn-tunnels">Use IPsec VPN tunnels</h5>
 <div class="paragraph">
 <p>The most common scenario for extending your on-premises network to your VPC is through IPsec VPN tunnels. Within the VPC, you can create a virtual private gateway that acts as a VPN concentrator on the Amazon side of the VPN tunnel. A customer gateway is the anchor on your side of that connection. The customer gateway can be a physical device or a software appliance.</p>
 </div>
@@ -1881,14 +1906,14 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <p>Multiple VPN configuration options are available, including the ability to use multiple on-premises customer gateways and configuring redundant VPN connections to provide failover. For details, see <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_VPN.html#Examples" target="_blank" rel="noopener">VPN Configuration Examples</a> in the <em>Amazon VPC User’s Guide</em>. Details about which hardware or software appliances you can use are available in the <a href="http://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Introduction.html#DevicesTested" target="_blank" rel="noopener">Customer Gateway devices we&#8217;ve tested</a> and <a href="http://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Introduction.html#CGRequirements" target="_blank" rel="noopener">Requirements for your customer gateway</a> sections of the <em>Amazon VPC Network Administrator Guide</em>.</p>
 </div>
 </div>
-<div class="sect3">
-<h4 id="using-aws-direct-connect">Use AWS Direct Connect</h4>
+<div class="sect4">
+<h5 id="using-aws-direct-connect">Use AWS Direct Connect</h5>
 <div class="paragraph">
 <p>AWS Direct Connect links your internal network to an AWS Direct Connect location over a standard 1 gigabit or 10 gigabit Ethernet fiber-optic cable. One end of the cable is connected to your router, the other to an AWS Direct Connect router. With this connection in place, you can create virtual interfaces directly to the AWS Cloud (for example, to Amazon EC2, to Amazon S3, and to Amazon VPC), bypassing internet service providers in your network path. More information about AWS Direct Connect can be found here.</p>
 </div>
 </div>
-<div class="sect3">
-<h4 id="connecting-to-additional-vpcs">Connect to additional VPCs</h4>
+<div class="sect4">
+<h5 id="connecting-to-additional-vpcs">Connect to additional VPCs</h5>
 <div class="paragraph">
 <p>If your Active Directory environment has already been deployed to AWS via a different VPC, you can connect the other VPC to your new VPC via VPC Peering. VPC Peering allows network connectivity within the same account or across multiple accounts. See the AWS VPC Peering guide for additional information.</p>
 </div>
@@ -1906,8 +1931,8 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="deploying-additional-domain-controllers-in-the-aws-cloud">Deploy additional domain controllers in the AWS Cloud</h3>
+<div class="sect3">
+<h4 id="deploying-additional-domain-controllers-in-the-aws-cloud">Deploy additional domain controllers in the AWS Cloud</h4>
 <div class="paragraph">
 <p>Although you can use AWS Direct Connect or a VPN connection to provide access to on-premises resources from the VPC, we recommend that you also add domain controllers to the AWS Cloud. Additional domain controllers provide a reliable, low-latency network connection for resources in AWS that need access to your AD DS. They can also maintain availability for AD DS in the AWS Cloud if there’s an on-premises infrastructure outage.</p>
 </div>
@@ -1924,8 +1949,8 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <p>In this type of environment, the customer network will already be defined in Active Directory Sites and Services. For example, there will already be a site definition that corresponds to the on-premises network, along with a subnet definition for the 192.168.1.0/24 network. The next step is to configure Active Directory Sites and Services to support the network components located in the VPC.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="configuring-active-directory-sites-and-services">Configure Active Directory Sites and Services</h3>
+<div class="sect3">
+<h4 id="configuring-active-directory-sites-and-services">Configure Active Directory Sites and Services</h4>
 <div class="paragraph">
 <p>An Active Directory site should be created for the Region in AWS. The 10.0.0.0/19 and 10.0.32.0/19 CIDR blocks used by the VPC subnets should be added to Active Directory Sites and Services. The subnets can then be associated with the AD DS site definition for the Region. Additional subnets for web, application, and database tiers in the VPC can be mapped to each AWS site object. Both the on-premises site and the site in the AWS Cloud can be mapped to a site link, which can be configured to replicate at custom intervals or during a specific time of day, if needed.</p>
 </div>
@@ -1933,8 +1958,8 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <p>By properly configuring Active Directory Sites and Services, you can help ensure that the AD DS queries and authentication requests that originate from the VPC are serviced by a local domain controller in the same AWS Availability Zone. This configuration reduces network latency and minimizes traffic that may otherwise need to travel across the VPN back to the on-premises infrastructure.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="configuring-dns-resolution">Configure DNS resolution</h3>
+<div class="sect3">
+<h4 id="configuring-dns-resolution">Configure DNS resolution</h4>
 <div class="paragraph">
 <p>After you’ve created a VPC and established connectivity to your on-premises network by using AWS Direct Connect or a VPN connection, your next step is to launch Windows instances to act as domain controllers. In order to join the on-premises Active Directory domain and promote your Windows instances to domain controllers, you’ll need to ensure that DNS resolution is configured appropriately.</p>
 </div>
@@ -1953,6 +1978,7 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <p>Initially configure the VPC DHCP options set to assign your on-premises Active Directory DNS server IP address to your instances launched into the VPC. After the Windows instances have been joined to the domain and promoted to domain controllers, you can create a new DHCP options set to assign the IP address of the Active Directory DNS server instances running in AWS.</p>
 </li>
 </ul>
+</div>
 </div>
 </div>
 </div>
@@ -3854,12 +3880,12 @@ and to share your customizations with others.</p>
 </html>
 <!--
 repo commit:
-76f20ff9fb82fc7a9d7bc86db6c984aad1368df7
+5e5fe94bb8642fb91c5cef6cc1733c251f4be7ca
 
 submodule config:
 +59b9927c61cd1831141cf0350520c89abb2246da docs/boilerplate (heads/main)
  53fbedf058adaea101a587ec0fa9d84cb2a05587 submodules/quickstart-aws-vpc (v1.0-56-g53fbedf)
  47371591852f18413d6d4fe69a6e2824e89a7bb8 submodules/quickstart-microsoft-pki (remotes/origin/master-118-g4737159)
- 1dfd5abcf9e3284ecbbfdb1b85cd5b0e4550e94a submodules/quickstart-microsoft-rdgateway (remotes/origin/master-67-g1dfd5ab)
+ 868c2d47b8c3a95572f24614ff63b1b4860d2418 submodules/quickstart-microsoft-rdgateway (heads/main)
  e1f1a322eff1014be7fbaa8f8384e9dea2fa218c submodules/quickstart-microsoft-utilities (heads/main)
 -->
