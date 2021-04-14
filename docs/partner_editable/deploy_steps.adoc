@@ -29,7 +29,7 @@ Scenario 1 takes about 60 minutes. Scenario 2 takes about 20 minutes. Scenario 3
 +
 [cols="3,1"]
 |===
-^|https://fwd.aws/EdwmE[Deploy scenario 1 (self-managed AD) into a new VPC)^]
+^|https://fwd.aws/EdwmE[Deploy scenario 1 (self-managed AD) into a new VPC^]
 ^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-1.template[View template^]
 
 ^|https://fwd.aws/eKBrm[Deploy scenario 1 (self-managed AD) into an existing VPC^]
