@@ -87,7 +87,7 @@ Try {
     Exit 1
 }
 
-Write-Output "Converting $AltAdminSecret from JSON"
+Write-Output "Converting AltAdminSecret from JSON"
 Try {
     $AltUserPassword = ConvertFrom-Json -InputObject $AltAdminSecret -ErrorAction Stop
 } Catch [System.Exception] {
@@ -108,7 +108,7 @@ Try {
     Exit 1
 }
 
-Write-Output "Converting $RestoreModeSecret from JSON"
+Write-Output "Converting RestoreModeSecret from JSON"
 Try {
     $RestoreModePassword = ConvertFrom-Json -InputObject $RestoreModeSecret -ErrorAction Stop
 } Catch [System.Exception] {

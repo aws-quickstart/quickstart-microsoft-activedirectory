@@ -103,16 +103,9 @@ If you have followed the automated deployment options in this guide, the necessa
 [cols=",,,",options="header",]
 |========================================================================================================================================================================================================================================
 |Security group |Associated with |Inbound source |Port(s)
-|DomainControllerSG |DC1, DC2 |VPCCIDR |TCP5985, TCP53, UDP53, TCP80, TCP3389
-| | |DomainControllerSG |IpProtocol-1, FromPort-1, ToPort-1
-| | |DomainMemberSG |UDP123, TCP135, UDP138, UDP137, TCP139, TCP445, UDP445, TCP464, UDP464, TCP49152-65535, UDP49152-65535, TCP389, UDP389, TCP636, TCP3268, TCP3269, TCP88, UDP88, UDP67, UDP2535, TCP9389, TCP5722, UDP5355, (ICMP -1)
-|DomainMemberSG |RDGW1, RDGW2 a|
-ADServer1PrivateIp,
-
-ADServer2PrivateIp
-
- |UDP88, TCP88, TCP445, UDP445, TCP49152-65535, UDP49152-65535, TCP389, UDP389, TCP636
-|RDGWSecurityGroup |RDGW1, RDGW2 |RDGWCIDR* |TCP3389
+|DomainControllerSG |DC1, DC2 |DomainMemberSG |UDP53, TCP53, TCP88, UDP88, UDP123, TCP135, UDP138, TCP389, TCP445, UDP445, UDP464, TCP464, TCP636, TCP3268, TCP3269, RDP3389, TCP5985, TCP9389, TCP49152-65535, UDP49152-65535
+|DomainMemberSG |RDGW1, RDGW2 |DomainMemberSG |TCP3389, TCP5985, TCP5986
+|RemoteDesktopGatewaySG |RDGW1, RDGW2 |RDGWCIDR |TCP3389, TCP443, UDP3391, ICMP-1
 |========================================================================================================================================================================================================================================
 
 *Important* *RDP should never be opened up to the entire internet, not even temporarily or for testing purposes.* For more information, see this http://aws.amazon.com/security/security-bulletins/morto-worm-spreading-via-remote-desktop-protocol/[Amazon security bulletin^]. Always restrict ports and source traffic to the minimum necessary to support the functionality of the application. For more about securing Remote Desktop Gateway, see the https://d0.awsstatic.com/whitepapers/aws-microsoft-platform-security.pdf[Securing the Microsoft Platform on Amazon Web Services^] whitepaper.

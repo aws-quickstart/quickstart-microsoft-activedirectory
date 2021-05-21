@@ -79,7 +79,7 @@ Try {
     Exit 1
 }
 
-Write-Output "Converting $RestoreModeSecret from JSON"
+Write-Output "Converting RestoreModeSecret from JSON"
 Try {
     $RestoreModePassword = ConvertFrom-Json -InputObject $RestoreModeSecret -ErrorAction Stop
 } Catch [System.Exception] {

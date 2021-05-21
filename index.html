@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.12">
+<meta name="generator" content="Asciidoctor 2.0.15">
 <title>Active Directory Domain Services on the AWS Cloud</title>
 <style>
 
@@ -182,7 +182,7 @@ p a>code:hover{color:rgba(0,0,0,.9)}
   padding-top:0;
   overflow:hidden;
   background:#283e5b;
-  border-bottom: 4px solid #435c7c;
+  /* border-bottom: 4px solid #435c7c; */
   width:320px;
   height:154px;
   top:0;
@@ -411,7 +411,7 @@ span.icon>.fa{cursor:default}
 a span.icon>.fa{cursor:inherit}
 .admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
 .admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
-.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";color: rgb(3, 87, 21);}
 .admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
 .admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
 .admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
@@ -747,8 +747,43 @@ p {
   font-weight  : 300 !important;
 }
 
-#toc.toc2 #toctitle{
-  background-image: url('images/AWS-Logo.svg');
+/* image layout */
+#toc.toc2 #toctitle {
+  background-image: url("images/AWS-Logo.svg");
+  background-repeat: no-repeat;
+  background-size: 50%;
+  background-position: center;
+  width: auto;
+  height: 15%;
+}
+
+/* Left Navbar size */
+#toc.toc2 {
+  width: 17%;
+  min-width: 15em;
+}
+
+/* auto width for main page */
+body.toc2 {
+  padding-left: 22%;
+  padding-right: 2%;
+}
+
+/* hide left nav bar if page size is smaller than 767px */
+@media screen and (max-width: 767px) {
+  #toc {
+      display: none !important;
+  }
+  body.toc2 {
+    padding-left: 1%;
+    padding-right: 1%;
+    position: relative;
+  }
+
+  #content {
+    padding-left: 2%;
+    padding-right: 2%;
+  }
 }
 
 /* QS Tables */
@@ -931,7 +966,7 @@ see the pricing pages for each AWS service you use. Prices are subject to change
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-After you deploy the Quick Start, <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/billing-reports-gettingstarted-turnonreports.html" target="_blank" rel="noopener">create AWS Cost and Usage Reports</a> to deliver billing metrics to an Amazon Simple Storage Service (Amazon S3) bucket in your account. These reports provide cost estimates based on usage throughout each month and aggregate the data at the end of the month. For more information, see <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/billing-reports-costusage.html" target="_blank" rel="noopener">What are AWS Cost and Usage Reports?</a>
+After you deploy the Quick Start, create <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/billing-reports-gettingstarted-turnonreports.html" target="_blank" rel="noopener">AWS Cost and Usage Reports</a> to deliver billing metrics to an Amazon Simple Storage Service (Amazon S3) bucket in your account. These reports provide cost estimates based on usage throughout each month and aggregate the data at the end of the month. For more information, see <a href="https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html" target="_blank" rel="noopener">What are AWS Cost and Usage Reports?</a>
 </td>
 </tr>
 </table>
@@ -1550,7 +1585,7 @@ The IP addresses in the domain-name-servers field are always returned in the sam
 <div class="sect3">
 <h4 id="_resource_quotas">Resource quotas</h4>
 <div class="paragraph">
-<p>If necessary, request <a href="https://console.aws.amazon.com/servicequotas/home?region=us-east-2#!/" target="_blank" rel="noopener">service quota increases</a> for the following resources. You might request quota increases to avoid exceeding the default limits for any resources that are shared across multiple deployments. The <a href="https://console.aws.amazon.com/servicequotas/home?region=us-east-2#!/" target="_blank" rel="noopener">Service Quotas console</a> displays your usage and quotas for some aspects of some services. For more information, see <a href="https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html" target="_blank" rel="noopener">What is Service Quotas?</a> and <a href="https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html" target="_blank" rel="noopener">AWS service quotas</a>.</p>
+<p>If necessary, request <a href="https://console.aws.amazon.com/servicequotas/home?region=us-east-2#!/" target="_blank" rel="noopener">service quota increases</a> for the following resources. You might need to request increases if your existing deployment currently uses these resources and if this Quick Start deployment could result in exceeding the default quotas. The <a href="https://console.aws.amazon.com/servicequotas/home?region=us-east-2#!/" target="_blank" rel="noopener">Service Quotas console</a> displays your usage and quotas for some aspects of some services. For more information, see <a href="https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html" target="_blank" rel="noopener">What is Service Quotas?</a> and <a href="https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html" target="_blank" rel="noopener">AWS service quotas</a>.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -1808,15 +1843,9 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <p>Monitor the status of the stack. When the status is <strong>CREATE_COMPLETE</strong>, the AD DS deployment is ready.</p>
 </li>
 <li>
-<p>Use the values displayed in the <strong>Outputs</strong> tab for the stack, as shown in <a href="#cfn_outputs">Figure 11</a>, to view the created resources.</p>
+<p>To view the created resources, see the values displayed in the <strong>Outputs</strong> tab for the stack.</p>
 </li>
 </ol>
-</div>
-<div id="cfn_outputs" class="imageblock">
-<div class="content">
-<a class="image" href="images/cfn_outputs.png"><img src="images/cfn_outputs.png" alt="cfn_outputs" width="100%" height="100%"></a>
-</div>
-<div class="title">Figure 11. AD DS outputs after successful deployment</div>
 </div>
 </div>
 </div>
@@ -1900,7 +1929,7 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <div class="content">
 <img src="images/image15.png" alt="Single VPN connection">
 </div>
-<div class="title">Figure 12. Single VPN connection from your on-premises network to your VPC</div>
+<div class="title">Figure 11. Single VPN connection from your on-premises network to your VPC</div>
 </div>
 <div class="paragraph">
 <p>Multiple VPN configuration options are available, including the ability to use multiple on-premises customer gateways and configuring redundant VPN connections to provide failover. For details, see <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_VPN.html#Examples" target="_blank" rel="noopener">VPN Configuration Examples</a> in the <em>Amazon VPC User’s Guide</em>. Details about which hardware or software appliances you can use are available in the <a href="http://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Introduction.html#DevicesTested" target="_blank" rel="noopener">Customer Gateway devices we&#8217;ve tested</a> and <a href="http://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Introduction.html#CGRequirements" target="_blank" rel="noopener">Requirements for your customer gateway</a> sections of the <em>Amazon VPC Network Administrator Guide</em>.</p>
@@ -1921,7 +1950,7 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <div class="content">
 <img src="images/image16.png" alt="AWS Direct Connect interfaces">
 </div>
-<div class="title">Figure 13. How AWS Direct Connect interfaces with your network</div>
+<div class="title">Figure 12. How AWS Direct Connect interfaces with your network</div>
 </div>
 <div class="paragraph">
 <p>When you choose AWS Direct Connect to extend your on-premises network to the cloud, you should consider configuring two dedicated connections for maximum redundancy. There are different configuration choices available when you provision two dedicated connections, including active/active (BGP multipath), and active/passive (failover).</p>
@@ -1937,13 +1966,13 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <p>Although you can use AWS Direct Connect or a VPN connection to provide access to on-premises resources from the VPC, we recommend that you also add domain controllers to the AWS Cloud. Additional domain controllers provide a reliable, low-latency network connection for resources in AWS that need access to your AD DS. They can also maintain availability for AD DS in the AWS Cloud if there’s an on-premises infrastructure outage.</p>
 </div>
 <div class="paragraph">
-<p>In the architecture shown in <a href="#additionalinfo3">Figure 14</a>, a single Active Directory forest has been extended from an on-premises deployment into a VPC using a VPN connection. Within the VPC, additional domain controllers configured as global catalog and DNS servers are deployed in the existing Active Directory forest.</p>
+<p>In the architecture shown in <a href="#additionalinfo3">Figure 13</a>, a single Active Directory forest has been extended from an on-premises deployment into a VPC using a VPN connection. Within the VPC, additional domain controllers configured as global catalog and DNS servers are deployed in the existing Active Directory forest.</p>
 </div>
 <div id="additionalinfo3" class="imageblock">
 <div class="content">
 <img src="images/image17.png" alt="AWS Direct Connect interfaces">
 </div>
-<div class="title">Figure 14. How AWS Direct Connect interfaces with your network</div>
+<div class="title">Figure 13. How AWS Direct Connect interfaces with your network</div>
 </div>
 <div class="paragraph">
 <p>In this type of environment, the customer network will already be defined in Active Directory Sites and Services. For example, there will already be a site definition that corresponds to the on-premises network, along with a subnet definition for the 192.168.1.0/24 network. The next step is to configure Active Directory Sites and Services to support the network components located in the VPC.</p>
@@ -2011,37 +2040,20 @@ If you’re deploying AD DS into an existing VPC, make sure that your VPC has tw
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DomainControllerSG</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DC1, DC2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">VPCCIDR</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">TCP5985, TCP53, UDP53, TCP80, TCP3389</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DomainControllerSG</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">IpProtocol-1, FromPort-1, ToPort-1</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DomainMemberSG</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">UDP123, TCP135, UDP138, UDP137, TCP139, TCP445, UDP445, TCP464, UDP464, TCP49152-65535, UDP49152-65535, TCP389, UDP389, TCP636, TCP3268, TCP3269, TCP88, UDP88, UDP67, UDP2535, TCP9389, TCP5722, UDP5355, (ICMP -1)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">UDP53, TCP53, TCP88, UDP88, UDP123, TCP135, UDP138, TCP389, TCP445, UDP445, UDP464, TCP464, TCP636, TCP3268, TCP3269, RDP3389, TCP5985, TCP9389, TCP49152-65535, UDP49152-65535</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DomainMemberSG</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">RDGW1, RDGW2</p></td>
-<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>ADServer1PrivateIp,</p>
-</div>
-<div class="paragraph">
-<p>ADServer2PrivateIp</p>
-</div></div></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">UDP88, TCP88, TCP445, UDP445, TCP49152-65535, UDP49152-65535, TCP389, UDP389, TCP636</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DomainMemberSG</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TCP3389, TCP5985, TCP5986</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDGWSecurityGroup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RemoteDesktopGatewaySG</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">RDGW1, RDGW2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDGWCIDR*</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">TCP3389</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RDGWCIDR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TCP3389, TCP443, UDP3391, ICMP-1</p></td>
 </tr>
 </tbody>
 </table>
@@ -2098,8 +2110,7 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Unless you are customizing the Quick Start templates for your own deployment projects, we recommend that you keep the default settings for the parameters labeled <code>Quick Start S3 bucket name</code>, <code>Quick Start S3 bucket
-Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parameter settings automatically updates code references to point to a new Quick Start location. For more information, see the <a href="https://aws-quickstart.github.io/option1.html" target="_blank" rel="noopener">AWS Quick Start Contributor’s Guide</a>.
+Unless you are customizing the Quick Start templates for your own deployment projects, keep the default settings for the parameters labeled <strong>Quick Start S3 bucket name</strong>, <strong>Quick Start S3 bucket Region</strong>, and <strong>Quick Start S3 key prefix</strong>. Changing these parameter settings automatically updates code references to point to a new Quick Start location. For more information, see the <a href="https://aws-quickstart.github.io/option1.html" target="_blank" rel="noopener">AWS Quick Start Contributor’s Guide</a>.
 </td>
 </tr>
 </table>
@@ -3873,19 +3884,19 @@ and to share your customizations with others.</p>
 </div>
 <p class="footer-text">
 <!-- We can use document attributes: -->
-<!-- Generated with Asciidoctor v2.0.12. -->
+<!-- Generated with Asciidoctor v2.0.15. -->
 <a href="https://aws.amazon.com/privacy/">Privacy</a> | <a href="https://aws.amazon.com/terms/">Site terms</a> | &copy; 2021, Amazon Web Services, Inc. or its affiliates. All rights reserved.
 </p>
 </body>
 </html>
 <!--
 repo commit:
-7ddc1aef0523b7e1b4e5e20574c3e729425bfd0b
+c529dc5081d6e3d6a2770652fb75862fd69444d0
 
 submodule config:
-+59b9927c61cd1831141cf0350520c89abb2246da docs/boilerplate (heads/main)
- 1f9a7bebc434f9a38b0ed4d4dd80d438d4d26204 submodules/quickstart-aws-vpc (v1.0-57-g1f9a7be)
- 47371591852f18413d6d4fe69a6e2824e89a7bb8 submodules/quickstart-microsoft-pki (remotes/origin/master-118-g4737159)
- 4f982ccee5222a5abba46996986aa79f8981e848 submodules/quickstart-microsoft-rdgateway (heads/main)
++4b31f09b105a1aa1ea6e421e0e33b647196f4c69 docs/boilerplate (heads/main)
+ ffc7af4e59a09dbf52199a3ecf70f3805abeff48 submodules/quickstart-aws-vpc (v1.0-58-gffc7af4)
+ 2964722bfc3346453c1a32280684a124f76ec816 submodules/quickstart-microsoft-pki (remotes/origin/master)
+ 359615f52f8abd518537d522cbfec91329b9cc6b submodules/quickstart-microsoft-rdgateway (heads/main)
  e1f1a322eff1014be7fbaa8f8384e9dea2fa218c submodules/quickstart-microsoft-utilities (heads/main)
 -->
