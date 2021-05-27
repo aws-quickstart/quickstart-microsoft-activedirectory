@@ -4,7 +4,7 @@ Description: >-
   Windows Server instances into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway instances and managed
   NAT gateways into the public subnet for each Availability Zone. After extending your on-premises network to the VPC, you can promote the Windows
   Server instances to Domain Controllers in your AD forest. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You
-  will be billed for the AWS resources used if you create a stack from this template.
+  will be billed for the AWS resources used if you create a stack from this template. (qs-1rtnidq2o)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for extending on-premises AD into a new VPC'
@@ -325,7 +325,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-2.template'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-2.template.yaml'
         - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
