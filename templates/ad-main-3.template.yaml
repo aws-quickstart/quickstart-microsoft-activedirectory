@@ -5,7 +5,7 @@ Description: >-
   managed NAT gateways into the public subnet for each Availability Zone. The default Domain Administrator user is 'admin'.  For adding members to the
   domain, ensure that they are launched into the domain member security group created by this template and then configure them to use the AD instances
   fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be
-  billed for the AWS resources used if you create a stack from this template.
+  billed for the AWS resources used if you create a stack from this template. (qs-1rtnidq31)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into a new VPC'
@@ -418,7 +418,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-3.template'
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-3.template.yaml'
         - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:

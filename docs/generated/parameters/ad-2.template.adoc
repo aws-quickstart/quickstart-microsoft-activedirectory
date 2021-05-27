@@ -1,0 +1,43 @@
+
+.Network configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|VPC CIDR
+(`VPCCIDR`)|`10.0.0.0/16`|CIDR Block for the VPC|VPC ID
+(`VPCID`)|`**__Requires input__**`|ID of the VPC (e.g., vpc-0343606e)|Subnet 1 ID
+(`Subnet1ID`)|`**__Requires input__**`|ID of subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)|Subnet 2 ID
+(`Subnet2ID`)|`**__Requires input__**`|ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+|===
+.Amazon EC2 configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Domain Controllers Instance Type
+(`ADServerInstanceType`)|`m5.large`|Amazon EC2 instance type for Active Directory Controller instances|Domain Controller 1 NetBIOS Name
+(`ADServer1NetBIOSName`)|`DC3`|NetBIOS name of the first additional Active Directory Domain Controller (up to 15 characters)|Domain Controller 1 Private IP Address
+(`ADServer1PrivateIP`)|`10.0.0.11`|Fixed private IP for the first additional Active Directory Domain Controller located in subnet 1|Domain Controller 2 NetBIOS Name
+(`ADServer2NetBIOSName`)|`DC4`|NetBIOS name of the second additional Active Directory Domain Controller (up to 15 characters)|Domain Controller 2 Private IP Address
+(`ADServer2PrivateIP`)|`10.0.32.11`|Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2|SYSVOL and NTDS and Data Drive Size
+(`DataDriveSizeGiB`)|`10`|Size of SYSVOL and NTDS data drive in GiB|Key Pair Name
+(`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches|SSM Parameter Value for latest AMI ID
+(`LatestAmiId`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|NO_DESCRIPTION
+|===
+.Microsoft Active Directory Domain Services configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Join and Promote to Domain Controllers
+(`JoinAndPromote`)|`No`|Do you want to join and promote these instances to be Active Directory Domain Controllers|Secret ARN Containing Administrator Credentials
+(`AdministratorSecret`)|`arn:aws:secretsmanager:us-east-1:############:secret:admin-creds-example`|ARN for the Administrator credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)|Secret ARN Containing Restore Mode Credentials
+(`RestoreModeSecret`)|`arn:aws:secretsmanager:us-east-1:############:secret:restore-creds-example`|ARN for the Restore Mode credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)|IP used for DNS (Must be accessible)
+(`ExistingDomainController1IP`)|`10.0.0.10`|IP of DNS server that can resolve domain (Must be accessible)|IP used for DNS (Must be accessible)
+(`ExistingDomainController2IP`)|`10.0.32.10`|IP of DNS server that can resolve domain (Must be accessible)|Domain DNS Name
+(`DomainDNSName`)|`example.com`|Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com|Domain NetBIOS Name
+(`DomainNetBIOSName`)|`example`|NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g. EXAMPLE
+|===
+.AWS Quick Start configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Quick Start S3 Bucket Name
+(`QSS3BucketName`)|`aws-quickstart`|S3 bucket name for CA CRL storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)|Quick Start S3 Bucket Region
+(`QSS3BucketRegion`)|`us-east-1`|The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value|Quick Start S3 Key Prefix
+(`QSS3KeyPrefix`)|`quickstart-microsoft-activedirectory/`|S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
+|===

@@ -799,14 +799,14 @@ Resources:
               - Effect: Allow
                 Action: s3:GetObject
                 Resource:
-                  - !Sub arn:aws:s3:::aws-ssm-${AWS::Region}/*
-                  - !Sub arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*
-                  - !Sub arn:aws:s3:::amazon-ssm-${AWS::Region}/*
-                  - !Sub arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*
-                  - !Sub arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*
-                  - !Sub arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*
-                  - !Sub arn:aws:s3:::aws-ssm-distributor-file-${AWS::Region}/*
-                  - !Sub arn:aws:s3:::aws-ssm-document-attachments-${AWS::Region}/*
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-distributor-file-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-document-attachments-${AWS::Region}/*'
           PolicyName: SSMAgent
         - PolicyDocument:
             Version: '2012-10-17'
