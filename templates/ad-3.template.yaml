@@ -353,6 +353,11 @@ Resources:
         VpcId: !Ref 'VPCID'
   DomainMemberSG:
     Type: AWS::EC2::SecurityGroup
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: F1000
+            reason: "Standard Amazon practice"
     Properties:
       GroupDescription: Domain Members
       VpcId: !Ref 'VPCID'

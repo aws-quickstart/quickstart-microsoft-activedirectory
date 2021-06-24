@@ -177,6 +177,11 @@ Conditions:
 Resources:
   InstanceRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "* is required"
     Properties:
       Policies:
         - PolicyDocument:
@@ -365,7 +370,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/install-ad-modules.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './install-ad-modules.ps1'
           # Configures Local Configuration Manager on each of the nodes.
           - name: 'dcsLCMConfig'
@@ -384,7 +389,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/LCM-Config.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './LCM-Config.ps1'
           # Generates MOF file on second DC Node to be processed by LCM.
           - name: 'createMgmtMof'
@@ -403,7 +408,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-MgmtInstanceConfig.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine:
                   './Invoke-MgmtInstanceConfig.ps1  -MgmtNetBIOSName {{MgmtServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName
                   {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam
@@ -452,7 +457,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-MgmtInstancePostConfig.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './Invoke-MgmtInstancePostConfig.ps1 -DirectoryID {{DirectoryID}} -VPCCIDR {{VPCCIDR}}'
           # Determines if CFN Needs to be Signaled or if Work flow should just end
           - name: CFNSignalEnd
