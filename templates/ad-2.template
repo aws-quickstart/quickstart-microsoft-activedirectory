@@ -372,7 +372,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/install-ad-modules.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './install-ad-modules.ps1'
           # Configures Local Configuration Manager on each of the nodes.
           - name: 'dcsLCMConfig'
@@ -391,7 +391,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/LCM-Config.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './LCM-Config.ps1'
           # Generates MOF file on second DC Node to be processed by LCM.
           - name: 'dc1createDCMof'
@@ -410,7 +410,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AD2-NonPromoConfig.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine:
                   './AD2-NonPromoConfig.ps1 -ADServerNetBIOSName {{ADServer1NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName
                   {{DomainDNSName}} -ADServer1PrivateIP {{ExistingDomainController1IP}} -ADServer2PrivateIP {{ExistingDomainController2IP}}'
@@ -459,7 +459,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AD2-NonPromoConfig.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine:
                   './AD2-NonPromoConfig.ps1 -ADServerNetBIOSName {{ADServer2NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName
                   {{DomainDNSName}} -ADServer1PrivateIP {{ExistingDomainController1IP}} -ADServer2PrivateIP {{ExistingDomainController2IP}}'
@@ -507,7 +507,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AD2-Post-Config.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './AD2-Post-Config.ps1 -VPCCIDR {{VPCCIDR}}'
           # Determines if CFN Needs to be Signaled or if Work flow should just end
           - name: 'CFNSignalEnd'
@@ -702,7 +702,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/install-ad-modules.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './install-ad-modules.ps1'
           # Configures Local Configuration Manager on each of the nodes.
           - name: 'dcsLCMConfig'
@@ -721,7 +721,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/LCM-Config.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './LCM-Config.ps1'
           # Generates MOF file on second DC Node to be processed by LCM.
           - name: 'dc1createDCMof'
@@ -740,7 +740,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/ConfigDC2.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine:
                   './ConfigDC2.ps1 -ADServer2NetBIOSName {{ADServer1NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName
                   {{DomainDNSName}} -ADServer1PrivateIP {{ExistingDomainController1IP}} -ADAdminSecParam {{ADAdminSecParamName}} -RestoreModeSecParam
@@ -790,7 +790,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/ConfigDC2.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine:
                   './ConfigDC2.ps1 -ADServer2NetBIOSName {{ADServer2NetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName
                   {{DomainDNSName}} -ADServer1PrivateIP {{ExistingDomainController1IP}} -ADAdminSecParam {{ADAdminSecParamName}} -RestoreModeSecParam
@@ -840,7 +840,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Dns-Config.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine:
                   './Dns-Config.ps1 -ADServer1NetBIOSName {{ADServer1NetBIOSName}} -ADServer2NetBIOSName {{ADServer2NetBIOSName}} -ADServer1PrivateIP
                   {{ADServer1PrivateIP}} -ADServer2PrivateIP {{ADServer2PrivateIP}} -DomainDNSName {{DomainDNSName}} -ADAdminSecParam
@@ -861,7 +861,7 @@ Resources:
                 sourceInfo: !Sub
                   - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/AD2-Post-Config.ps1"}'
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
                 commandLine: './AD2-Post-Config.ps1 -VPCCIDR {{VPCCIDR}}'
           # Determines if CFN Needs to be Signaled or if Work flow should just end
           - name: 'CFNSignalEnd'

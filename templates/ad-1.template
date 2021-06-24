@@ -791,6 +791,11 @@ Resources:
               UniqueId: '{{dc2InstanceId.InstanceId}}'
   ADServerRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "* required"
     Properties:
       Policies:
         - PolicyDocument:
@@ -1017,6 +1022,15 @@ Resources:
             - "</powershell>\n"
   DomainControllersSG:
     Type: AWS::EC2::SecurityGroup
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: F1000
+            reason: "Standard Amazon practice"
+          - id: W42
+            reason: "Standard Amazon practice"
+          - id: W27
+            reason: "Standard Amazon practice"
     Properties:
       GroupDescription: Domain Controllers Security Group
       VpcId: !Ref VPCID
@@ -1131,6 +1145,11 @@ Resources:
           Value: DomainControllersSecurityGroup
   DomainMembersSG:
     Type: AWS::EC2::SecurityGroup
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: F1000
+            reason: "Standard Amazon practice"
     Properties:
       GroupDescription: Domain Members
       VpcId: !Ref VPCID
