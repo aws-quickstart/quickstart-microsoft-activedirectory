@@ -857,6 +857,7 @@ p.footer-text a{color:#d7d8d8}
 </li>
 <li><a href="#_security">Security</a></li>
 <li><a href="#_faq">FAQ</a></li>
+<li><a href="#_customer_responsibility">Customer responsibility</a></li>
 <li><a href="#_parameter_reference">Parameter reference</a>
 <ul class="sectlevel2">
 <li><a href="#_parameters_for_deploying_self_managed_ad_into_a_new_vpc">Parameters for deploying self-managed AD into a new VPC</a></li>
@@ -2100,6 +2101,14 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 </div>
 <div class="paragraph">
 <p><strong>A.</strong> Check the logs in CloudWatch. Also ensure that the deployment is targeting the correct instances. If any other EC2 instances in your environment use the same Name tag, they will be targeted and will fail during automation, which will cause the Quick Start to fail.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_customer_responsibility">Customer responsibility</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After you successfully deploy this Quick Start, confirm that your resources and services are updated and configured — including any required patches — to meet your security and other needs. For more information, see the <a href="https://aws.amazon.com/compliance/shared-responsibility-model/" target="_blank" rel="noopener">AWS Shared Responsibility Model</a>.</p>
 </div>
 </div>
 </div>
@@ -4669,12 +4678,12 @@ and to share your customizations with others.</p>
 </html>
 <!--
 repo commit:
-a7d12ad0d7f43bab5f91d0e2f1e07845675a2ff6
+c6c9e28ae300f3e0fc108dbe2cb10ec72664d881
 
 submodule config:
-+41862fa5fb846466fba46a36faf67e2a77c2bfc5 docs/boilerplate (heads/main)
++81ea0b675a571b662377f9de556a26cce8dad05f docs/boilerplate (heads/main)
  ffc7af4e59a09dbf52199a3ecf70f3805abeff48 submodules/quickstart-aws-vpc (v1.0-58-gffc7af4)
  f709d1ad81caa0d9b79c8fc615d9e463f00f2a94 submodules/quickstart-microsoft-pki (remotes/origin/master-129-gf709d1a)
- 23af011799027a5ec193fad0233595461d232139 submodules/quickstart-microsoft-rdgateway (heads/main)
+ 1f0f71bce50345a8db21f67e5ff8dc580454f351 submodules/quickstart-microsoft-rdgateway (heads/main)
  e1f1a322eff1014be7fbaa8f8384e9dea2fa218c submodules/quickstart-microsoft-utilities (heads/main)
 -->
