@@ -21,7 +21,7 @@ include::ad-2.adoc[]
 include::ad-main-3.template.adoc[]
 
 === Parameters for deploying AWS Managed Microsoft AD into an existing VPC
-include::ad-3.adoc[]
+include::ad-3.template.adoc[]
 
 === Parameters for deploying AWS Managed Microsoft AD into an existing VPC
-include::ad-3.template.adoc[]
+include::ad-3.adoc[]

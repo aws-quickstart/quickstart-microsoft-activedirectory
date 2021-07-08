@@ -6,6 +6,11 @@ Description: >-
   server. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you
   create a stack from this template. (qs-1qup6rae5)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9006
+        - E9101
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying self-managed AD into an existing VPC'
     Order: '2'
@@ -360,6 +365,7 @@ Parameters:
     Type: AWS::EC2::VPC::Id
   WINFULLBASE:
     Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+    Description: System Manager parameter value for latest Windows Server AMI
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
 Rules:
   SubnetsInVPC:

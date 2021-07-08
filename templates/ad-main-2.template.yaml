@@ -6,6 +6,10 @@ Description: >-
   Server instances to Domain Controllers in your AD forest. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You
   will be billed for the AWS resources used if you create a stack from this template. (qs-1rtnidq2o)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9006
   QuickStartDocumentation:
     EntrypointName: 'Parameters for extending on-premises AD into a new VPC'
     Order: '3'

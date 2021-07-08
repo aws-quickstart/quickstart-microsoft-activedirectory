@@ -4,6 +4,11 @@ Description: >-
   network to the VPC, you can promote the Windows Server instances to Domain Controllers in your AD forest. Or optionally you can choose to have automation join and promote them to an existing domain.
   **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1qup6radg)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9006
+        - E9101
   QuickStartDocumentation:
     EntrypointName: 'Parameters for extending on-premises AD into an existing VPC'
     Order: '4'
@@ -174,6 +179,7 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
   LatestAmiId:
     Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+    Description: Systems Manager parameter value for latest Windows Server AMI
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$

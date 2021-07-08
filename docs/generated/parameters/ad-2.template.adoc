@@ -19,7 +19,7 @@
 (`ADServer2PrivateIP`)|`10.0.32.11`|Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2|SYSVOL and NTDS and Data Drive Size
 (`DataDriveSizeGiB`)|`10`|Size of SYSVOL and NTDS data drive in GiB|Key Pair Name
 (`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches|SSM Parameter Value for latest AMI ID
-(`LatestAmiId`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|NO_DESCRIPTION
+(`LatestAmiId`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|Systems Manager parameter value for latest Windows Server AMI
 |===
 .Microsoft Active Directory Domain Services configuration
 [width="100%",cols="16%,11%,73%",options="header",]
