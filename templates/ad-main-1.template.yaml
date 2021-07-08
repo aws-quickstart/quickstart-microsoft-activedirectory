@@ -7,6 +7,10 @@ Description: >-
   template and then configure them to use the AD instances fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2
   Windows instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1rtnidq09)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9006
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying self-managed AD into a new VPC'
     Order: '1'
