@@ -17,6 +17,7 @@ Metadata:
         Parameters:
           - MgmtServerInstanceType
           - MgmtDataDriveSizeGiB
+          - EbsEncryptionKmsKeyId
           - KeyPairName
           - MgmtAmi
           - AdministratorSecret
@@ -50,6 +51,8 @@ Metadata:
         default: Security Group ID for Domain Members Security Group
       DomainNetBIOSName:
         default: Domain NetBIOS Name
+      EbsEncryptionKmsKeyId:
+        default: KMS Key for EBS Encryption
       KeyPairName:
         default: Key Pair Name
       MgmtAmi:
@@ -101,6 +104,10 @@ Parameters:
     Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
+    Type: String
+  EbsEncryptionKmsKeyId:
+    Default: alias/aws/ebs
+    Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
     Type: String
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
@@ -181,7 +188,7 @@ Resources:
       cfn_nag:
         rules_to_suppress:
           - id: W11
-            reason: "* is required"
+            reason: "* required"
     Properties:
       Policies:
         - PolicyDocument:
@@ -334,132 +341,192 @@ Resources:
             description: 'AWS URL suffix'
             type: 'String'
         mainSteps:
-          # This step grabs the Instance IDs for both nodes that will be configured as DCs in the Quick Start and Instance IDs for the for next steps.
-          - name: 'mgmtInstanceId'
+          - name: mgmtInstanceId
             action: aws:executeAwsApi
-            onFailure: 'step:signalfailure'
-            nextStep: 'dcsInstallDscModules'
+            onFailure: step:signalfailure
             inputs:
               Service: ec2
               Api: DescribeInstances
               Filters:
-                - Name: 'tag:Name'
+                - Name: tag:Name
                   Values: ['{{MgmtServerNetBIOSName}}']
-                - Name: 'tag:aws:cloudformation:stack-name'
+                - Name: tag:aws:cloudformation:stack-name
                   Values: ['{{StackName}}']
-                - Name: 'instance-state-name'
+                - Name: instance-state-name
                   Values: ['running']
             outputs:
               - Name: InstanceId
-                Selector: '$.Reservations[0].Instances[0].InstanceId'
-                Type: 'String'
-          # Installs needed Powershell DSC Modules and components on both nodes.
-          - name: 'dcsInstallDscModules'
-            action: 'aws:runCommand'
-            onFailure: 'step:signalfailure'
-            nextStep: 'dcsLCMConfig'
-            inputs:
-              DocumentName: 'AWS-RunRemoteScript'
-              InstanceIds:
-                - '{{mgmtInstanceId.InstanceId}}'
-              CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'true'
-                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
-              Parameters:
-                sourceType: 'S3'
-                sourceInfo: !Sub
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/install-ad-modules.ps1"}'
-                  - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
-                commandLine: './install-ad-modules.ps1'
-          # Configures Local Configuration Manager on each of the nodes.
-          - name: 'dcsLCMConfig'
-            action: 'aws:runCommand'
-            onFailure: 'step:signalfailure'
-            nextStep: 'createMgmtMof'
-            inputs:
-              DocumentName: 'AWS-RunRemoteScript'
-              InstanceIds:
-                - '{{mgmtInstanceId.InstanceId}}'
-              CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'true'
-                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
-              Parameters:
-                sourceType: 'S3'
-                sourceInfo: !Sub
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/LCM-Config.ps1"}'
-                  - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
-                commandLine: './LCM-Config.ps1'
-          # Generates MOF file on second DC Node to be processed by LCM.
-          - name: 'createMgmtMof'
-            action: 'aws:runCommand'
-            onFailure: 'step:signalfailure'
-            nextStep: 'configMgmt'
-            inputs:
-              DocumentName: 'AWS-RunRemoteScript'
-              InstanceIds:
-                - '{{mgmtInstanceId.InstanceId}}'
-              CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'true'
-                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
-              Parameters:
-                sourceType: 'S3'
-                sourceInfo: !Sub
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-MgmtInstanceConfig.ps1"}'
-                  - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
-                commandLine:
-                  './Invoke-MgmtInstanceConfig.ps1  -MgmtNetBIOSName {{MgmtServerNetBIOSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName
-                  {{DomainDNSName}} -DomainController1IP {{DomainController1IP}} -DomainController2IP {{DomainController2IP}} -ADAdminSecParam
-                  {{AdministratorSecret}}'
-          # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
-          - name: 'configMgmt'
+                Selector: $.Reservations[0].Instances[0].InstanceId
+                Type: String
+            nextStep: intializeInstance
+          - name: intializeInstance
             action: aws:runCommand
-            onFailure: 'step:signalfailure'
-            nextStep: 'finalConfigMgmt'
             inputs:
               DocumentName: AWS-RunPowerShellScript
               InstanceIds:
                 - '{{mgmtInstanceId.InstanceId}}'
-              CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'true'
-                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
               Parameters:
-                commands:
-                  - |
-                    function DscStatusCheck () {
-                        $LCMState = (Get-DscLocalConfigurationManager).LCMState
-                        if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
-                            'returning 3010, should continue after reboot'
-                            exit 3010
-                        } else {
-                            'Completed'
-                        }
-                    }
+                commands: |-
+                  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-                    Start-DscConfiguration 'C:\AWSQuickstart\ConfigMgmt' -Wait -Verbose -Force
+                  $S3BucketName = '{{QSS3BucketName}}'
+                  $S3KeyPrefix = '{{QSS3KeyPrefix}}'
+                  $S3BucketRegion = '{{QSS3BucketRegion}}'
 
-                    DscStatusCheck
-          # Ensure that AD servers point to themselves for DNS
-          - name: 'finalConfigMgmt'
-            action: 'aws:runCommand'
-            onFailure: 'step:signalfailure'
+                  $CustomModules = @(
+                      'Module-AD.psd1',
+                      'Module-AD.psm1'
+                  )
+
+                  $Modules = @(
+                      @{
+                          Name = 'NetworkingDsc'
+                          Version = '8.2.0'
+                      },
+                      @{
+                          Name = 'ActiveDirectoryDsc'
+                          Version = '6.0.1'
+                      },
+                      @{
+                          Name = 'ComputerManagementDsc'
+                          Version = '8.4.0'
+                      },
+                      @{
+                          Name = 'DnsServerDsc'
+                          Version = '3.0.0'
+                      }
+                  )
+
+                  Write-Output 'Creating AWSQuickstart Directory'
+                  Try {
+                      $Null = New-Item -Path 'C:\AWSQuickstart\Module-AD' -ItemType 'Directory' -ErrorAction Stop
+                  } Catch [System.Exception] {
+                      Write-Output "Failed to create AWSQuickstart directory $_"
+                      Exit 1
+                  }
+
+                  $S3KeyPrefix = $S3KeyPrefix.Substring(0,$S3KeyPrefix.Length -1)
+                  Write-Output 'Downloading AD PowerShell Module'
+                  Foreach ($CustomModule in $CustomModules) {
+                      Try {
+                          $Null = Read-S3Object -BucketName $S3BucketName -Key "$($S3KeyPrefix)/scripts/Modules/Module-AD/$CustomModule" -File "C:\AWSQuickstart\Module-AD\$CustomModule" -Region $S3BucketRegion
+                      } Catch [System.Exception] {
+                          Write-Output "Failed to read and download $CustomModule.Name from S3 $_"
+                          Exit 1
+                      }
+                  }
+
+                  Write-Output 'Installing NuGet Package Provider'
+                  Try {
+                      $Null = Install-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5' -Force -ErrorAction Stop
+                  } Catch [System.Exception] {
+                      Write-Output "Failed to install NuGet Package Provider $_"
+                      Exit 1
+                  }
+
+                  Write-Output 'Setting PSGallery Respository to trusted'
+                  Try {
+                      Set-PSRepository -Name 'PSGallery' -InstallationPolicy 'Trusted' -ErrorAction Stop
+                  } Catch [System.Exception] {
+                      Write-Output "Failed to set PSGallery Respository to trusted $_"
+                      Exit 1
+                  }
+
+                  Write-Output 'Installing the needed Powershell DSC modules for this Quick Start'
+                  Foreach ($Module in $Modules) {
+                      Try {
+                          Install-Module -Name $Module.Name -RequiredVersion $Module.Version -ErrorAction Stop
+                      } Catch [System.Exception] {
+                          Write-Output "Failed to Import Modules $_"
+                          Exit 1
+                      }
+                  } 
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: true
+                CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
+            nextStep: configureInstance
+          - name: configureInstance
+            action: aws:runCommand
             inputs:
-              DocumentName: 'AWS-RunRemoteScript'
+              DocumentName: AWS-RunPowerShellScript
               InstanceIds:
                 - '{{mgmtInstanceId.InstanceId}}'
-              CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'true'
-                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
               Parameters:
-                sourceType: S3
-                sourceInfo: !Sub
-                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Invoke-MgmtInstancePostConfig.ps1"}'
-                  - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
-                    S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
-                commandLine: './Invoke-MgmtInstancePostConfig.ps1 -DirectoryID {{DirectoryID}} -VPCCIDR {{VPCCIDR}}'
-          # Determines if CFN Needs to be Signaled or if Work flow should just end
+                commands: |-
+                  Try {
+                      Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
+                  } Catch [System.Exception] {
+                      Write-Output "Failed to import AD PS Module $_"
+                      Exit 1
+                  }
+                  New-VolumeFromRawDisk
+                  Invoke-PreConfig
+                  Invoke-LcmConfig
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: true
+                CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
+            nextStep: configureMgmtMof
+          - name: configureMgmtMof
+            action: aws:runCommand
+            inputs:
+              DocumentName: AWS-RunPowerShellScript
+              InstanceIds:
+                - '{{mgmtInstanceId.InstanceId}}'
+              Parameters:
+                commands: |-
+                  Try {
+                      Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
+                  } Catch [System.Exception] {
+                      Write-Output "Failed to import AD PS Module $_"
+                      Exit 1
+                  }
+                  $EniConfig = Get-EniConfig
+                  $AltSecret = Get-SecretInfo -Domain '{{DomainNetBIOSName}}' -SecretArn '{{AdministratorSecret}}'
+                  Set-DscConfiguration -DaCredentials $AltSecret.DomainCredentials -DeploymentType 'MemberServer' -DomainDNSName '{{DomainDNSName}}' -DomainNetBIOSName '{{DomainNetBIOSName}}' -ExistingDcIP01 '{{DomainController1IP}}' -ExistingDcIP02 '{{DomainController2IP}}' -GatewayAddress $EniConfig.GatewayAddress -InstanceIP $EniConfig.IpAddress -InstanceNetBIOSName '{{MgmtServerNetBIOSName}}' -MacAddress $EniConfig.MacAddress
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: true
+                CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
+            nextStep: runMgmtMof
+          - name: runMgmtMof
+            action: aws:runCommand
+            onFailure: step:signalfailure
+            inputs:
+              DocumentName: AWS-RunPowerShellScript
+              InstanceIds:
+                - '{{mgmtInstanceId.InstanceId}}'
+              Parameters:
+                commands: |-
+                  Try {
+                      Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
+                  } Catch [System.Exception] {
+                      Write-Output "Failed to import AD PS Module $_"
+                      Exit 1
+                  }
+                  Start-DscConfiguration 'C:\AWSQuickstart\ConfigInstance' -Wait -Verbose -Force
+                  Invoke-DscStatusCheck
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: true
+                CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
+            nextStep: PostConfig
+          - name: PostConfig
+            action: aws:runCommand
+            inputs:
+              DocumentName: AWS-RunPowerShellScript
+              InstanceIds:
+                - '{{mgmtInstanceId.InstanceId}}'
+              Parameters:
+                commands: |-
+                  Try {
+                      Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
+                  } Catch [System.Exception] {
+                      Write-Output "Failed to import AD PS Module $_"
+                      Exit 1
+                  }
+                  Set-MgmtPostConfig -DirectoryID '{{DirectoryID}}' -VPCCIDR '{{VPCCIDR}}'
+                  Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: true
+                CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
           - name: CFNSignalEnd
             action: aws:branch
             inputs:
@@ -471,7 +538,6 @@ Resources:
                 - NextStep: sleepend
                   Variable: '{{StackName}}'
                   StringEquals: ''
-          # If all steps complete successfully signals CFN of Success
           - name: 'signalsuccess'
             action: 'aws:executeAwsApi'
             isEnd: True
@@ -482,13 +548,11 @@ Resources:
               StackName: '{{StackName}}'
               Status: SUCCESS
               UniqueId: '{{mgmtInstanceId.InstanceId}}'
-          # If CFN Signl Not Needed this sleep ends work flow
           - name: 'sleepend'
             action: 'aws:sleep'
             isEnd: True
             inputs:
               Duration: PT1S
-          # If any steps fails signals CFN of Failure
           - name: 'signalfailure'
             action: 'aws:executeAwsApi'
             inputs:
@@ -520,12 +584,14 @@ Resources:
             VolumeSize: 60
             VolumeType: gp3
             Encrypted: true
+            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
             DeleteOnTermination: true
         - DeviceName: /dev/xvdf
           Ebs:
             VolumeSize: !Ref 'MgmtDataDriveSizeGiB'
             VolumeType: gp3
             Encrypted: true
+            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
             DeleteOnTermination: true
       SecurityGroupIds:
         - !Ref 'DomainMembersSG'
