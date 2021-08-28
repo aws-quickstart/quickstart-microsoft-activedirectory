@@ -938,12 +938,12 @@ Function Invoke-Cleanup {
         Write-Output "Failed re-enable firewall $_"
     }
 
-    Write-Output 'Removing QuickStart build files'
-    Try {
-        Remove-Item -Path 'C:\AWSQuickstart' -Recurse -Force -ErrorAction Stop
-    } Catch [System.Exception] {
-        Write-Output "Failed remove QuickStart build files $_"
-    }
+    # Write-Output 'Removing QuickStart build files'
+    # Try {
+    #     Remove-Item -Path 'C:\AWSQuickstart' -Recurse -Force -ErrorAction Stop
+    # } Catch [System.Exception] {
+    #     Write-Output "Failed remove QuickStart build files $_"
+    # }
 
     Write-Output 'Removing self signed cert'
     Try {
@@ -1230,4 +1230,56 @@ Function Update-PolMigTable {
     #$PolMigTableContentExample = $PolMigTable.MigrationTable.Mapping | Where-Object { $_.Source -eq 'Example@model.com' }
     #$PolMigTableContentExample.destination = "Example@$FQDN"
     $PolMigTable.Save($PolMigTablePath)
+}
+
+Function Set-NonWindowsDomainJoin-Credentials{
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $True)][String]$SecretArn
+    )
+    #==================================================
+    # Main
+    #==================================================
+    $SecretUsernameKey = 'awsSeamlessDomainUsername'
+    $SecretPasswordKey = 'awsSeamlessDomainPassword'
+
+
+    Write-Output "Getting Secret $SecretArn"
+    Try {
+        $SecretContent = Get-SECSecretValue -SecretId $SecretArn -ErrorAction Stop | Select-Object -ExpandProperty 'SecretString' | ConvertFrom-Json -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to get $SecretArn Secret $_"
+        # Exit 1
+    }
+
+    $AccountName = $SecretContent.$SecretUsernameKey
+    Write-Output "Creating AD User $AccountName"
+    Try {
+        New-ADUser -Name $AccountName -AccountPassword (ConvertTo-SecureString ($SecretContent.$SecretPasswordKey) -AsPlainText -Force) -ChangePasswordAtLogon $false -Enabled $true -CannotChangePassword $true    
+    } Catch [System.Exception] {
+        Write-Output "Failed to create AD User $AccountName"
+        # Exit 1
+    }
+
+    # Getting Active Directory information.
+    Write-Output "Setting Domain Join permissions for AD User $AccountName"
+    Try {
+        $Domain = Get-ADDomain -ErrorAction Stop
+        $ComputersContainer = $Domain.ComputersContainer
+        $SchemaNamingContext = Get-ADRootDSE | Select-Object -ExpandProperty 'schemaNamingContext'
+        [System.GUID]$ServicePrincipalNameGuid = (Get-ADObject -SearchBase $SchemaNamingContext -Filter { lDAPDisplayName -eq 'Computer' } -Properties 'schemaIDGUID').schemaIDGUID
+        # Getting Service account Information.
+        $AccountProperties = Get-ADUser -Identity $AccountName
+        $AccountSid = New-Object -TypeName 'System.Security.Principal.SecurityIdentifier' $AccountProperties.SID.Value
+        # Getting ACL settings for the Computers container.
+        $ObjectAcl = Get-ACL -Path "AD:\$ComputersContainer" 
+        # Setting ACL allowing the service account the ability to create child computer objects in the Computers container.
+        $AddAccessRule = New-Object -TypeName 'System.DirectoryServices.ActiveDirectoryAccessRule' $AccountSid, 'CreateChild', 'Allow', $ServicePrincipalNameGUID, 'All'
+        $ObjectAcl.AddAccessRule($AddAccessRule)
+        Set-ACL -AclObject $ObjectAcl -Path "AD:\$ComputersContainer"
+    } Catch [System.Exception] {
+        Write-Output "Failed to set Domain Join permissions for AD User $AccountName"
+        # Exit 1
+    }
+
 }
