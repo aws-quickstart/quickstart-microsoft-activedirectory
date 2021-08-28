@@ -39,6 +39,7 @@ Metadata:
           - DomainDNSName
           - DomainNetBIOSName
           - DomainAdminPassword
+          - NonWindowsDomainJoin
           - ADEdition
       - Label:
           default: Microsoft Windows Server management instance
@@ -108,6 +109,8 @@ Metadata:
         default: Management Server Instance Type
       MgmtServerNetBIOSName:
         default: Management Server NetBIOS Name
+      NonWindowsDomainJoin:
+        default: Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain
       NumberOfAZs:
         default: Number of Availability Zones
       NumberOfRDGWHosts:
@@ -259,6 +262,15 @@ Parameters:
     MaxLength: '15'
     MinLength: '1'
     Type: String
+  NonWindowsDomainJoin:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: |
+      Do you want to create an AD User with minimal permissions allowing non-Windows instances to join the domain?
+      The username and password will be stored in Secrets Manager and a policy to access the secret will be created.
+    Type: String
   NumberOfAZs:
     AllowedValues:
       - '2'
@@ -393,6 +405,11 @@ Conditions:
   IsTwoAz: !Equals [!Ref 'NumberOfAZs', '2']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Rules:
+  NonWindowsDomainJoin:
+    RuleCondition: !Equals [!Ref NonWindowsDomainJoin, 'true']
+    Assertions:
+      - AssertDescription: To enable creation of an AD user for non-Windows Domain joins, you need to create a Management Server Instance
+        Assert: !Equals [!Ref MgmtServer, 'true']
   S3CRLBucketNameValidation:
     RuleCondition: !And
       - !Equals [!Ref UseS3ForCRL, 'Yes']
@@ -442,6 +459,7 @@ Resources:
         MgmtServer: !Ref 'MgmtServer'
         MgmtServerInstanceType: !Ref 'MgmtServerInstanceType'
         MgmtServerNetBIOSName: !Ref 'MgmtServerNetBIOSName'
+        NonWindowsDomainJoin: !Ref 'NonWindowsDomainJoin'
         OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
         OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
         PKI: !Ref 'PKI'

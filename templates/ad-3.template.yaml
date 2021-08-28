@@ -29,6 +29,7 @@ Metadata:
           - DomainDNSName
           - DomainNetBIOSName
           - DomainAdminPassword
+          - NonWindowsDomainJoin
           - ADEdition
       - Label:
           default: Microsoft Windows Server management instance
@@ -97,6 +98,8 @@ Metadata:
         default: Management Server Instance Type
       MgmtServerNetBIOSName:
         default: Management Server NetBIOS Name
+      NonWindowsDomainJoin:
+        default: Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain
       OrCaServerNetBIOSName:
         default: Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
       OrCaValidityPeriodUnits:
@@ -238,6 +241,15 @@ Parameters:
     MaxLength: '15'
     MinLength: '1'
     Type: String
+  NonWindowsDomainJoin:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: |
+      Do you want to create an AD User with minimal permissions allowing non-Windows instances to join the domain.
+      The username and password will be stored in Secrets Manager and a policy to access the secret will be created.
+    Type: String
   OrCaServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: ORCA1
@@ -301,6 +313,11 @@ Parameters:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
 Rules:
+  NonWindowsDomainJoin:
+    RuleCondition: !Equals [!Ref NonWindowsDomainJoin, 'true']
+    Assertions:
+      - AssertDescription: To enable creation of an AD user for non-Windows Domain joins, you need to create a Management Server Instance
+        Assert: !Equals [!Ref MgmtServer, 'true']
   SubnetsInVPC:
     Assertions:
       - Assert: !EachMemberIn
@@ -319,6 +336,7 @@ Rules:
 Conditions:
   ShouldCreateDHCPOption: !Not [!Equals [!Ref DHCPOptionSet, 'No']]
   ShouldCreateMgmtServer: !Equals [!Ref MgmtServer, 'true']
+  ShouldCreateNonWindowsDomainJoinADUser: !Equals [!Ref NonWindowsDomainJoin, 'true']
   ShouldCreateOneTierPkiResource: !Equals [!Ref PKI, 'One-Tier']
   ShouldCreateTwoTierPkiResource: !Equals [!Ref PKI, 'Two-Tier']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
@@ -344,6 +362,31 @@ Resources:
       Name: !Sub 'ADAdminSecret-${AWS::StackName}'
       Description: Admin User Secrets for Managed AD Quick Start
       SecretString: !Sub '{"username":"Admin","password":"${DomainAdminPassword}"}'
+  NonWindowsDomainJoinSecrets:
+    Type: AWS::SecretsManager::Secret
+    Condition: ShouldCreateNonWindowsDomainJoinADUser
+    Properties:
+      Name: !Sub 'aws/directory-services/${MicrosoftAD}/seamless-domain-join'
+      Description: User Secrets for seamless domain joins in context of the Managed AD Quick Start
+      GenerateSecretString:
+        RequireEachIncludedType: True
+        SecretStringTemplate: '{"awsSeamlessDomainUsername": "awsSeamlessDomain"}'
+        GenerateStringKey: 'awsSeamlessDomainPassword'
+        PasswordLength: 32
+        ExcludePunctuation: True
+  NonWindowsDomainJoinPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Condition: ShouldCreateNonWindowsDomainJoinADUser
+    Properties: 
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+            - 'secretsmanager:GetSecretValue'
+            - 'secretsmanager:DescribeSecret'
+          Resource: !Ref NonWindowsDomainJoinSecrets
+      ManagedPolicyName: !Sub SM-Secret-DJ-${MicrosoftAD}-Read
   MicrosoftAD:
     Type: AWS::DirectoryService::MicrosoftAD
     Properties:
@@ -418,6 +461,8 @@ Resources:
         MgmtServerInstanceType: !Ref 'MgmtServerInstanceType'
         MgmtServerNetBIOSName: !Ref 'MgmtServerNetBIOSName'
         MgmtServerSubnet: !Ref 'PrivateSubnet1ID'
+        NonWindowsDomainJoin: !Ref 'NonWindowsDomainJoin'
+        NonWindowsDomainJoinSecret: !If [ShouldCreateNonWindowsDomainJoinADUser, !Ref 'NonWindowsDomainJoinSecrets', !Ref 'AWS::NoValue']
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
@@ -513,3 +558,11 @@ Outputs:
   DomainMemberSGID:
     Description: Domain Member Security Group ID
     Value: !Ref 'DomainMemberSG'
+  NonWindowsDomainJoinSecrets:
+    Condition: ShouldCreateNonWindowsDomainJoinADUser
+    Description: ARN for the Secret that has Password and User bane for the domain join user
+    Value: !Ref NonWindowsDomainJoinSecrets
+  NonWindowsDomainJoinPolicy:
+    Condition: ShouldCreateNonWindowsDomainJoinADUser
+    Description: ARN of the policy with permissions to read the secret holding the credentials for the domain join user
+    Value: !Ref NonWindowsDomainJoinPolicy
