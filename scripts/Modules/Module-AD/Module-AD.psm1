@@ -938,12 +938,12 @@ Function Invoke-Cleanup {
         Write-Output "Failed re-enable firewall $_"
     }
 
-    # Write-Output 'Removing QuickStart build files'
-    # Try {
-    #     Remove-Item -Path 'C:\AWSQuickstart' -Recurse -Force -ErrorAction Stop
-    # } Catch [System.Exception] {
-    #     Write-Output "Failed remove QuickStart build files $_"
-    # }
+    Write-Output 'Removing QuickStart build files'
+    Try {
+        Remove-Item -Path 'C:\AWSQuickstart' -Recurse -Force -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed remove QuickStart build files $_"
+    }
 
     Write-Output 'Removing self signed cert'
     Try {
