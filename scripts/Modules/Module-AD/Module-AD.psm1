@@ -1235,51 +1235,172 @@ Function Update-PolMigTable {
 Function Set-NonWindowsDomainJoin-Credentials{
     [CmdletBinding()]
     Param (
-        [Parameter(Mandatory = $True)][String]$SecretArn
+        [Parameter(Mandatory = $True)][String]$SecretArn,
+        [Parameter(Mandatory = $True)][PSCredential]$Credential
     )
     #==================================================
     # Main
     #==================================================
-    $SecretUsernameKey = 'awsSeamlessDomainUsername'
-    $SecretPasswordKey = 'awsSeamlessDomainPassword'
-
 
     Write-Output "Getting Secret $SecretArn"
     Try {
         $SecretContent = Get-SECSecretValue -SecretId $SecretArn -ErrorAction Stop | Select-Object -ExpandProperty 'SecretString' | ConvertFrom-Json -ErrorAction Stop
     } Catch [System.Exception] {
         Write-Output "Failed to get $SecretArn Secret $_"
-        # Exit 1
+        Exit 1
     }
 
-    $AccountName = $SecretContent.$SecretUsernameKey
-    Write-Output "Creating AD User $AccountName"
-    Try {
-        New-ADUser -Name $AccountName -AccountPassword (ConvertTo-SecureString ($SecretContent.$SecretPasswordKey) -AsPlainText -Force) -ChangePasswordAtLogon $false -Enabled $true -CannotChangePassword $true    
-    } Catch [System.Exception] {
-        Write-Output "Failed to create AD User $AccountName"
-        # Exit 1
-    }
+    $AccountName = $SecretContent.awsSeamlessDomainUsername
+    $AccountPassword = $SecretContent.awsSeamlessDomainPassword
 
-    # Getting Active Directory information.
-    Write-Output "Setting Domain Join permissions for AD User $AccountName"
-    Try {
-        $Domain = Get-ADDomain -ErrorAction Stop
+    Set-CredSSP -Action 'Enable'
+    Invoke-Command -Authentication 'Credssp' -ComputerName $env:COMPUTERNAME -Credential $Credential -ScriptBlock {
+        Write-Output "Creating AD User $Using:AccountName"
+        Try {
+            New-ADUser -Name $Using:AccountName `
+                -AccountPassword (ConvertTo-SecureString ($Using:AccountPassword) -AsPlainText -Force) `
+                -ChangePasswordAtLogon $false -Enabled $true -CannotChangePassword $true  
+        } Catch [System.Exception] {
+            Write-Output "Failed to create AD User $Using:AccountName"
+            Exit 1
+        }
+        Write-Output "Setting Domain Join permissions for AD User $Using:AccountName"
+        Try {
+            $Domain = Get-ADDomain -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output 'Failed to get domain info'
+            Exit 1
+        }
         $ComputersContainer = $Domain.ComputersContainer
-        $SchemaNamingContext = Get-ADRootDSE | Select-Object -ExpandProperty 'schemaNamingContext'
-        [System.GUID]$ServicePrincipalNameGuid = (Get-ADObject -SearchBase $SchemaNamingContext -Filter { lDAPDisplayName -eq 'Computer' } -Properties 'schemaIDGUID').schemaIDGUID
-        # Getting Service account Information.
-        $AccountProperties = Get-ADUser -Identity $AccountName
-        $AccountSid = New-Object -TypeName 'System.Security.Principal.SecurityIdentifier' $AccountProperties.SID.Value
-        # Getting ACL settings for the Computers container.
-        $ObjectAcl = Get-ACL -Path "AD:\$ComputersContainer" 
-        # Setting ACL allowing the service account the ability to create child computer objects in the Computers container.
-        $AddAccessRule = New-Object -TypeName 'System.DirectoryServices.ActiveDirectoryAccessRule' $AccountSid, 'CreateChild', 'Allow', $ServicePrincipalNameGUID, 'All'
-        $ObjectAcl.AddAccessRule($AddAccessRule)
-        Set-ACL -AclObject $ObjectAcl -Path "AD:\$ComputersContainer"
-    } Catch [System.Exception] {
-        Write-Output "Failed to set Domain Join permissions for AD User $AccountName"
-        # Exit 1
-    }
+        Try {
+            $SchemaNamingContext = Get-ADRootDSE -ErrorAction Stop | Select-Object -ExpandProperty 'schemaNamingContext'
+        } Catch [System.Exception] {
+            Write-Output 'Failed to get domain schemaNamingContext'
+            Exit 1
+        }
+        Try {
+            [System.GUID]$ServicePrincipalNameGuid = (Get-ADObject -SearchBase $SchemaNamingContext -Filter { lDAPDisplayName -eq 'Computer' } -Properties 'schemaIDGUID' -ErrorAction Stop).schemaIDGUID 
+        } Catch [System.Exception] {
+            Write-Output 'Failed to get schemaIDGUID for computer objects'
+            Exit 1
+        }
+        Try {
+            $AccountProperties = Get-ADUser -Identity $Using:AccountName -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to get AD User $Using:AccountName"
+            Exit 1
+        }
+        Try {
+            $AccountSid = New-Object -TypeName 'System.Security.Principal.SecurityIdentifier' $AccountProperties.SID.Value -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to get SID for AD User $Using:AccountName"
+            Exit 1
+        }
+        Try {
+            $ObjectAcl = Get-Acl -Path "AD:\$ComputersContainer" -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to get ACL for $ComputersContainer" 
+            Exit 1
+        }
+        Try {
+            $AddAccessRule = New-Object -TypeName 'System.DirectoryServices.ActiveDirectoryAccessRule' $AccountSid, 'CreateChild', 'Allow', $ServicePrincipalNameGUID, 'All' -ErrorAction Stop
+            $ObjectAcl.AddAccessRule($AddAccessRule)
+        } Catch [System.Exception] {
+            Write-Output "Failed to create ACL for $ComputersContainer" 
+            Exit 1
+        }
+        Try {
+            Set-Acl -AclObject $ObjectAcl -Path "AD:\$ComputersContainer" -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to set ACL for $ComputersContainer" 
+            Exit 1
+        }
+    } # End ScriptBlog
+    Set-CredSSP -Action 'Disable'
+}
 
+Function Set-CredSSP {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('Enable', 'Disable')][string]$Action
+    )
+
+    #==================================================
+    # Variables
+    #==================================================
+
+    $RootKey = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows'
+    $CredDelKey = 'CredentialsDelegation'
+    $FreshCredKey = 'AllowFreshCredentials'
+    $FreshCredKeyNTLM = 'AllowFreshCredentialsWhenNTLMOnly'
+
+    #==================================================
+    # Main
+    #==================================================
+
+    Switch ($Action) {
+        'Enable' {
+            Write-Output 'Enabling CredSSP'
+            Try {
+                $Null = Enable-WSManCredSSP -Role 'Client' -DelegateComputer '*' -Force -ErrorAction Stop
+                $Null = Enable-WSManCredSSP -Role 'Server' -Force -ErrorAction Stop
+            } Catch [System.Exception] {
+                Write-Output "Failed to enable CredSSP $_"
+                $Null = Disable-WSManCredSSP -Role 'Client' -ErrorAction SilentlyContinue
+                $Null = Disable-WSManCredSSP -Role 'Server' -ErrorAction SilentlyContinue
+                Exit 1
+            }
+       
+            Write-Output 'Setting CredSSP Registry entries'
+            $CredDelKeyPresent = Test-Path -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -ErrorAction SilentlyContinue
+            If (-not $CredDelKeyPresent) {
+                Try {
+                    $CredDelPath = New-Item -Path $RootKey -Name $CredDelKey -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
+
+                    $FreshCredKeyPresent = Test-Path -Path (Join-Path -Path "Registry::$CredDelPath" -ChildPath $FreshCredKey) -ErrorAction SilentlyContinue
+                    If (-not $FreshCredKeyPresent) {
+                        $FreshCredKeyPath = New-Item -Path "Registry::$CredDelPath" -Name $FreshCredKey -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
+                    }
+
+                    $FreshCredKeyNTLMPresent = Test-Path -Path (Join-Path -Path "Registry::$CredDelPath" -ChildPath $FreshCredKeyNTLM) -ErrorAction SilentlyContinue
+                    If (-not $FreshCredKeyNTLMPresent) {
+                        $FreshCredKeyNTLMPath = New-Item -Path "Registry::$CredDelPath" -Name $FreshCredKeyNTLM -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
+                    }
+
+                    $Null = New-ItemProperty -Path "Registry::$CredDelPath" -Name 'AllowFreshCredentials' -Value '1' -PropertyType 'Dword' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$CredDelPath" -Name 'ConcatenateDefaults_AllowFresh' -Value '1' -PropertyType 'Dword' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$CredDelPath" -Name 'AllowFreshCredentialsWhenNTLMOnly' -Value '1' -PropertyType 'Dword' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$CredDelPath" -Name 'ConcatenateDefaults_AllowFreshNTLMOnly' -Value '1' -PropertyType 'Dword' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$FreshCredKeyPath" -Name '1' -Value 'WSMAN/*' -PropertyType 'String' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$FreshCredKeyNTLMPath" -Name '1' -Value 'WSMAN/*' -PropertyType 'String' -Force -ErrorAction Stop
+                } Catch [System.Exception] {
+                    Write-Output "Failed to create CredSSP Registry entries $_"
+                    Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+                    Exit 1
+                }
+            }
+        }
+        'Disable' {
+            Write-Output 'Disabling CredSSP'
+            Try {
+                Disable-WSManCredSSP -Role 'Client' -ErrorAction Continue
+                Disable-WSManCredSSP -Role 'Server' -ErrorAction Stop
+            } Catch [System.Exception] {
+                Write-Output "Failed to disable CredSSP $_"
+                Exit 1
+            }
+
+            Write-Output 'Removing CredSSP Registry entries'
+            Try {
+                Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+            } Catch [System.Exception] {
+                Write-Output "Failed to remove CredSSP Registry entries $_"
+                Exit 1
+            }
+        }
+        Default { 
+            Write-Output 'InvalidArgument: Invalid value is passed for parameter Type' 
+            Exit 1
+        }
+    }
 }
