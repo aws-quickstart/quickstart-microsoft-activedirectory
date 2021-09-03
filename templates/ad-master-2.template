@@ -6,6 +6,11 @@ Description: >-
   Server instances to Domain Controllers in your AD forest. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You
   will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9006
+        - E9007
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
