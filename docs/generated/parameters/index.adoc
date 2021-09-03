@@ -1,1 +1,27 @@
-// placeholder
+
+=== Parameters for deploying self-managed AD into a new VPC
+include::ad-main-1.template.adoc[]
+
+=== Parameters for deploying self-managed AD into an existing VPC
+include::ad-1.adoc[]
+
+=== Parameters for deploying self-managed AD into an existing VPC
+include::ad-1.template.adoc[]
+
+=== Parameters for extending on-premises AD into a new VPC
+include::ad-main-2.template.adoc[]
+
+=== Parameters for extending on-premises AD into an existing VPC
+include::ad-2.template.adoc[]
+
+=== Parameters for extending on-premises AD into an existing VPC
+include::ad-2.adoc[]
+
+=== Parameters for deploying AWS Managed Microsoft AD into a new VPC
+include::ad-main-3.template.adoc[]
+
+=== Parameters for deploying AWS Managed Microsoft AD into an existing VPC
+include::ad-3.template.adoc[]
+
+=== Parameters for deploying AWS Managed Microsoft AD into an existing VPC
+include::ad-3.adoc[]
