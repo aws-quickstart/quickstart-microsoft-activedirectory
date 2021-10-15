@@ -98,7 +98,7 @@ Metadata:
       DHCPOptionSet:
         default: Create a DHCP Options set
       DataDriveSizeGiB:
-        default: SYSVOL and NTDS and Data Drive Size
+        default: SYSVOL and NTDS Data Drive Size
       DeletedObjectLifetime:
         default: Set new Deleted Objects Lifetime
       DomainAdminPassword:
