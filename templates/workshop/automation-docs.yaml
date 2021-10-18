@@ -32,7 +32,7 @@ Resources:
                     "aws:TagKeys": Domain
           PolicyName: complete-asg-lifecycle-policy
       ManagedPolicyArns:
-        - arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonSSMAutomationRole
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonSSMAutomationRole
 
   ##########################################################################################################################################
   #  SSM Resources - In this section we are creating the resources in AWS Systems Manager. Creating another parameter with the CloudWatch  #
@@ -411,10 +411,10 @@ Resources:
               LifecycleHookName: "{{LCHName}}"
 Outputs:
   SetupConfigurationDocArn:
-    Value: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${SetupConfigurationDoc}:$DEFAULT"
+    Value: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${SetupConfigurationDoc}:$DEFAULT"
     Export:
       Name: SetupConfigurationDocArn
   RemoveConfigurationDocArn:
-    Value: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${RemoveConfigurationDoc}:$DEFAULT"
+    Value: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${RemoveConfigurationDoc}:$DEFAULT"
     Export:
       Name: RemoveConfigurationDocArn
