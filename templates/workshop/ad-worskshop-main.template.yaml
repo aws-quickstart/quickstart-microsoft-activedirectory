@@ -214,12 +214,6 @@ Conditions:
   IsTwoAz: !Equals [!Ref 'NumberOfAZs', '2']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Resources:
-  IdeEnvironment:
-    Type: AWS::Cloud9::EnvironmentEC2
-    Properties:
-      AutomaticStopTimeMinutes: 30
-      InstanceType: t2.small
-      Name: !Sub Workshop-${AWS::StackName}
   VPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:

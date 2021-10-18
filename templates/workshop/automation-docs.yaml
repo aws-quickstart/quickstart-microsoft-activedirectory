@@ -1,9 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Roles and Automation Documents to perform AD workshop configuration. (qs-1scnfaihg)
+Description: Roles and Automation Documents to perform AD workshop configuration.
 Resources:
-  ######################
-  # Security Resources #
-  ######################
+  ###############################################################################################################################
+  # Security Resources - This role will be passed to the SSM Automation Document at run time. It givees the automation document #
+  # the necessary priveleges to complete the steps in the document.                                                             #
+  ###############################################################################################################################
 
   SSMExecutionResourceRole:
     Type: AWS::IAM::Role
@@ -33,9 +34,10 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
 
-  ###################
-  #  SSM Resources  #
-  ###################
+  ##########################################################################################################################################
+  #  SSM Resources - In this section we are creating the resources in AWS Systems Manager. Creating another parameter with the CloudWatch  #
+  #  configuration as well as the SSM Automation Document, which we will step through                                                      #
+  ##########################################################################################################################################
 
   CloudWatchParam:
     Type: AWS::SSM::Parameter
@@ -100,15 +102,21 @@ Resources:
           }
         }
       Description: SSM Parameter for CloudWatch Configuration.
+  
+  ######################################################################################################################
+  # This is the runbook we will execute to configure our EC2 Instances. The document starts after the content section, #
+  # we will discuss what each step is doing.                                                                           #
+  ######################################################################################################################
 
   SetupConfigurationDoc:
     Type: AWS::SSM::Document
     Properties:
       DocumentType: Automation
       Content:
+        # As noted previously Automation runbooks are schema version 0.3. We also have a description for the document
         schemaVersion: "0.3"
         description: "Configure Instances on Launch"
-        assumeRole: "{{AutomationAssumeRole}}"
+        assumeRole: "{{AutomationAssumeRole}}" 
         parameters:
           InstanceId:
             description: "ID of the Instance."
@@ -126,6 +134,8 @@ Resources:
             default: !GetAtt SSMExecutionResourceRole.Arn
             description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
             type: "String"
+        # The mainSteps sections is where the party begins. SSM will runs these steps in sequential order. However, this can be 
+        # controlled with branching. 
         mainSteps:
           - name: waitUntilInstanceStateRunning
             action: aws:waitForAwsResourceProperty
@@ -148,6 +158,10 @@ Resources:
               PropertySelector: "$.InstanceStatuses[0].InstanceState.Name"
               DesiredValues:
                 - running
+          # Here we are using the aws:runcommand action and we are using the AWS-RunPowerShellScript command document to create a Name Tag 
+          # with the hostname of the Windows Instance. Each Run Command action in teh runbook uses a different run command document
+          # which determine the parameters used as input for the step. Notice the use of "{{InstanceId}}", this double
+          # curly brace is how we pass parameter values in the runbook. 
           - name: "setNameTag"
             action: aws:runCommand
             onFailure: "step:abandonHookAction"
@@ -255,7 +269,7 @@ Resources:
                       Install-WindowsFeature -Name Web-Server -IncludeAllSubFeature
                       Add-Content c:\inetpub\wwwroot\default.aspx '<%@ Page Title="" Language="C#" Trace="true"%>'
                       del c:\inetpub\wwwroot\iisstart.htm
-          # Determines if CFN Needs to be Signaled or if Work flow should just end
+          # Determines if a LifeCycle hook Needs to be Signaled or if the runbook should just end
           - name: LCHEnd
             action: aws:branch
             inputs:
@@ -267,12 +281,12 @@ Resources:
               - NextStep: sleepend
                 Variable: "{{StackName}}"
                 StringEquals: ""
-          # If CFN Signl Not Needed this sleep ends work flow
+          # If LifeCycle hook Signal is Not Needed this sleep ends the runbook. Notice the isend: True option. 
           - name: "sleepend"
             action: "aws:sleep"
             isEnd: True
             inputs:
-          # If all steps complete successfully signals LCH of Success
+          # If all steps complete successfully signals Lifecycle hook of Success
           - name: "completeHookAction"
             action: aws:executeAwsApi
             isEnd: true
@@ -283,6 +297,7 @@ Resources:
               InstanceId: "{{InstanceId}}"
               LifecycleActionResult: CONTINUE
               LifecycleHookName: "{{LCHName}}"
+          # If any steps complete failure signals Lifecycle hook of failure
           - name: "abandonHookAction"
             action: aws:executeAwsApi
             isEnd: true
@@ -293,6 +308,11 @@ Resources:
               InstanceId: "{{InstanceId}}"
               LifecycleActionResult: ABANDON
               LifecycleHookName: "{{LCHName}}"
+  
+  ######################################################################################
+  # This is the runbook we will execute to remove our EC2 Instance from the AD Domain. #
+  ######################################################################################
+
   RemoveConfigurationDoc:
     Type: AWS::SSM::Document
     Properties:
@@ -348,7 +368,7 @@ Resources:
                   - "False"
                 EnableDebugLogging:
                   - "False"
-          # Determines if CFN Needs to be Signaled or if Work flow should just end
+          # Determines if a LifeCycle hook Needs to be Signaled or if the runbook should just end
           - name: LCHEnd
             action: aws:branch
             inputs:
@@ -360,12 +380,12 @@ Resources:
               - NextStep: sleepend
                 Variable: "{{StackName}}"
                 StringEquals: ""
-          # If CFN Signl Not Needed this sleep ends work flow
+          # If LifeCycle hook Signal is Not Needed this sleep ends the runbook. Notice the isend: True option. 
           - name: "sleepend"
             action: "aws:sleep"
             isEnd: True
             inputs:
-          # If all steps complete successfully signals LCH of Success
+          # If all steps complete successfully signals Lifecycle hook of Success
           - name: "completeHookAction"
             action: aws:executeAwsApi
             isEnd: true
@@ -376,6 +396,7 @@ Resources:
               InstanceId: "{{InstanceId}}"
               LifecycleActionResult: CONTINUE
               LifecycleHookName: "{{LCHName}}"
+          # If any steps complete failure signals Lifecycle hook of failure
           - name: "abandonHookAction"
             action: aws:executeAwsApi
             isEnd: true
