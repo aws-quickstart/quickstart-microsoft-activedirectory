@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Managing Microsoft Workloads at Scale on AWS
+Description: Managing Microsoft Workloads at Scale on AWS (qs-1scnfaifg)
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:

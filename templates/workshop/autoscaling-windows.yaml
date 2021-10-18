@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Autoscaling Group set to trigger an SSM Active Directory (AD) Document at creation and termination.
+Description: Autoscaling Group set to trigger an SSM Active Directory (AD) Document at creation and termination. (qs-1scnfaiha)
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:

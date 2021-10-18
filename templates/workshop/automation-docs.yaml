@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Roles and Automation Documents to perform AD workshop configuration.
+Description: Roles and Automation Documents to perform AD workshop configuration. (qs-1scnfaihg)
 Resources:
   ######################
   # Security Resources #
