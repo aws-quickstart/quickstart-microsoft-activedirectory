@@ -30,22 +30,22 @@ Scenario 1 takes about 60 minutes. Scenario 2 takes about 20 minutes. Scenario 3
 [cols="3,1"]
 |===
 ^|https://fwd.aws/EdwmE[Deploy scenario 1 (self-managed AD) into a new VPC^]
-^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-1.template[View template^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-1.template.yaml[View template^]
 
 ^|https://fwd.aws/eKBrm[Deploy scenario 1 (self-managed AD) into an existing VPC^]
-^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-1.template[View template^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-1.template.yaml[View template^]
 
 ^|https://fwd.aws/AEBD7[Deploy scenario 2 (extending on-premises AD) into a new VPC^]
-^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-2.template[View template^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-2.template.yaml[View template^]
 
 ^|https://fwd.aws/KGgYW[Deploy scenario 2 (extending on-premises AD) into an existing VPC^]
-^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-2.template[View template^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-2.template.yaml[View template^]
 
 ^|https://fwd.aws/EqwrE[Deploy scenario 3 (AWS Managed Microsoft AD) into a new VPC^]
-^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-3.template[View template^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-main-3.template.yaml[View template^]
 
 ^|https://fwd.aws/RgvXr[Deploy scenario 3 (AWS Managed Microsoft AD) into an existing VPC^]
-^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-3.template[View template^]
+^|https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/blob/main/templates/ad-3.template.yaml[View template^]
 |===
 +
 . Check the AWS Region that’s displayed in the upper-right corner of the navigation bar, and change it if necessary. This Region is where the network infrastructure for {partner-product-short-name} is built. The template is launched in the {default_deployment_region} Region by default. See link:#_supported_regions[Supported Regions] earlier in this guide.
