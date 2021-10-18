@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Roles and Automation Documents to perform AD workshop configuration.
+Description: Roles and Automation Documents to perform AD workshop configuration. (qs-1scnfaifg)
 Resources:
   ###############################################################################################################################
   # Security Resources - This role will be passed to the SSM Automation Document at run time. It givees the automation document #
@@ -32,7 +32,7 @@ Resources:
                     "aws:TagKeys": Domain
           PolicyName: complete-asg-lifecycle-policy
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
+        - arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonSSMAutomationRole
 
   ##########################################################################################################################################
   #  SSM Resources - In this section we are creating the resources in AWS Systems Manager. Creating another parameter with the CloudWatch  #
