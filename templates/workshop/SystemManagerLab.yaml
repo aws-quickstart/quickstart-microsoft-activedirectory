@@ -81,7 +81,7 @@ Resources:
               - Action:
                   - ssm:GetParameter
                 Resource:
-                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${LogonMessageParam}"
+                  - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${LogonMessageParam}"
                 Effect: Allow
           PolicyName: ssm-param-policy
         - PolicyDocument:

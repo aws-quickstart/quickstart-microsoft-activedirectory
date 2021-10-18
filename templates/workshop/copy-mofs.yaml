@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: MOF files to be copied to designated s3 bucket
+Description: MOF files to be copied to designated s3 bucket (qs-1scnfaifg)
 Parameters:
   Bucket:
     Description: "Name of bucket to copy MOFs, if not leave blank and one will be created."

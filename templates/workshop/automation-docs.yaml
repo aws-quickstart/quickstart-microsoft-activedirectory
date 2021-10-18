@@ -286,6 +286,7 @@ Resources:
             action: "aws:sleep"
             isEnd: True
             inputs:
+              Duration: PT1S
           # If all steps complete successfully signals Lifecycle hook of Success
           - name: "completeHookAction"
             action: aws:executeAwsApi
@@ -385,6 +386,7 @@ Resources:
             action: "aws:sleep"
             isEnd: True
             inputs:
+              Duration: PT1S
           # If all steps complete successfully signals Lifecycle hook of Success
           - name: "completeHookAction"
             action: aws:executeAwsApi
