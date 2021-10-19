@@ -291,3 +291,13 @@ Outputs:
     Description: Instance profile name
     Export:
       Name: InstanceProfile
+  EC2SecurityGroup:
+    Value: !Ref EC2SecurityGroup
+    Description: Security Groups between IIS Servers and ELB
+    Export:
+      Name: EC2SecurityGroup
+  ELBSecurityGroup:
+    Value: !Ref ELBSecurityGroup
+    Description: Security Groups between IIS Servers and ELB
+    Export:
+      Name: ELBSecurityGroup

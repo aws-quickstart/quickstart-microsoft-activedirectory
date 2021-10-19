@@ -418,3 +418,7 @@ Outputs:
     Value: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${RemoveConfigurationDoc}:$DEFAULT"
     Export:
       Name: RemoveConfigurationDocArn
+  SSMExecutionRole:
+    Value: !GetAtt SSMExecutionResourceRole.Arn
+    Export:
+      Name: SSMExecutionRole
