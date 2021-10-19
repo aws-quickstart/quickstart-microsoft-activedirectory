@@ -279,7 +279,7 @@ Resources:
                   Variable: "{{LCHName}}"
                   StringEquals: ""
               - NextStep: sleepend
-                Variable: "{{StackName}}"
+                Variable: "{{LCHName}}"
                 StringEquals: ""
           # If LifeCycle hook Signal is Not Needed this sleep ends the runbook. Notice the isend: True option. 
           - name: "sleepend"
@@ -379,7 +379,7 @@ Resources:
                   Variable: "{{LCHName}}"
                   StringEquals: ""
               - NextStep: sleepend
-                Variable: "{{StackName}}"
+                Variable: "{{LCHName}}"
                 StringEquals: ""
           # If LifeCycle hook Signal is Not Needed this sleep ends the runbook. Notice the isend: True option. 
           - name: "sleepend"
