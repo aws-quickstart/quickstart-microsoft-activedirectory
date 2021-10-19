@@ -1,0 +1,35 @@
+/*
+@TargetNode='localhost'
+*/
+instance of MSFT_Credential as $MSFT_Credential1ref
+{
+UserName = "arn:aws:secretsmanager:us-west-2:111122223333:secret:secretName";
+ Password = "stringdoesntmatter";
+};
+instance of DSC_Computer as $DSC_Computer1ref
+{
+ModuleName = "ComputerManagementDsc";
+ DomainName = "{tag:Domain}";
+ ModuleVersion = "8.4.0";
+ Credential = $MSFT_Credential1ref;
+ Name = "{tag:Name}";
+ ResourceID = "[Computer]JoinDomain";
+ ConfigurationName = "DomainJoin";
+};
+instance of MSFT_SecurityOption as $MSFT_SecurityOption1ref
+{
+Interactive_logon_Message_title_for_users_attempting_to_log_on = "Logon policy From SSM";
+ ModuleName = "SecurityPolicyDsc";
+ ModuleVersion = "2.10.0.0";
+ Name = "LogonMessage";
+ ResourceID = "[SecurityOption]LogonMessage";
+ Interactive_logon_Message_text_for_users_attempting_to_log_on = "{ssm:LogonMessage}";
+ ConfigurationName = "DomainJoin";
+};
+instance of OMI_ConfigurationDocument
+                    {
+ Version="2.0.0";
+                        MinimumCompatibleVersion = "1.0.0";
+                        CompatibleVersionAdditionalProperties= {"Omi_BaseResource:ConfigurationName"};
+                        Name="DomainJoin";
+                    };
