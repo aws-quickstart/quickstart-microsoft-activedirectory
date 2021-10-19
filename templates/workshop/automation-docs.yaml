@@ -277,10 +277,10 @@ Resources:
               - NextStep: completeHookAction
                 Not: 
                   Variable: "{{LCHName}}"
-                  StringEquals: ""
+                  StringEquals: "none"
               - NextStep: sleepend
                 Variable: "{{LCHName}}"
-                StringEquals: ""
+                StringEquals: "none"
           # If LifeCycle hook Signal is Not Needed this sleep ends the runbook. Notice the isend: True option. 
           - name: "sleepend"
             action: "aws:sleep"
@@ -377,10 +377,10 @@ Resources:
               - NextStep: completeHookAction
                 Not: 
                   Variable: "{{LCHName}}"
-                  StringEquals: ""
+                  StringEquals: "none"
               - NextStep: sleepend
                 Variable: "{{LCHName}}"
-                StringEquals: ""
+                StringEquals: "none"
           # If LifeCycle hook Signal is Not Needed this sleep ends the runbook. Notice the isend: True option. 
           - name: "sleepend"
             action: "aws:sleep"
