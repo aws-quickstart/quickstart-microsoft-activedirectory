@@ -1,0 +1,432 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Roles and Automation Documents to perform AD workshop configuration. (qs-1scnfaifg)
+Resources:
+  ###############################################################################################################################
+  # Security Resources - This role will be passed to the SSM Automation Document at run time. It givees the automation document #
+  # the necessary priveleges to complete the steps in the document.                                                             #
+  ###############################################################################################################################
+
+  SSMExecutionResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: SSM IAM role which will access to CompleteLifecycleAction on ASG.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ssm.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - autoscaling:CompleteLifecycleAction
+                Resource: "*"
+                Condition:
+                  "ForAllValues:StringEquals":
+                    "aws:TagKeys": Domain
+          PolicyName: complete-asg-lifecycle-policy
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonSSMAutomationRole
+
+  ##########################################################################################################################################
+  #  SSM Resources - In this section we are creating the resources in AWS Systems Manager. Creating another parameter with the CloudWatch  #
+  #  configuration as well as the SSM Automation Document, which we will step through                                                      #
+  ##########################################################################################################################################
+
+  CloudWatchParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "AmazonCloudWatch-Windows-${AWS::StackName}"
+      Type: String
+      Value: |
+        {
+          "logs": {
+            "logs_collected": {
+              "files": {
+                "collect_list": [
+                  {
+                    "file_path": "C:\\inetpub\\logs\\LogFiles\\W3SVC1\\*.log",
+                    "log_group_name": "IISLogs",
+                    "log_stream_name": "{instance_id}"
+                  }
+                ]
+              },
+              "windows_events": {
+                "collect_list": [
+                  {
+                    "event_format": "xml",
+                    "event_levels": [
+                      "VERBOSE",
+                      "INFORMATION",
+                      "WARNING",
+                      "ERROR",
+                      "CRITICAL"
+                    ],
+                    "event_name": "System",
+                    "log_group_name": "System",
+                    "log_stream_name": "{instance_id}"
+                  }
+                ]
+              }
+            }
+          },
+          "metrics": {
+            "metrics_collected": {
+              "LogicalDisk": {
+                "measurement": [
+                  "% Free Space"
+                ],
+                "metrics_collection_interval": 60,
+                "resources": [
+                  "*"
+                ]
+              },
+              "Memory": {
+                "measurement": [
+                  "% Committed Bytes In Use"
+                ],
+                "metrics_collection_interval": 60
+              },
+              "statsd": {
+                "metrics_aggregation_interval": 60,
+                "metrics_collection_interval": 10,
+                "service_address": ":8125"
+              }
+            }
+          }
+        }
+      Description: SSM Parameter for CloudWatch Configuration.
+  
+  ######################################################################################################################
+  # This is the runbook we will execute to configure our EC2 Instances. The document starts after the content section, #
+  # we will discuss what each step is doing.                                                                           #
+  ######################################################################################################################
+
+  SetupConfigurationDoc:
+    Type: AWS::SSM::Document
+    Properties:
+      DocumentType: Automation
+      Content:
+        # As noted previously Automation runbooks are schema version 0.3. We also have a description for the document
+        schemaVersion: "0.3"
+        description: "Configure Instances on Launch"
+        assumeRole: "{{AutomationAssumeRole}}" 
+        parameters:
+          InstanceId:
+            description: "ID of the Instance."
+            type: "String"
+          ASGName:
+            description: "Auto Scaling Group Name"
+            type: "String"
+          ConfigBucket:
+            description: "Bucket Containing Mof Files"
+            type: "String"
+          LCHName:
+            description: "Life Cycle Hook Name"
+            type: "String"
+          AutomationAssumeRole:
+            default: !GetAtt SSMExecutionResourceRole.Arn
+            description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
+            type: "String"
+        # The mainSteps sections is where the party begins. SSM will runs these steps in sequential order. However, this can be 
+        # controlled with branching. 
+        mainSteps:
+          - name: waitUntilInstanceStateRunning
+            action: aws:waitForAwsResourceProperty
+            timeoutSeconds: 600
+            inputs:
+              Service: ec2
+              Api: DescribeInstanceStatus
+              InstanceIds:
+                - "{{InstanceId}}"
+              PropertySelector: "$.InstanceStatuses[0].InstanceState.Name"
+              DesiredValues:
+                - running
+          - name: assertInstanceStateRunning
+            action: aws:assertAwsResourceProperty
+            inputs:
+              Service: ec2
+              Api: DescribeInstanceStatus
+              InstanceIds:
+                - "{{InstanceId}}"
+              PropertySelector: "$.InstanceStatuses[0].InstanceState.Name"
+              DesiredValues:
+                - running
+          # Here we are using the aws:runcommand action and we are using the AWS-RunPowerShellScript command document to create a Name Tag 
+          # with the hostname of the Windows Instance. Each Run Command action in teh runbook uses a different run command document
+          # which determine the parameters used as input for the step. Notice the use of "{{InstanceId}}", this double
+          # curly brace is how we pass parameter values in the runbook. 
+          - name: "setNameTag"
+            action: aws:runCommand
+            onFailure: "step:abandonHookAction"
+            inputs:
+              DocumentName: AWS-RunPowerShellScript
+              InstanceIds:
+                - "{{InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: "/win302/SetupConfiguration"
+              Parameters:
+                commands:
+                  - |
+                    Import-Module AWSPowerShell
+                    Try {
+                      $instanceid = (Invoke-RestMethod -Method Get -Uri http://169.254.169.254/latest/meta-data/instance-id)
+                      Write-Output "Creating new ec2 name tag: $env:COMPUTERNAME on $instanceId "
+                      New-EC2Tag -Resource $instanceId -Tag @{Key="Name";Value=$env:COMPUTERNAME}
+                    }Catch [System.Exception] {
+                      Write-Output "Failed to set Name Tag $_"
+                      Exit 1
+                    }
+          - name: "installCloudWatchAgent"
+            action: aws:runCommand
+            onFailure: step:abandonHookAction
+            inputs:
+              DocumentName: AWS-ConfigureAWSPackage
+              InstanceIds:
+                - "{{InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: "/win302/SetupConfiguration"
+              Parameters:
+                action:
+                  - "Install"
+                installationType:
+                  - "Uninstall and reinstall"
+                name:
+                  - "AmazonCloudWatchAgent"
+                version:
+                  - "latest"
+          - name: "configureCloudWatchAgent"
+            action: aws:runCommand
+            onFailure: step:abandonHookAction
+            inputs:
+              DocumentName: AmazonCloudWatch-ManageAgent
+              InstanceIds:
+                - "{{InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: "/win302/SetupConfiguration"
+              Parameters:
+                action:
+                  - "configure"
+                mode:
+                  - "ec2"
+                optionalConfigurationLocation:
+                  - !Ref "CloudWatchParam"
+                optionalConfigurationSource:
+                  - "ssm"
+                optionalRestart:
+                  - "yes"
+          - name: "applyDomainJoin"
+            action: aws:runCommand
+            onFailure: step:abandonHookAction
+            inputs:
+              DocumentName: AWS-ApplyDSCMofs
+              InstanceIds:
+                - "{{InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: "/win302/SetupConfiguration"
+              Parameters:
+                MofsToApply:
+                  - "s3:{{ConfigBucket}}:winworkshop.mof"
+                ServicePath:
+                  - default
+                MofOperationMode:
+                  - Apply
+                ModuleSourceBucketName:
+                  - "NONE"
+                AllowPSGalleryModuleSource:
+                  - "True"
+                RebootBehavior:
+                  - "AfterMof"
+                UseComputerNameForReporting:
+                  - "False"
+                EnableVerboseLogging:
+                  - "False"
+                EnableDebugLogging:
+                  - "False"
+          - name: "SetupIIS"
+            action: aws:runCommand
+            onFailure: step:abandonHookAction
+            inputs:
+              DocumentName: AWS-RunPowerShellScript
+              InstanceIds:
+                - "{{InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: "/win302/SetupConfiguration"
+              Parameters:
+                commands:
+                  - |
+                      Install-WindowsFeature -Name Web-Server -IncludeAllSubFeature
+                      Add-Content c:\inetpub\wwwroot\default.aspx '<%@ Page Title="" Language="C#" Trace="true"%>'
+                      del c:\inetpub\wwwroot\iisstart.htm
+          # Determines if a LifeCycle hook Needs to be Signaled or if the runbook should just end
+          - name: LCHEnd
+            action: aws:branch
+            inputs:
+              Choices:
+              - NextStep: completeHookAction
+                Not: 
+                  Variable: "{{LCHName}}"
+                  StringEquals: "none"
+              - NextStep: sleepend
+                Variable: "{{LCHName}}"
+                StringEquals: "none"
+          # If LifeCycle hook Signal is Not Needed this sleep ends the runbook. Notice the isend: True option. 
+          - name: "sleepend"
+            action: "aws:sleep"
+            isEnd: True
+            inputs:
+              Duration: PT1S
+          # If all steps complete successfully signals Lifecycle hook of Success
+          - name: "completeHookAction"
+            action: aws:executeAwsApi
+            isEnd: true
+            inputs:
+              Service: autoscaling
+              Api: CompleteLifecycleAction
+              AutoScalingGroupName: "{{ASGName}}"
+              InstanceId: "{{InstanceId}}"
+              LifecycleActionResult: CONTINUE
+              LifecycleHookName: "{{LCHName}}"
+          # If any steps complete failure signals Lifecycle hook of failure
+          - name: "abandonHookAction"
+            action: aws:executeAwsApi
+            isEnd: true
+            inputs:
+              Service: autoscaling
+              Api: CompleteLifecycleAction
+              AutoScalingGroupName: "{{ASGName}}"
+              InstanceId: "{{InstanceId}}"
+              LifecycleActionResult: ABANDON
+              LifecycleHookName: "{{LCHName}}"
+  
+  ######################################################################################
+  # This is the runbook we will execute to remove our EC2 Instance from the AD Domain. #
+  ######################################################################################
+
+  RemoveConfigurationDoc:
+    Type: AWS::SSM::Document
+    Properties:
+      DocumentType: Automation
+      Content:
+        schemaVersion: "0.3"
+        description: "Remove EC2 Instances from AD Domain"
+        assumeRole: "{{AutomationAssumeRole}}"
+        parameters:
+          InstanceId:
+            description: "ID of the Instance."
+            type: "String"
+          ASGName:
+            description: "Auto Scaling Group Name"
+            type: "String"
+          ConfigBucket:
+            description: "Bucket Containing Mof Files"
+            type: "String"
+          LCHName:
+            description: "Life Cycle Hook Name"
+            type: "String"
+          AutomationAssumeRole:
+            default: !GetAtt SSMExecutionResourceRole.Arn
+            description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
+            type: "String"
+        mainSteps:
+          - name: "RemoveFromDomain"
+            action: aws:runCommand
+            onFailure: step:abandonHookAction
+            inputs:
+              DocumentName: AWS-ApplyDSCMofs
+              InstanceIds:
+                - "{{InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: "/win302/RemoveConfiguration"
+              Parameters:
+                MofsToApply:
+                  - "s3:{{ConfigBucket}}:domainremove.mof"
+                ServicePath:
+                  - default
+                MofOperationMode:
+                  - Apply
+                ModuleSourceBucketName:
+                  - "NONE"
+                AllowPSGalleryModuleSource:
+                  - "True"
+                RebootBehavior:
+                  - "AfterMof"
+                UseComputerNameForReporting:
+                  - "False"
+                EnableVerboseLogging:
+                  - "False"
+                EnableDebugLogging:
+                  - "False"
+          # Determines if a LifeCycle hook Needs to be Signaled or if the runbook should just end
+          - name: LCHEnd
+            action: aws:branch
+            inputs:
+              Choices:
+              - NextStep: completeHookAction
+                Not: 
+                  Variable: "{{LCHName}}"
+                  StringEquals: "none"
+              - NextStep: sleepend
+                Variable: "{{LCHName}}"
+                StringEquals: "none"
+          # If LifeCycle hook Signal is Not Needed this sleep ends the runbook. Notice the isend: True option. 
+          - name: "sleepend"
+            action: "aws:sleep"
+            isEnd: True
+            inputs:
+              Duration: PT1S
+          # If all steps complete successfully signals Lifecycle hook of Success
+          - name: "completeHookAction"
+            action: aws:executeAwsApi
+            isEnd: true
+            inputs:
+              Service: autoscaling
+              Api: CompleteLifecycleAction
+              AutoScalingGroupName: "{{ASGName}}"
+              InstanceId: "{{InstanceId}}"
+              LifecycleActionResult: CONTINUE
+              LifecycleHookName: "{{LCHName}}"
+          # If any steps complete failure signals Lifecycle hook of failure
+          - name: "abandonHookAction"
+            action: aws:executeAwsApi
+            isEnd: true
+            inputs:
+              Service: autoscaling
+              Api: CompleteLifecycleAction
+              AutoScalingGroupName: "{{ASGName}}"
+              InstanceId: "{{InstanceId}}"
+              LifecycleActionResult: ABANDON
+              LifecycleHookName: "{{LCHName}}"
+Outputs:
+  SetupConfigurationDocArn:
+    Value: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${SetupConfigurationDoc}:$DEFAULT"
+    Export:
+      Name: SetupConfigurationDocArn
+  SetupConfigurationDocName:
+    Value: !Ref "SetupConfigurationDoc"
+    Export:
+      Name: SetupConfigurationDocName
+  RemoveConfigurationDocArn:
+    Value: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${RemoveConfigurationDoc}:$DEFAULT"
+    Export:
+      Name: RemoveConfigurationDocArn
+  RemoveConfigurationDocName:
+    Value: !Ref "RemoveConfigurationDoc"
+    Export:
+      Name: RemoveConfigurationDocName
+  SSMExecutionRole:
+    Value: !GetAtt SSMExecutionResourceRole.Arn
+    Export:
+      Name: SSMExecutionRole

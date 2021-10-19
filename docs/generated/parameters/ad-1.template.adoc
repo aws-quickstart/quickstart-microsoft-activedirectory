@@ -18,8 +18,9 @@
 (`ADServer1PrivateIP`)|`10.0.0.10`|Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1|Domain Controller 2 Instance Type
 (`ADServer2InstanceType`)|`m5.large`|Amazon EC2 instance type for the second Active Directory Domain Controller instance|Domain Controller 2 NetBIOS Name
 (`ADServer2NetBIOSName`)|`DC2`|NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)|Domain Controller 2 Private IP Address
-(`ADServer2PrivateIP`)|`10.0.32.10`|Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2|SYSVOL and NTDS and Data Drive Size
-(`DataDriveSizeGiB`)|`10`|Size of SYSVOL and NTDS data drive in GiB|Key Pair Name
+(`ADServer2PrivateIP`)|`10.0.32.10`|Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2|SYSVOL and NTDS Data Drive Size
+(`DataDriveSizeGiB`)|`10`|Size of SYSVOL and NTDS data drive in GiB|KMS Key for EBS Encryption
+(`EbsEncryptionKmsKeyId`)|`alias/aws/ebs`|The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN|Key Pair Name
 (`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches|SSM Parameter Value for latest AMI ID
 (`WINFULLBASE`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|System Manager parameter value for latest Windows Server AMI
 |===

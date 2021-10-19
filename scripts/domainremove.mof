@@ -1,0 +1,36 @@
+/*
+@TargetNode='localhost'
+*/
+instance of MSFT_RoleResource as $MSFT_RoleResource1ref
+{
+ResourceID = "[WindowsFeature]RSAT-AD-PowerShell";
+ Ensure = "Present";
+ Name = "RSAT-AD-PowerShell";
+ ModuleName = "PSDesiredStateConfiguration";
+ModuleVersion = "1.0";
+ ConfigurationName = "RemoveDomain";
+};
+instance of MSFT_Credential as $MSFT_Credential1ref
+{
+Password = "stringdoesntmatter";
+ UserName = "arn:aws:secretsmanager:us-west-2:111122223333:secret:secretName";
+};
+instance of MSFT_ADComputer as $MSFT_ADComputer1ref
+{
+ResourceID = "[ADComputer]RemoveDomain";
+ Ensure = "Absent";
+ Credential = $MSFT_Credential1ref;
+ ComputerName = "{tag:Name}";
+ ModuleName = "ActiveDirectoryDsc";
+ ModuleVersion = "6.0.1";
+DependsOn = {
+    "[WindowsFeature]RSAT-AD-PowerShell"};
+ ConfigurationName = "RemoveDomain";
+};
+instance of OMI_ConfigurationDocument
+                    {
+ Version="2.0.0";
+                        MinimumCompatibleVersion = "1.0.0";
+                        CompatibleVersionAdditionalProperties= {"Omi_BaseResource:ConfigurationName"};
+                        Name="RemoveDomain";
+                    };

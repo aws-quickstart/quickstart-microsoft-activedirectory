@@ -1,0 +1,302 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: MOF files to be copied to designated s3 bucket (qs-1scnfaifg)
+Parameters:
+  Bucket:
+    Description: "Name of bucket to copy MOFs, if not leave blank and one will be created."
+    Type: "String"
+    Default: ""
+  DomainJoinSecrets:
+    Description: "Name of secret to join domain"
+    Type: "String"
+    Default: ""
+Conditions:
+  CreateBucket: !Equals
+    - !Ref Bucket
+    - ""
+Resources:
+  ######################
+  # Security Resources #
+  ######################
+
+  WriteS3LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !If [
+                      CreateBucket,
+                      !Sub "arn:aws:s3:::${ConfigBucket}",
+                      !Sub "arn:aws:s3:::${Bucket}",
+                    ]
+                  - !If [
+                      CreateBucket,
+                      !Sub "arn:aws:s3:::${ConfigBucket}/*",
+                      !Sub "arn:aws:s3:::${Bucket}/*",
+                    ]
+          PolicyName: write-mof-s3-policy
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+
+  ###############
+  #  S3 Bucket  #
+  ###############
+
+  ConfigBucket:
+    Condition: CreateBucket
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteAfter30Days
+            ExpirationInDays: 30
+            Status: Enabled
+            Prefix: "logs/"
+
+  ######################
+  #  Lambda Functions  #
+  ######################
+
+  WriteMOFFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import threading
+          import boto3
+          import cfnresponse
+          def create_object(bucket, body, key):
+              s3 = boto3.client('s3')
+              s3.put_object(Body=body,Bucket=bucket, Key=key)
+          def delete_objects(bucket, key):
+              s3 = boto3.client('s3')
+              objects = s3.list_objects_v2(Bucket=bucket)
+              logsobjects = s3.list_objects_v2(Bucket=bucket, Prefix='logs')
+              if logsobjects['KeyCount'] != 0:
+                for object in logsobjects['Contents']:
+                  s3.delete_object(Bucket=bucket, Key=object['Key'])
+                s3.delete_object(Bucket=bucket, Key=key)
+              else:
+                s3.delete_object(Bucket=bucket, Key=key)
+          def timeout(event, context):
+              logging.error('Execution is about to time out, sending failure response to CloudFormation')
+              cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+          def handler(event, context):
+              # make sure we send a failure to CloudFormation if the function is going to timeout
+              timer = threading.Timer((context.get_remaining_time_in_millis() / 1000.00) - 0.5, timeout, args=[event, context])
+              timer.start()
+              print('Received event: %s' % json.dumps(event))
+              status = cfnresponse.SUCCESS
+              try:
+                  bucket = event['ResourceProperties']['Bucket']
+                  body = event['ResourceProperties']['Body']
+                  key = event['ResourceProperties']['Key']
+                  if event['RequestType'] == 'Delete':
+                      delete_objects(bucket, key)
+                  else:
+                      create_object(bucket, body, key)
+              except Exception as e:
+                  logging.error('Exception: %s' % e, exc_info=True)
+                  status = cfnresponse.FAILED
+              finally:
+                  timer.cancel()
+                  object_url = f'https://{bucket}.s3.amazonaws.com/{key}'
+                  cfnresponse.send(event, context, status, {}, object_url)
+      Handler: index.handler
+      Role: !GetAtt "WriteS3LambdaRole.Arn"
+      Runtime: python3.7
+      Timeout: 240
+
+  ######################
+  #  Custom Resources  #
+  ######################
+
+  WriteDomainJoinIISMOF:
+    Type: Custom::WriteMOFFile
+    Properties:
+      ServiceToken: !GetAtt WriteMOFFunction.Arn
+      Bucket: !If [CreateBucket, !Ref ConfigBucket, !Ref Bucket]
+      Key: "DomainJoinWebBuild.mof"
+      Body: !Sub |
+        /*
+        @TargetNode='localhost'
+        */
+        instance of MSFT_Credential as $MSFT_Credential1ref
+        {
+        Password = "stringdoesntmatter";
+         UserName = "${DomainJoinSecrets}";
+
+        };
+        instance of DSC_Computer as $DSC_Computer1ref
+        {
+        ResourceID = "[Computer]JoinDomain";
+         Credential = $MSFT_Credential1ref;
+         DomainName = "{tag:DomainToJoin}";
+         Name = "{tag:Name}";
+         ModuleName = "ComputerManagementDsc";
+         ModuleVersion = "8.0.0";
+         ConfigurationName = "DomainJoin";
+        };
+  WriteWebBuildMOF:
+    Type: Custom::WriteMOFFile
+    Properties:
+      ServiceToken: !GetAtt WriteMOFFunction.Arn
+      Bucket: !If [CreateBucket, !Ref ConfigBucket, !Ref Bucket]
+      Key: "WebSite.mof"
+      Body: |
+        /*
+        @TargetNode='localhost'
+        */
+        instance of MSFT_RoleResource as $MSFT_RoleResource1ref
+        {
+        ResourceID = "[WindowsFeature]WebServer";
+         Ensure = "Present";
+         Name = "Web-Server";
+         ModuleName = "PSDesiredStateConfiguration";
+        ModuleVersion = "1.0";
+         ConfigurationName = "WebsiteTest";
+        };
+        instance of MSFT_ScriptResource as $MSFT_ScriptResource1ref
+        {
+        ResourceID = "[Script]GetWebFiles";
+         GetScript = "\n                $filelocation = \"c:\\webfiles\\index.html\"\n                Return @{Result = [string]$(test-path $filelocation)}\n            ";
+         TestScript = "\n                $filelocation = \"c:\\webfiles\\index.html\"\n                if((test-path $filelocation) -eq $false) {\n                    Write-Verbose 'Files need to be Downloaded'\n                    Return $false\n                } else {\n                    Write-Verbose 'Files are present locally'\n                    Return $true\n                }\n            ";
+         SetScript = "\n Copy-Item -Path c:\\windows\\temp\\index.html -Destination c:\\inetpub\\wwwroot\\index.html -Force\n            ";
+         ModuleName = "PSDesiredStateConfiguration";
+        ModuleVersion = "1.0";
+        DependsOn = {
+            "[WindowsFeature]WebServer"};
+         ConfigurationName = "WebsiteTest";
+        };
+        instance of OMI_ConfigurationDocument
+                            {
+         Version="2.0.0";
+                                MinimumCompatibleVersion = "1.0.0";
+                                CompatibleVersionAdditionalProperties= {"Omi_BaseResource:ConfigurationName"};
+                                Name="WebsiteTest";
+                            };
+  WriteDomainJoinMOF:
+    Type: Custom::WriteMOFFile
+    Properties:
+      ServiceToken: !GetAtt WriteMOFFunction.Arn
+      Bucket: !If [CreateBucket, !Ref ConfigBucket, !Ref Bucket]
+      Key: "DomainJoin.mof"
+      Body: !Sub |
+        /*
+        @TargetNode='localhost'
+        */
+        instance of MSFT_Credential as $MSFT_Credential1ref
+        {
+        Password = "stringdoesntmatter";
+         UserName = "${DomainJoinSecrets}";
+        };
+        instance of DSC_Computer as $DSC_Computer1ref
+        {
+        ResourceID = "[Computer]JoinDomain";
+        Credential = $MSFT_Credential1ref;
+        DomainName = "{tag:DomainToJoin}";
+        Name = "{tag:Name}";
+        ModuleName = "ComputerManagementDsc";
+        ModuleVersion = "8.0.0";
+        ConfigurationName = "DomainJoin";
+        };
+        instance of OMI_ConfigurationDocument
+                            {
+         Version="2.0.0";
+                                MinimumCompatibleVersion = "1.0.0";
+                                CompatibleVersionAdditionalProperties= {"Omi_BaseResource:ConfigurationName"};
+                                Name="DomainJoin";
+                            };
+  WriteDomainRemoveMOF:
+    Type: Custom::WriteMOFFile
+    Properties:
+      ServiceToken: !GetAtt WriteMOFFunction.Arn
+      Bucket: !If [CreateBucket, !Ref ConfigBucket, !Ref Bucket]
+      Key: "DomainRemove.mof"
+      Body: !Sub |
+        /*
+        @TargetNode='localhost'
+        */
+        instance of MSFT_RoleResource as $MSFT_RoleResource1ref
+        {
+        ResourceID = "[WindowsFeature]RSAT-AD-PowerShell";
+         Ensure = "Present";
+         Name = "RSAT-AD-PowerShell";
+         ModuleName = "PSDesiredStateConfiguration";
+        ModuleVersion = "1.0";
+         ConfigurationName = "RemoveDomain";
+        };
+        instance of MSFT_Credential as $MSFT_Credential1ref
+        {
+        Password = "stringdoesntmatter";
+         UserName = "${DomainJoinSecrets}";
+        };
+        instance of MSFT_ADComputer as $MSFT_ADComputer1ref
+        {
+        ResourceID = "[ADComputer]RemoveDomain";
+         Ensure = "Absent";
+         Credential = $MSFT_Credential1ref;
+         ComputerName = "{tag:Name}";
+         ModuleName = "ActiveDirectoryDsc";
+         ModuleVersion = "6.0.1";
+        DependsOn = {
+            "[WindowsFeature]RSAT-AD-PowerShell"};
+         ConfigurationName = "RemoveDomain";
+        };
+        instance of OMI_ConfigurationDocument
+                            {
+         Version="2.0.0";
+                                MinimumCompatibleVersion = "1.0.0";
+                                CompatibleVersionAdditionalProperties= {"Omi_BaseResource:ConfigurationName"};
+                                Name="RemoveDomain";
+                            };
+  WriteHtmlFile:
+    Type: Custom::WriteMOFFile
+    Properties:
+      ServiceToken: !GetAtt WriteMOFFunction.Arn
+      Bucket: !If [CreateBucket, !Ref ConfigBucket, !Ref Bucket]
+      Key: "webfiles/index.html"
+      Body: !Join
+        - ""
+        - - "<html> "
+          - "<head> "
+          - >-
+            <style>body{margin-top: 20px; background-color: rgb(255, 255,
+            255);color:black;} </style></head>
+          - >-
+            <style>div {text-align: center; padding:20px; border: 5px solid rgb(236,
+            175, 8);}</style>
+          - "<body> "
+          - >-
+            <div><a href="https://aws.amazon.com/what-is-cloud-computing"><img
+            src="https://d0.awsstatic.com/logos/powered-by-aws.png" alt="Powered by
+            AWS Cloud Computing"></a>
+          - "<h1>AWS QuickStart IIS Sample Webpage</h1>  "
+          - "<h2>Congratulations!</h2> <p>Your application is running on Amazon EC2"
