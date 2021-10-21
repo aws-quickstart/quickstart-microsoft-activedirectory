@@ -403,7 +403,7 @@ Resources:
                   Write-Output 'Downloading AD PowerShell Module'
                   Foreach ($CustomModule in $CustomModules) {
                       Try {
-                          $Null = Read-S3Object -BucketName $S3BucketName -Key "$($S3KeyPrefix)/scripts/Modules/Module-AD/$CustomModule" -File "C:\AWSQuickstart\Module-AD\$CustomModule" -Region $S3BucketRegion
+                          $Null = Read-S3Object -BucketName $S3BucketName -Key "$($S3KeyPrefix)/templates/workshop/Modules/Module-AD/$CustomModule" -File "C:\AWSQuickstart\Module-AD\$CustomModule" -Region $S3BucketRegion
                       } Catch [System.Exception] {
                           Write-Output "Failed to read and download $CustomModule.Name from S3 $_"
                           Exit 1
