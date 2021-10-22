@@ -13,10 +13,10 @@
     },
     {
         "ParameterKey": "ELBSubnets",
-        "ParameterValue": "subnet-a0246dcd"
+        "ParameterValue": "subnet-a0246dcd,subnet-b0359bac"
     },
     {
         "ParameterKey": "WorkloadSubnets",
-        "ParameterValue": "subnet-a0246dcd"
+        "ParameterValue": "subnet-a0246dcd,subnet-b0359bac"
     }
 ]
