@@ -1,0 +1,22 @@
+[
+    {
+        "ParameterKey": "ASGMinSize",
+        "ParameterValue": 2
+    },
+    {
+        "ParameterKey": "ASGMaxSize",
+        "ParameterValue": 4
+    },
+    {
+        "ParameterKey": "ASGDesiredCapacity",
+        "ParameterValue": 2
+    },
+    {
+        "ParameterKey": "ELBSubnets",
+        "ParameterValue": "subnet-a0246dcd"
+    },
+    {
+        "ParameterKey": "WorkloadSubnets",
+        "ParameterValue": "subnet-a0246dcd"
+    }
+]
