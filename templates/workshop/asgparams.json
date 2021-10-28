@@ -1,15 +1,19 @@
 [
     {
         "ParameterKey": "ASGMinSize",
-        "ParameterValue": 2
+        "ParameterValue": "2"
     },
     {
         "ParameterKey": "ASGMaxSize",
-        "ParameterValue": 4
+        "ParameterValue": "4"
     },
     {
         "ParameterKey": "ASGDesiredCapacity",
-        "ParameterValue": 2
+        "ParameterValue": "2"
+    },
+    {
+        "ParameterKey": "VPCID",
+        "ParameterValue": "vpc-b0359bac"
     },
     {
         "ParameterKey": "ELBSubnets",
