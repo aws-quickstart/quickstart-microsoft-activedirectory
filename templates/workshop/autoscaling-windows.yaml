@@ -230,7 +230,7 @@ Resources:
           DefaultResult: ABANDON
           HeartbeatTimeout: 600
       Tags:
-        - Key: DomainToJoin
+        - Key: Domain
           Value: !Ref "DomainDNSName"
           PropagateAtLaunch: true
 
