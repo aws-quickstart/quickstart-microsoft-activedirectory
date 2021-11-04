@@ -140,6 +140,17 @@ Parameters:
   MgmtServerSubnet:
     Description: ID of the Management Instance subnet (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
+  NonWindowsDomainJoin:
+    Description: 'Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: 'String'
+    Default: 'false'
+  NonWindowsDomainJoinSecret:
+    Description: 'ARN for the Secret that has Password and User bane for the domain join user'
+    Type: 'String'
+    Default: ''
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription:
@@ -179,8 +190,14 @@ Rules:
             - VpcId
           - !RefAll 'AWS::EC2::VPC::Id'
         AssertDescription: All subnets must in the VPC
+  NonWindowsDomainJoin:
+    RuleCondition: !Equals [!Ref NonWindowsDomainJoin, 'true']
+    Assertions:
+      - AssertDescription: To create an AD domain join user, you need to provide the secret arn.
+        Assert: !Not [!Equals [!Ref NonWindowsDomainJoinSecret, '']]
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  ShouldCreateNonWindowsDomainJoinADUser: !Equals [!Ref NonWindowsDomainJoin, 'true']
 Resources:
   InstanceRole:
     Type: AWS::IAM::Role
@@ -255,7 +272,9 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                   - secretsmanager:DescribeSecret
-                Resource: !Ref 'AdministratorSecret'
+                Resource: 
+                  - !Ref 'AdministratorSecret'
+                  - !If [ShouldCreateNonWindowsDomainJoinADUser, !Ref 'NonWindowsDomainJoinSecret', !Ref 'AWS::NoValue']
           PolicyName: AWS-Mgd-AD-Secret-Policy
       Path: /
       ManagedPolicyArns:
@@ -302,6 +321,12 @@ Resources:
             type: 'String'
           MgmtServerNetBIOSName:
             description: 'NetBIOS name of the Management Instance server (up to 15 characters)'
+            type: 'String'
+          NonWindowsDomainJoin:
+            description: 'Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain'
+            type: 'String'
+          NonWindowsDomainJoinSecret:
+            description: 'The Secrets Parameter Name that has Password and User bane for the domain join user'
             type: 'String'
           DomainController1IP:
             description: 'IP of DNS server that can resolve domain (Must be accessible)'
@@ -523,10 +548,16 @@ Resources:
                       Exit 1
                   }
                   Set-MgmtPostConfig -DirectoryID '{{DirectoryID}}' -VPCCIDR '{{VPCCIDR}}'
+                  If ('{{NonWindowsDomainJoin}}'  -eq 'true' )  {
+                    Write-Output "Obtaining AD Admin Credential to authorize AD actions"
+                    $AltSecretAdmin = Get-SecretInfo -Domain '{{DomainNetBIOSName}}' -SecretArn '{{AdministratorSecret}}'
+                    Set-NonWindowsDomainJoin-Credentials -SecretArn '{{NonWindowsDomainJoinSecret}}' -Credential $AltSecretAdmin.Credentials
+                  }
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
               CloudWatchOutputConfig:
                 CloudWatchOutputEnabled: true
                 CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
+            nextStep: CFNSignalEnd
           - name: CFNSignalEnd
             action: aws:branch
             inputs:
@@ -619,6 +650,10 @@ Resources:
             - !Sub '"${DomainDNSName}"'
             - ';"DomainNetBIOSName"='
             - !Sub '"${DomainNetBIOSName}"'
+            - ';"NonWindowsDomainJoin"='
+            - !Sub '"${NonWindowsDomainJoin}"'
+            - ';"NonWindowsDomainJoinSecret"='
+            - !Sub '"${NonWindowsDomainJoinSecret}"'
             - ';"QSS3BucketName"='
             - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
             - ';"QSS3BucketRegion"='
