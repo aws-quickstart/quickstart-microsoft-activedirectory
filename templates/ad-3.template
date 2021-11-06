@@ -10,6 +10,9 @@ Metadata:
       ignore_checks:
         - W9006
         - E9101
+  QuickStartDocumentation:
+    EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into an existing VPC'
+    Order: '6'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -127,7 +130,7 @@ Parameters:
     Description: The AWS Managed Microsoft AD Edition you wish to deploy
     Type: String
   CaAmi:
-    Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+    Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
     Type: String
   CaDataDriveSizeGiB:
@@ -151,12 +154,15 @@ Parameters:
     Type: String
   CaServerInstanceType:
     AllowedValues:
-      - t2.small
       - t3.small
-      - t2.medium
       - t3.medium
-      - t2.large
       - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
     Default: t3.medium
     Description: Amazon EC2 instance type for the CA instance(s)
     Type: String
@@ -203,7 +209,7 @@ Parameters:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
   MgmtAmi:
-    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base'
     Description: Management Server SSM Parameter Value to grab the latest AMI ID
     Type: String
   MgmtDataDriveSizeGiB:
@@ -219,12 +225,14 @@ Parameters:
     Type: String
   MgmtServerInstanceType:
     AllowedValues:
-      - t2.small
-      - t3.small
-      - t2.medium
       - t3.medium
-      - t2.large
       - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
     Default: t3.medium
     Description: Amazon EC2 instance type for the Management Server
     Type: String

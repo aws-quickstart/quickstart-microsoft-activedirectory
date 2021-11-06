@@ -4,13 +4,15 @@ Description: >-
   Windows Server instances into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway instances and managed
   NAT gateways into the public subnet for each Availability Zone. After extending your on-premises network to the VPC, you can promote the Windows
   Server instances to Domain Controllers in your AD forest. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You
-  will be billed for the AWS resources used if you create a stack from this template.
+  will be billed for the AWS resources used if you create a stack from this template. (qs-1rtnidq2o)
 Metadata:
   cfn-lint:
     config:
       ignore_checks:
         - W9006
-        - E9007
+  QuickStartDocumentation:
+    EntrypointName: 'Parameters for extending on-premises AD into a new VPC'
+    Order: '3'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -80,9 +82,9 @@ Metadata:
       DomainNetBIOSName:
         default: Domain NetBIOS Name
       ExistingDomainController1IP:
-        default: IP used for DNS (Must be accessible)
+        default: IP the Instance will be used for DNS (Must be accessible)
       ExistingDomainController2IP:
-        default: IP used for DNS (Must be accessible)
+        default: IP the Instance will be used for DNS (Must be accessible)
       KeyPairName:
         default: Key Pair Name
       NumberOfAZs:
@@ -140,14 +142,10 @@ Parameters:
     Type: String
   ADServerInstanceType:
     AllowedValues:
-      - t2.medium
       - t3.medium
-      - t2.large
       - t3.large
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
+      - t3.xlarge
+      - t3.2xlarge
       - m5.large
       - m5.xlarge
       - m5.2xlarge
@@ -170,8 +168,7 @@ Parameters:
     MinLength: '5'
     Type: String
   AvailabilityZones:
-    Description:
-      'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
+    Description: 'List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and only 2 AZs are used for this deployment'
     Type: List<AWS::EC2::AvailabilityZone::Name>
   DataDriveSizeGiB:
     Default: '10'
@@ -309,7 +306,6 @@ Resources:
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AvailabilityZones: !Join [',', !Ref 'AvailabilityZones']
-        KeyPairName: !Ref 'KeyPairName'
         NumberOfAZs: !If [IsTwoAz, '2', '3']
         PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
         PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'
