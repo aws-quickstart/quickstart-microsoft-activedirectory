@@ -9,6 +9,9 @@ Metadata:
       ignore_checks:
         - W9006
         - E9101
+  QuickStartDocumentation:
+    EntrypointName: 'Parameters for extending on-premises AD into an existing VPC'
+    Order: '4'
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -123,14 +126,10 @@ Parameters:
     Type: String
   ADServerInstanceType:
     AllowedValues:
-      - t2.medium
       - t3.medium
-      - t2.large
       - t3.large
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
+      - t3.xlarge
+      - t3.2xlarge
       - m5.large
       - m5.xlarge
       - m5.2xlarge
@@ -189,7 +188,7 @@ Parameters:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
   LatestAmiId:
-    Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+    Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Systems Manager parameter value for latest Windows Server AMI
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
   QSS3BucketName:

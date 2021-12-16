@@ -7,6 +7,7 @@
 :template_aws_ec2_securitygroupingress:
 :template_aws_ec2_vpcdhcpoptionsassociation:
 :template_aws_iam_instanceprofile:
+:template_aws_iam_managedpolicy:
 :template_aws_iam_policy:
 :template_aws_iam_role:
 :template_aws_secretsmanager_secret:

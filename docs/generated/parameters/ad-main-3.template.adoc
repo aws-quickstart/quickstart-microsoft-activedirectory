@@ -26,8 +26,11 @@
 |Parameter label (name) |Default value|Description|Domain DNS Name
 (`DomainDNSName`)|`example.com`|Fully qualified domain name (FQDN) of the forest root domain e.g. example.com|Domain NetBIOS Name
 (`DomainNetBIOSName`)|`example`|NetBIOS name of the domain (upto 15 characters) for users of earlier versions of Windows e.g. EXAMPLE|Admin Account Password
-(`DomainAdminPassword`)|`**__Requires input__**`|Password for the Admin user account. Must be at least 8 characters containing letters, numbers and symbols|AWS Microsoft AD Edition
-(`ADEdition`)|`Enterprise`|The AWS Microsoft AD Edition you wish to deploy
+(`DomainAdminPassword`)|`**__Requires input__**`|Password for the Admin user account. Must be at least 8 characters containing letters, numbers and symbols|Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain
+(`NonWindowsDomainJoin`)|`false`|Do you want to create an AD User with minimal permissions allowing non-Windows instances to join the domain?
+The username and password will be stored in Secrets Manager and a policy to access the secret will be created.
+|AWS Managed Microsoft AD Edition
+(`ADEdition`)|`Enterprise`|The AWS Managed Microsoft AD Edition you wish to deploy
 |===
 .Microsoft Windows Server management instance
 [width="100%",cols="16%,11%,73%",options="header",]
@@ -48,7 +51,7 @@
 (`OrCaServerNetBIOSName`)|`ORCA1`|NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)|Enterprise Root or Subordinate CA NetBIOS Name
 (`EntCaServerNetBIOSName`)|`ENTCA1`|NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)|CA Key Length
 (`CaKeyLength`)|`2048`|CA(s) Cryptographic Provider Key Length|CA Hash Algorithm
-(`CaHashAlgorithm`)|`SHA256`|CA(s) Hash Algorithm for Siging Certificates|Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+(`CaHashAlgorithm`)|`SHA256`|CA(s) Hash Algorithm for Signing Certificates|Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
 (`OrCaValidityPeriodUnits`)|`10`|Validity Period in Years (Only Used For Two Tier PKI)|Enterprise Root or Subordinate CA Certificate Validity Period in Years
 (`CaValidityPeriodUnits`)|`5`|Validity Period in Years|Use S3 for CA CRL Location
 (`UseS3ForCRL`)|`No`|Store CA CRL(s) in an S3 bucket|CA CRL S3 Bucket Name

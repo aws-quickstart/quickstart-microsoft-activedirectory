@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  This template creates 2 Windows 2019 Active Directory Domain Controllers into private subnets in separate Availability Zones inside a VPC. The
+  This template creates 2 Windows Active Directory Domain Controllers into private subnets in separate Availability Zones inside a VPC. The
   default Domain Administrator password will be the one retrieved from the instance.  For adding members to the domain, ensure that they are launched
-  into the domain member security group created by this template and then configure them to use the AD instances fixed private IP addresses as the DNS
+  using the domain member security group created by this template and then configure them to use the AD instances fixed private IP addresses as the DNS
   server. **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you
   create a stack from this template. (qs-1qup6rae5)
 Metadata:
@@ -82,7 +82,7 @@ Metadata:
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
       CaAmi:
-        default: CA SSM Parameter Value for latest AMI ID
+        default: CA SSM Parameter Value for Latest AMI ID
       CaDataDriveSizeGiB:
         default: CA Data Drive Size
       CaHashAlgorithm:
@@ -100,7 +100,7 @@ Metadata:
       DataDriveSizeGiB:
         default: SYSVOL and NTDS Data Drive Size
       DeletedObjectLifetime:
-        default: Set new Deleted Objects Lifetime
+        default: Set new Deleted Objects Lifetime in Days
       DomainAdminPassword:
         default: Alternate Domain Admin Password
       DomainAdminUser:
@@ -134,7 +134,7 @@ Metadata:
       S3CRLBucketName:
         default: CA CRL S3 Bucket Name
       TombstoneLifetime:
-        default: Set new Tombstone Lifetime
+        default: Set new Tombstone Lifetime in Days
       UseS3ForCRL:
         default: Use S3 for CA CRL Location
       VPCCIDR:
@@ -142,18 +142,14 @@ Metadata:
       VPCID:
         default: VPC ID
       WINFULLBASE:
-        default: SSM Parameter Value for latest AMI ID
+        default: SSM Parameter Value for Latest AMI ID
 Parameters:
   ADServer1InstanceType:
     AllowedValues:
-      - t2.medium
       - t3.medium
-      - t2.large
       - t3.large
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
+      - t3.xlarge
+      - t3.2xlarge
       - m5.large
       - m5.xlarge
       - m5.2xlarge
@@ -175,14 +171,10 @@ Parameters:
     Type: String
   ADServer2InstanceType:
     AllowedValues:
-      - t2.medium
       - t3.medium
-      - t2.large
       - t3.large
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
+      - t3.xlarge
+      - t3.2xlarge
       - m5.large
       - m5.xlarge
       - m5.2xlarge
@@ -203,7 +195,7 @@ Parameters:
     Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2
     Type: String
   CaAmi:
-    Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+    Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
     Type: String
   CaDataDriveSizeGiB:
@@ -227,12 +219,15 @@ Parameters:
     Type: String
   CaServerInstanceType:
     AllowedValues:
-      - t2.small
       - t3.small
-      - t2.medium
       - t3.medium
-      - t2.large
       - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
     Default: t3.medium
     Description: Amazon EC2 instance type for the CA instance(s)
     Type: String
@@ -371,7 +366,7 @@ Parameters:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
   WINFULLBASE:
-    Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+    Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: System Manager parameter value for latest Windows Server AMI
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
 Rules:
@@ -383,26 +378,6 @@ Rules:
             - VpcId
           - !RefAll 'AWS::EC2::VPC::Id'
         AssertDescription: All subnets must in the VPC
-  CheckSupportedInstances:
-    RuleCondition: !Or
-      - !Contains
-        - - m4.large
-          - m4.xlarge
-          - m4.2xlarge
-          - m4.4xlarge
-        - !Ref 'ADServer1InstanceType'
-      - !Contains
-        - - m4.large
-          - m4.xlarge
-          - m4.2xlarge
-          - m4.4xlarge
-        - !Ref 'ADServer2InstanceType'
-    Assertions:
-      - Assert: !Not
-          - !Contains
-            - - eu-west-3
-            - !Ref 'AWS::Region'
-        AssertDescription: M4 instances are not available in the Paris region
   S3CRLBucketNameValidation:
     RuleCondition: !And
       - !Equals [!Ref UseS3ForCRL, 'Yes']

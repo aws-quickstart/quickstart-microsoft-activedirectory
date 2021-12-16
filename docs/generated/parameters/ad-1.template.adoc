@@ -21,8 +21,8 @@
 (`ADServer2PrivateIP`)|`10.0.32.10`|Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2|SYSVOL and NTDS Data Drive Size
 (`DataDriveSizeGiB`)|`10`|Size of SYSVOL and NTDS data drive in GiB|KMS Key for EBS Encryption
 (`EbsEncryptionKmsKeyId`)|`alias/aws/ebs`|The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN|Key Pair Name
-(`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches|SSM Parameter Value for latest AMI ID
-(`WINFULLBASE`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|System Manager parameter value for latest Windows Server AMI
+(`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches|SSM Parameter Value for Latest AMI ID
+(`WINFULLBASE`)|`/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base`|System Manager parameter value for latest Windows Server AMI
 |===
 .Microsoft Active Directory Domain Services configuration
 [width="100%",cols="16%,11%,73%",options="header",]
@@ -32,8 +32,8 @@
 (`DomainAdminPassword`)|`**__Requires input__**`|Password for the account named above. Must be at least 8 characters containing letters, numbers and symbols|Domain DNS Name
 (`DomainDNSName`)|`example.com`|Fully qualified domain name (FQDN) of the forest root domain e.g. example.com|Domain NetBIOS Name
 (`DomainNetBIOSName`)|`example`|NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE|Create Default OUs
-(`CreateDefaultOUs`)|`No`|Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default users and computers containers to Domain Users and Domain Computers|Set new Tombstone Lifetime
-(`TombstoneLifetime`)|`180`|The number of days before a deleted object is removed from Active Directory, minimum number is 2|Set new Deleted Objects Lifetime
+(`CreateDefaultOUs`)|`No`|Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default users and computers containers to Domain Users and Domain Computers|Set new Tombstone Lifetime in Days
+(`TombstoneLifetime`)|`180`|The number of days before a deleted object is removed from Active Directory, minimum number is 2|Set new Deleted Objects Lifetime in Days
 (`DeletedObjectLifetime`)|`180`|The number of days before a deleted object is removed from the Active Directory recycle bin, minimum number is 2
 |===
 .Microsoft Active Directory Certificate Services configuration
@@ -42,8 +42,8 @@
 |Parameter label (name) |Default value|Description|CA Deployment Type
 (`PKI`)|`No`|Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure|CA Instance Type
 (`CaServerInstanceType`)|`t3.medium`|Amazon EC2 instance type for the CA instance(s)|CA Data Drive Size
-(`CaDataDriveSizeGiB`)|`2`|Size of the data drive in GiB for the CA instance(s)|CA SSM Parameter Value for latest AMI ID
-(`CaAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|Enterprise Root CA SSM Parameter Value to grab the latest AMI ID|Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
+(`CaDataDriveSizeGiB`)|`2`|Size of the data drive in GiB for the CA instance(s)|CA SSM Parameter Value for Latest AMI ID
+(`CaAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base`|Enterprise Root CA SSM Parameter Value to grab the latest AMI ID|Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
 (`OrCaServerNetBIOSName`)|`ORCA1`|NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)|Enterprise Root or Subordinate CA NetBIOS Name
 (`EntCaServerNetBIOSName`)|`ENTCA1`|NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)|CA Key Length
 (`CaKeyLength`)|`2048`|CA(s) Cryptographic Provider Key Length|CA Hash Algorithm

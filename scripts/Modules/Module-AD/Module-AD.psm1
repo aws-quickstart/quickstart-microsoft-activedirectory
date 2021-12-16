@@ -30,34 +30,35 @@ Function New-VolumeFromRawDisk {
         Try {
             Initialize-Disk -Number $BlankDisk -PartitionStyle 'GPT' -ErrorAction Stop
         } Catch [System.Exception] {
-            Write-Output "Failed attempting to bring online Data Volume $_"
+            Write-Output "Failed attempting to bring Data Volume online $_"
             Exit 1
         }
 
         Start-Sleep -Seconds 5
 
-        Write-Output 'Data Volume creating new partition'
+        Write-Output 'Creating new partition for Data Volume'
         Try {
             $DriveLetter = New-Partition -DiskNumber $BlankDisk -AssignDriveLetter -UseMaximumSize -ErrorAction Stop | Select-Object -ExpandProperty 'DriveLetter'
         } Catch [System.Exception] {
-            Write-Output "Failed creating new partition $_"
+            Write-Output "Failed creating new partition for Data Volume $_"
             Exit 1
         }
 
         Start-Sleep -Seconds 5
 
-        Write-Output 'Data Volume formatting partition'
+        Write-Output 'Formatting partition on Data Volume'
         Try {
             $Null = Format-Volume -DriveLetter $DriveLetter -FileSystem 'NTFS' -NewFileSystemLabel 'Data' -Confirm:$false -Force -ErrorAction Stop
         } Catch [System.Exception] {
-            Write-Output "Failed formatting partition $_"
+            Write-Output "Failed to format partition on Data Volume $_"
             Exit 1
         }
 
+        Write-Output 'Turning off Data Volume indexing'
         Try {
             $Null = Get-CimInstance -ClassName 'Win32_Volume' -Filter "DriveLetter='$($DriveLetter):'" -ErrorAction Stop | Set-CimInstance -Arguments @{ IndexingEnabled = $False }
         } Catch [System.Exception] {
-            Write-Output "Failed to turn off indexing $_"
+            Write-Output "Failed to turn off Data Volume indexing $_"
             Exit 1
         }
     }
@@ -79,7 +80,7 @@ Function Invoke-PreConfig {
     Try {
         $Null = New-Item -Path 'C:\AWSQuickstart\publickeys' -ItemType 'Directory' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to create publickeys file directory $_"
+        Write-Output "Failed to create file directory for DSC public cert $_"
         Exit 1
     }
     
@@ -87,7 +88,7 @@ Function Invoke-PreConfig {
     Try {
         $cert = New-SelfSignedCertificate -Type 'DocumentEncryptionCertLegacyCsp' -DnsName 'AWSQSDscEncryptCert' -HashAlgorithm 'SHA256' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to create self signed cert $_"
+        Write-Output "Failed to create certificate to encrypt credentials in MOF file $_"
         Exit 1
     }
     
@@ -128,10 +129,10 @@ Function Invoke-LcmConfig {
         }
     }
     
-    Write-Output 'Generating MOF file for LCM'
+    Write-Output 'Generating MOF file for DSC LCM'
     LCMConfig -OutputPath 'C:\AWSQuickstart\LCMConfig'
         
-    Write-Output 'Sets LCM configuration to MOF generated in previous command'
+    Write-Output 'Setting the DSC LCM configuration from the MOF generated in previous command'
     Try {
         Set-DscLocalConfigurationManager -Path 'C:\AWSQuickstart\LCMConfig' -ErrorAction Stop
     } Catch [System.Exception] {
@@ -197,7 +198,7 @@ Function Get-SecretInfo {
         Exit 1
     }
        
-    Write-Output 'Creating credential object'
+    Write-Output 'Creating PSCredential object from Secret'
     $Username = $SecretContent.username
     $UserPassword = ConvertTo-SecureString ($SecretContent.password) -AsPlainText -Force
     $DomainCredentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ("$Domain\$Username", $UserPassword)
@@ -223,7 +224,7 @@ Function Invoke-DscStatusCheck {
     If ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
         Exit 3010
     } Else {
-        Write-Output 'DSC Config Completed'
+        Write-Output 'DSC configuration completed'
     }
 }
 
@@ -260,11 +261,11 @@ Function Set-DscConfiguration {
     # Main
     #==================================================
 
-    Write-Output 'Getting the DSC encryption thumbprint to secure the MOF file'
+    Write-Output 'Getting the DSC encryption certificate thumbprint to secure the MOF file'
     Try {
         $DscCertThumbprint = Get-ChildItem -Path 'cert:\LocalMachine\My' -ErrorAction Stop | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
     } Catch [System.Exception] {
-        Write-Output "Failed to get DSC cert thumbprint $_"
+        Write-Output "Failed to get DSC encryption certificate thumbprint $_"
         Exit 1
     }
     
@@ -430,6 +431,7 @@ Function Set-DscConfiguration {
                         Password               = $AltAdminCredentials
                         DisplayName            = $AltAdminUserName
                         PasswordAuthentication = 'Negotiate'
+                        UserPrincipalName      = "$AltAdminUserName@$DomainDnsName"
                         Credential             = $DaCredentials
                         DependsOn              = '[ADReplicationSite]RegionSite'
                     }
@@ -667,6 +669,8 @@ Function Set-PostPromoConfig {
         Write-Output "Failed to get AD domain $_"
         Exit 1
     }
+
+    # Future Use $DomainDNSName = $Domain | Select-Object -ExpandProperty 'DNSRoot'
     
     $BaseDn = $Domain | Select-Object -ExpandProperty 'DistinguishedName'
     $WMIFilters = @(
@@ -720,21 +724,21 @@ Function Set-PostPromoConfig {
     # Main
     #==================================================
     
-    Write-Output 'Enabling Certificate Auto-Enrollment Policy'
+    Write-Output 'Enabling certificate auto-enrollment policy'
     Try {
         Set-CertificateAutoEnrollmentPolicy -ExpirationPercentage 10 -PolicyState 'Enabled' -EnableTemplateCheck -EnableMyStoreManagement -StoreName 'MY' -context 'Machine' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to enable Certificate Auto-Enrollment Policy $_"
+        Write-Output "Failed to enable certificate auto-enrollment policy $_"
     }
     
-    Write-Output 'Enabling SMBv1 Auditing'
+    Write-Output 'Enabling SMBv1 auditing'
     Try {
         Set-SmbServerConfiguration -AuditSmb1Access $true -Force -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to enable SMBv1 Audit log $_"
+        Write-Output "Failed to enable SMBv1 auditing $_"
     }
-    
-    Write-Output 'On PDCe configuring DNS scavenging, importing GPOs / WMI Filters, and installing default CA templates'
+
+    Write-Output 'Getting PDCe for domain'
     Try {
         $Pdce = Get-ADDomainController -Service 'PrimaryDC' -Discover | Select-Object -ExpandProperty 'Name'
     } Catch [System.Exception] {
@@ -750,18 +754,18 @@ Function Set-PostPromoConfig {
             Write-Output "Failed to install default CA templates $_"
         }       
     
-        Write-Output 'Enabling DNS Scavenging on all DNS zones'
+        Write-Output 'Enabling DNS scavenging on all DNS zones'
         Set-DnsScavengingAllZones 
     
         # Future Use Write-Output 'Updating GPO Migration Table'
-        # Future Use Update-PolMigTable
+        # Future Use Update-PolMigTable -DomainDNSName $DomainDNSName 
     
         Write-Output 'Importing GPO WMI filters'
         Foreach ($WMIFilter in $WMIFilters) {
             Import-WMIFilter @WMIFilter
         }
     
-        Write-Output 'Downloading GPO Zip File'
+        Write-Output 'Downloading GPO zip file'
         Try {
             $Null = Read-S3Object -BucketName $S3BucketName -Key "$($S3KeyPrefix)scripts/GPOs.zip" -File 'C:\AWSQuickstart\GPOs.zip' -Region $S3BucketRegion
         } Catch [System.Exception] {
@@ -773,7 +777,7 @@ Function Set-PostPromoConfig {
         Try {
             Expand-Archive -Path 'C:\AWSQuickstart\GPOs.zip' -DestinationPath 'C:\AWSQuickstart\GPOs' -ErrorAction Stop
         } Catch [System.Exception] {
-            Write-Output "Failed to expand GPO Zip $_"
+            Write-Output "Failed to expand GPO zip file $_"
             Exit 1
         }
     
@@ -786,7 +790,7 @@ Function Set-PostPromoConfig {
         }
     
         If ($CreateDefaultOUs -eq 'Yes') {
-            Write-Output 'Creating Default OUs'
+            Write-Output 'Creating default OUs'
             Foreach ($OU in $OUs) {
                 Try {
                     $OuPresent = Get-ADOrganizationalUnit -Identity "OU=$OU,$BaseDn" -ErrorAction SilentlyContinue
@@ -801,7 +805,7 @@ Function Set-PostPromoConfig {
                     }
                 }
             }
-            Write-Output 'Setting Default User and Computers Container to Domain Users and Domain Computers OUs'
+            Write-Output 'Setting default User and Computers container to Domain Users and Domain Computers OUs'
             Set-DefaultContainer -ComputerDN "OU=Domain Computers,$BaseDn" -UserDN "OU=Domain Users,$BaseDn" -DomainDn $BaseDn
         }
     
@@ -827,13 +831,13 @@ Function Set-PostPromoConfig {
     Write-Output 'Running Group Policy update'
     Invoke-GPUpdate -RandomDelayInMinutes '0' -Force
     
-    Write-Output 'Restarting Time Service'
+    Write-Output 'Restarting time service'
     Restart-Service -Name 'W32Time'
     
-    Write-Output 'Resyncing Time Service'
+    Write-Output 'Resyncing time service'
     & w32tm.exe /resync > $null
     
-    Write-Output 'Registering DNS Client'
+    Write-Output 'Registering DNS client'
     Register-DnsClient
 }
 
@@ -842,18 +846,18 @@ Function Set-AD2PostConfig {
     # Main
     #==================================================
     
-    Write-Output 'Enabling Certificate Auto-Enrollment Policy'
+    Write-Output 'Enabling certificate auto-enrollment policy'
     Try {
         Set-CertificateAutoEnrollmentPolicy -ExpirationPercentage 10 -PolicyState 'Enabled' -EnableTemplateCheck -EnableMyStoreManagement -StoreName 'MY' -context 'Machine' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to enable Certificate Auto-Enrollment Policy $_"
+        Write-Output "Failed to enable certificate auto-enrollment policy $_"
     }
     
-    Write-Output 'Enabling SMBv1 Auditing'
+    Write-Output 'Enabling SMBv1 auditing'
     Try {
         Set-SmbServerConfiguration -AuditSmb1Access $true -Force -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to enable SMBv1 Audit log $_"
+        Write-Output "Failed to enable SMBv1 auditing $_"
     }
     
     Write-Output 'Checking domain membership'
@@ -867,13 +871,13 @@ Function Set-AD2PostConfig {
         Write-Output 'Running Group Policy update'
         Invoke-GPUpdate -RandomDelayInMinutes '0' -Force
 
-        Write-Output 'Restarting Time Service'
+        Write-Output 'Restarting time service'
         Restart-Service -Name 'W32Time'
         
-        Write-Output 'Resyncing Time Service'
+        Write-Output 'Resyncing time service'
         & w32tm.exe /resync > $null
         
-        Write-Output 'Registering DNS Client'
+        Write-Output 'Registering DNS client'
         Register-DnsClient
     }
 }
@@ -899,11 +903,11 @@ Function Set-MgmtPostConfig {
     # Main
     #==================================================
     
-    Write-Output 'Creating Conditional Forwarder for amazonaws.com'
+    Write-Output 'Creating DNS conditional forwarder for amazonaws.com'
     Try {
         New-DSConditionalForwarder -DirectoryId $DirectoryID -DnsIpAddr $VPCDNS -RemoteDomainName 'amazonaws.com' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to create DNS Conditional Forwarder for amazonaws.com $_"
+        Write-Output "Failed to create DNS conditional forwarder for amazonaws.com $_"
     }
 }
 
@@ -917,25 +921,25 @@ Function Invoke-Cleanup {
     # Main
     #==================================================
 
-    Write-Output 'Setting Windows Firewall WinRM Public rule to allow VPC CIDR traffic'
+    Write-Output 'Setting Windows Firewall WinRM public rule to allow VPC CIDR traffic'
     Try {
-        Set-NetFirewallRule -Name 'WINRM-HTTP-In-TCP-PUBLIC' -RemoteAddress $VPCCIDR
+        Set-NetFirewallRule -Name 'WINRM-HTTP-In-TCP-PUBLIC' -RemoteAddress $VPCCIDR -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed allow WinRM Traffic from VPC CIDR $_"
+        Write-Output "Failed allow WinRM traffic from VPC CIDR $_"
     }
 
-    Write-Output 'Removing DSC Configuration'
+    Write-Output 'Removing DSC configuration'
     Try {    
         Remove-DscConfigurationDocument -Stage 'Current' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed build DSC Configuration $_"
+        Write-Output "Failed remove DSC configuration $_"
     }
 
     Write-Output 'Re-enabling Windows Firewall'
     Try {
         Get-NetFirewallProfile -ErrorAction Stop | Set-NetFirewallProfile -Enabled 'True' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed re-enable firewall $_"
+        Write-Output "Failed re-enable Windows Firewall $_"
     }
 
     Write-Output 'Removing QuickStart build files'
@@ -945,12 +949,12 @@ Function Invoke-Cleanup {
         Write-Output "Failed remove QuickStart build files $_"
     }
 
-    Write-Output 'Removing self signed cert'
+    Write-Output 'Removing self signed certificate'
     Try {
         $SelfSignedThumb = Get-ChildItem -Path 'cert:\LocalMachine\My\' -ErrorAction Stop | Where-Object { $_.Subject -eq 'CN=AWSQSDscEncryptCert' } | Select-Object -ExpandProperty 'Thumbprint'
         Remove-Item -Path "cert:\LocalMachine\My\$SelfSignedThumb" -DeleteKey -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed remove self signed cert $_"
+        Write-Output "Failed remove self signed certificate $_"
     }
 }
 
@@ -970,7 +974,7 @@ Function Set-DnsScavengingAllZones {
     Try {
         Set-DnsServerScavenging -ApplyOnAllZones -RefreshInterval '7.00:00:00' -NoRefreshInterval '7.00:00:00' -ScavengingState $True -ScavengingInterval '7.00:00:00' -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to set DNS Scavenging $_"
+        Write-Output "Failed to set DNS scavenging on all zones $_"
         Exit 1
     }
 }
@@ -1143,7 +1147,7 @@ Function Set-GroupPolicyLink {
     Try {
         $GpLinks = Get-ADObject -Filter { DistinguishedName -eq $Target } -Properties 'gplink' -ErrorAction SilentlyContinue
     } Catch [System.Exception] {
-        Write-Output "Failed to get Group Policy Links for $Target $_"
+        Write-Output "Failed to get Group Policy links for $Target $_"
         Exit 1
     }
 
@@ -1160,14 +1164,14 @@ Function Set-GroupPolicyLink {
         Try {
             New-GPLink -Name $BackupGpoName -Target $Target -Order $Order -ErrorAction Stop
         } Catch [System.Exception] {
-            Write-Output "Failed to create Group Policy Link for $BackupGpoName $_"
+            Write-Output "Failed to create Group Policy link for $BackupGpoName $_"
             Exit 1
         }
     } Else {
         Try {
             Set-GPLink -Name $BackupGpoName -Target $Target -LinkEnabled $LinkEnabled -Order $Order -ErrorAction Stop
         } Catch [System.Exception] {
-            Write-Output "Failed to set Group Policy Link for $BackupGpoName $_"
+            Write-Output "Failed to set Group Policy link for $BackupGpoName $_"
             Exit 1
         }
     }
@@ -1202,7 +1206,7 @@ Function Set-DefaultContainer {
             Set-ADObject $DomainDn -Add @{wellKnownObjects = $NewUserWko } -Remove @{wellKnownObjects = $CurrentUserWko } -ErrorAction Stop
             Set-ADObject $DomainDn -Add @{wellKnownObjects = $NewComputerWko } -Remove @{wellKnownObjects = $CurrentComputerWko } -ErrorAction Stop
         } Catch [System.Exception] {
-            Write-Output "Failed to get set default user and or computer container $_"
+            Write-Output "Failed to get set default user and / or computer container $_"
             Exit 1
         }
     } Else {
@@ -1212,22 +1216,198 @@ Function Set-DefaultContainer {
 }
 
 Function Update-PolMigTable {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$DomainDNSName
+    )
 
     #==================================================
     # Main
     #==================================================
 
-    $FQDN = $Domain | Select-Object -ExpandProperty 'Forest'
     $PolMigTablePath = 'C:\AWSQuickstart\GPOs\PolMigTable.migtable'
 
-    Write-Output "Getting GPO Migration Table content $_"
+    Write-Output "Getting GPO migration table content $_"
     Try {
         [xml]$PolMigTable = Get-Content -Path $PolMigTablePath -ErrorAction Stop
     } Catch [System.Exception] {
-        Write-Output "Failed to get GPO Migration Table content $_"
+        Write-Output "Failed to get GPO migration table content $_"
         Exit 1
     }
     #$PolMigTableContentExample = $PolMigTable.MigrationTable.Mapping | Where-Object { $_.Source -eq 'Example@model.com' }
-    #$PolMigTableContentExample.destination = "Example@$FQDN"
+    #$PolMigTableContentExample.destination = "Example@$DomainDNSName"
     $PolMigTable.Save($PolMigTablePath)
+}
+
+Function Set-NonWindowsDomainJoin-Credentials{
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $True)][String]$SecretArn,
+        [Parameter(Mandatory = $True)][PSCredential]$Credential
+    )
+    #==================================================
+    # Main
+    #==================================================
+
+    Write-Output "Getting Secret $SecretArn"
+    Try {
+        $SecretContent = Get-SECSecretValue -SecretId $SecretArn -ErrorAction Stop | Select-Object -ExpandProperty 'SecretString' | ConvertFrom-Json -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to get $SecretArn Secret $_"
+        Exit 1
+    }
+
+    $AccountName = $SecretContent.awsSeamlessDomainUsername
+    $AccountPassword = $SecretContent.awsSeamlessDomainPassword
+
+    Set-CredSSP -Action 'Enable'
+    Invoke-Command -Authentication 'Credssp' -ComputerName $env:COMPUTERNAME -Credential $Credential -ScriptBlock {
+        Write-Output "Creating AD User $Using:AccountName"
+        Try {
+            New-ADUser -Name $Using:AccountName `
+                -AccountPassword (ConvertTo-SecureString ($Using:AccountPassword) -AsPlainText -Force) `
+                -ChangePasswordAtLogon $false -Enabled $true -CannotChangePassword $true  
+        } Catch [System.Exception] {
+            Write-Output "Failed to create AD User $Using:AccountName"
+            Exit 1
+        }
+        Write-Output "Setting Domain Join permissions for AD User $Using:AccountName"
+        Try {
+            $Domain = Get-ADDomain -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output 'Failed to get domain info'
+            Exit 1
+        }
+        $ComputersContainer = $Domain.ComputersContainer
+        Try {
+            $SchemaNamingContext = Get-ADRootDSE -ErrorAction Stop | Select-Object -ExpandProperty 'schemaNamingContext'
+        } Catch [System.Exception] {
+            Write-Output 'Failed to get domain schemaNamingContext'
+            Exit 1
+        }
+        Try {
+            [System.GUID]$ServicePrincipalNameGuid = (Get-ADObject -SearchBase $SchemaNamingContext -Filter { lDAPDisplayName -eq 'Computer' } -Properties 'schemaIDGUID' -ErrorAction Stop).schemaIDGUID 
+        } Catch [System.Exception] {
+            Write-Output 'Failed to get schemaIDGUID for computer objects'
+            Exit 1
+        }
+        Try {
+            $AccountProperties = Get-ADUser -Identity $Using:AccountName -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to get AD User $Using:AccountName"
+            Exit 1
+        }
+        Try {
+            $AccountSid = New-Object -TypeName 'System.Security.Principal.SecurityIdentifier' $AccountProperties.SID.Value -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to get SID for AD User $Using:AccountName"
+            Exit 1
+        }
+        Try {
+            $ObjectAcl = Get-Acl -Path "AD:\$ComputersContainer" -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to get ACL for $ComputersContainer" 
+            Exit 1
+        }
+        Try {
+            $AddAccessRule = New-Object -TypeName 'System.DirectoryServices.ActiveDirectoryAccessRule' $AccountSid, 'CreateChild', 'Allow', $ServicePrincipalNameGUID, 'All' -ErrorAction Stop
+            $ObjectAcl.AddAccessRule($AddAccessRule)
+        } Catch [System.Exception] {
+            Write-Output "Failed to create ACL for $ComputersContainer" 
+            Exit 1
+        }
+        Try {
+            Set-Acl -AclObject $ObjectAcl -Path "AD:\$ComputersContainer" -ErrorAction Stop
+        } Catch [System.Exception] {
+            Write-Output "Failed to set ACL for $ComputersContainer" 
+            Exit 1
+        }
+    } # End ScriptBlog
+    Set-CredSSP -Action 'Disable'
+}
+
+Function Set-CredSSP {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('Enable', 'Disable')][string]$Action
+    )
+
+    #==================================================
+    # Variables
+    #==================================================
+
+    $RootKey = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows'
+    $CredDelKey = 'CredentialsDelegation'
+    $FreshCredKey = 'AllowFreshCredentials'
+    $FreshCredKeyNTLM = 'AllowFreshCredentialsWhenNTLMOnly'
+
+    #==================================================
+    # Main
+    #==================================================
+
+    Switch ($Action) {
+        'Enable' {
+            Write-Output 'Enabling CredSSP'
+            Try {
+                $Null = Enable-WSManCredSSP -Role 'Client' -DelegateComputer '*' -Force -ErrorAction Stop
+                $Null = Enable-WSManCredSSP -Role 'Server' -Force -ErrorAction Stop
+            } Catch [System.Exception] {
+                Write-Output "Failed to enable CredSSP $_"
+                $Null = Disable-WSManCredSSP -Role 'Client' -ErrorAction SilentlyContinue
+                $Null = Disable-WSManCredSSP -Role 'Server' -ErrorAction SilentlyContinue
+                Exit 1
+            }
+       
+            Write-Output 'Setting CredSSP Registry entries'
+            $CredDelKeyPresent = Test-Path -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -ErrorAction SilentlyContinue
+            If (-not $CredDelKeyPresent) {
+                Try {
+                    $CredDelPath = New-Item -Path $RootKey -Name $CredDelKey -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
+
+                    $FreshCredKeyPresent = Test-Path -Path (Join-Path -Path "Registry::$CredDelPath" -ChildPath $FreshCredKey) -ErrorAction SilentlyContinue
+                    If (-not $FreshCredKeyPresent) {
+                        $FreshCredKeyPath = New-Item -Path "Registry::$CredDelPath" -Name $FreshCredKey -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
+                    }
+
+                    $FreshCredKeyNTLMPresent = Test-Path -Path (Join-Path -Path "Registry::$CredDelPath" -ChildPath $FreshCredKeyNTLM) -ErrorAction SilentlyContinue
+                    If (-not $FreshCredKeyNTLMPresent) {
+                        $FreshCredKeyNTLMPath = New-Item -Path "Registry::$CredDelPath" -Name $FreshCredKeyNTLM -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
+                    }
+
+                    $Null = New-ItemProperty -Path "Registry::$CredDelPath" -Name 'AllowFreshCredentials' -Value '1' -PropertyType 'Dword' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$CredDelPath" -Name 'ConcatenateDefaults_AllowFresh' -Value '1' -PropertyType 'Dword' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$CredDelPath" -Name 'AllowFreshCredentialsWhenNTLMOnly' -Value '1' -PropertyType 'Dword' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$CredDelPath" -Name 'ConcatenateDefaults_AllowFreshNTLMOnly' -Value '1' -PropertyType 'Dword' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$FreshCredKeyPath" -Name '1' -Value 'WSMAN/*' -PropertyType 'String' -Force -ErrorAction Stop
+                    $Null = New-ItemProperty -Path "Registry::$FreshCredKeyNTLMPath" -Name '1' -Value 'WSMAN/*' -PropertyType 'String' -Force -ErrorAction Stop
+                } Catch [System.Exception] {
+                    Write-Output "Failed to create CredSSP Registry entries $_"
+                    Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+                    Exit 1
+                }
+            }
+        }
+        'Disable' {
+            Write-Output 'Disabling CredSSP'
+            Try {
+                Disable-WSManCredSSP -Role 'Client' -ErrorAction Continue
+                Disable-WSManCredSSP -Role 'Server' -ErrorAction Stop
+            } Catch [System.Exception] {
+                Write-Output "Failed to disable CredSSP $_"
+                Exit 1
+            }
+
+            Write-Output 'Removing CredSSP Registry entries'
+            Try {
+                Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+            } Catch [System.Exception] {
+                Write-Output "Failed to remove CredSSP Registry entries $_"
+                Exit 1
+            }
+        }
+        Default { 
+            Write-Output 'InvalidArgument: Invalid value is passed for parameter Type' 
+            Exit 1
+        }
+    }
 }

@@ -21,7 +21,7 @@
 (`DataDriveSizeGiB`)|`10`|Size of SYSVOL and NTDS data drive in GiB|KMS Key for EBS Encryption
 (`EbsEncryptionKmsKeyId`)|`alias/aws/ebs`|The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN|Key Pair Name
 (`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches|SSM Parameter Value for latest AMI ID
-(`LatestAmiId`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|Systems Manager parameter value for latest Windows Server AMI
+(`LatestAmiId`)|`/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base`|Systems Manager parameter value for latest Windows Server AMI
 |===
 .Microsoft Active Directory Domain Services configuration
 [width="100%",cols="16%,11%,73%",options="header",]

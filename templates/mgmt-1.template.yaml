@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  This template creates 1 Windows Server 2019 Enterprise CA in a private subnet inside a VPC. **WARNING** This template creates an Amazon EC2 Windows
+  This template creates 1 Windows Server Managment Instance in a private subnet inside a VPC. **WARNING** This template creates an Amazon EC2 Windows
   instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1rteoo9fs)
 Metadata:
   AWS::CloudFormation::Interface:
@@ -113,7 +113,7 @@ Parameters:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
   MgmtAmi:
-    Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+    Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
   MgmtDataDriveSizeGiB:
     Default: '2'
@@ -121,12 +121,14 @@ Parameters:
     Type: Number
   MgmtServerInstanceType:
     AllowedValues:
-      - t2.small
-      - t3.small
-      - t2.medium
       - t3.medium
-      - t2.large
       - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
     Default: t3.medium
     Description: Amazon EC2 instance type for the Management Server instances
     Type: String
@@ -140,14 +142,22 @@ Parameters:
   MgmtServerSubnet:
     Description: ID of the Management Instance subnet (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
+  NonWindowsDomainJoin:
+    Description: 'Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: 'String'
+    Default: 'false'
+  NonWindowsDomainJoinSecret:
+    Description: 'ARN for the Secret that has Password and User bane for the domain join user'
+    Type: 'String'
+    Default: ''
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription:
-      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Default: aws-quickstart
-    Description:
-      S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-)
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketRegion:
     Default: us-east-1
@@ -157,9 +167,7 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
-    Description:
-      S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-),
-      and  forward slash (/)
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and  forward slash (/)
     Type: String
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
@@ -179,8 +187,14 @@ Rules:
             - VpcId
           - !RefAll 'AWS::EC2::VPC::Id'
         AssertDescription: All subnets must in the VPC
+  NonWindowsDomainJoin:
+    RuleCondition: !Equals [!Ref NonWindowsDomainJoin, 'true']
+    Assertions:
+      - AssertDescription: To create an AD domain join user, you need to provide the secret arn.
+        Assert: !Not [!Equals [!Ref NonWindowsDomainJoinSecret, '']]
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  ShouldCreateNonWindowsDomainJoinADUser: !Equals [!Ref NonWindowsDomainJoin, 'true']
 Resources:
   InstanceRole:
     Type: AWS::IAM::Role
@@ -255,7 +269,9 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                   - secretsmanager:DescribeSecret
-                Resource: !Ref 'AdministratorSecret'
+                Resource: 
+                  - !Ref 'AdministratorSecret'
+                  - !If [ShouldCreateNonWindowsDomainJoinADUser, !Ref 'NonWindowsDomainJoinSecret', !Ref 'AWS::NoValue']
           PolicyName: AWS-Mgd-AD-Secret-Policy
       Path: /
       ManagedPolicyArns:
@@ -303,6 +319,12 @@ Resources:
           MgmtServerNetBIOSName:
             description: 'NetBIOS name of the Management Instance server (up to 15 characters)'
             type: 'String'
+          NonWindowsDomainJoin:
+            description: 'Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain'
+            type: 'String'
+          NonWindowsDomainJoinSecret:
+            description: 'The Secrets Parameter Name that has Password and User bane for the domain join user'
+            type: 'String'
           DomainController1IP:
             description: 'IP of DNS server that can resolve domain (Must be accessible)'
             type: 'String'
@@ -317,20 +339,15 @@ Resources:
             type: 'String'
           QSS3BucketName:
             default: 'aws-quickstart'
-            description:
-              'S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and
-              hyphens (-). It cannot start or end with a hyphen (-).'
+            description: 'S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).'
             type: 'String'
           QSS3BucketRegion:
             default: 'us-east-1'
-            description:
-              'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
+            description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
             type: 'String'
           QSS3KeyPrefix:
             default: 'quickstart-microsoft-activedirectory/'
-            description:
-              'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens
-              (-), and forward slash (/).'
+            description: 'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).'
             type: 'String'
           StackName:
             default: ''
@@ -523,10 +540,16 @@ Resources:
                       Exit 1
                   }
                   Set-MgmtPostConfig -DirectoryID '{{DirectoryID}}' -VPCCIDR '{{VPCCIDR}}'
+                  If ('{{NonWindowsDomainJoin}}'  -eq 'true' )  {
+                    Write-Output "Obtaining AD Admin Credential to authorize AD actions"
+                    $AltSecretAdmin = Get-SecretInfo -Domain '{{DomainNetBIOSName}}' -SecretArn '{{AdministratorSecret}}'
+                    Set-NonWindowsDomainJoin-Credentials -SecretArn '{{NonWindowsDomainJoinSecret}}' -Credential $AltSecretAdmin.Credentials
+                  }
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
               CloudWatchOutputConfig:
                 CloudWatchOutputEnabled: true
                 CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
+            nextStep: CFNSignalEnd
           - name: CFNSignalEnd
             action: aws:branch
             inputs:
@@ -619,6 +642,10 @@ Resources:
             - !Sub '"${DomainDNSName}"'
             - ';"DomainNetBIOSName"='
             - !Sub '"${DomainNetBIOSName}"'
+            - ';"NonWindowsDomainJoin"='
+            - !Sub '"${NonWindowsDomainJoin}"'
+            - ';"NonWindowsDomainJoinSecret"='
+            - !Sub '"${NonWindowsDomainJoinSecret}"'
             - ';"QSS3BucketName"='
             - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
             - ';"QSS3BucketRegion"='

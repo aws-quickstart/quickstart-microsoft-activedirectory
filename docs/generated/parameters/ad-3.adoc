@@ -24,7 +24,7 @@
 |Parameter label (name) |Default value|Description|Deploy Management Server
 (`MgmtServer`)|`true`|Do you want to deploy a Management Server|Management Server Instance Type
 (`MgmtServerInstanceType`)|`t3.medium`|Amazon EC2 instance type for the Management Server|Management Server SSM Parameter Value for latest AMI ID
-(`MgmtAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|Management Server SSM Parameter Value to grab the latest AMI ID|Data Drive Size
+(`MgmtAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base`|Management Server SSM Parameter Value to grab the latest AMI ID|Data Drive Size
 (`MgmtDataDriveSizeGiB`)|`2`|Size of the Management Server Data Drive in GiB|Management Server NetBIOS Name
 (`MgmtServerNetBIOSName`)|`MGMT1`|NetBIOS name of the Management Server server (up to 15 characters)|Key Pair Name
 (`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches
@@ -35,7 +35,7 @@
 |Parameter label (name) |Default value|Description|CA Deployment Type
 (`PKI`)|`No`|Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure|CA Instance Type
 (`CaServerInstanceType`)|`t3.medium`|Amazon EC2 instance type for the CA instance(s)|CA SSM Parameter Value for latest AMI ID
-(`CaAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|Enterprise Root CA SSM Parameter Value to grab the latest AMI ID|CA Data Drive Size
+(`CaAmi`)|`/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base`|Enterprise Root CA SSM Parameter Value to grab the latest AMI ID|CA Data Drive Size
 (`CaDataDriveSizeGiB`)|`2`|Size of the data drive in GiB for the CA instance(s)|Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
 (`OrCaServerNetBIOSName`)|`ORCA1`|NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)|Enterprise Root or Subordinate CA NetBIOS Name
 (`EntCaServerNetBIOSName`)|`ENTCA1`|NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)|CA Key Length

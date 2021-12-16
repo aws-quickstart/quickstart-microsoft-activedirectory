@@ -6,7 +6,8 @@
 (`VPCCIDR`)|`10.0.0.0/16`|CIDR Block for the VPC|VPC ID
 (`VPCID`)|`**__Requires input__**`|ID of the VPC (e.g., vpc-0343606e)|Subnet 1 ID
 (`Subnet1ID`)|`**__Requires input__**`|ID of subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)|Subnet 2 ID
-(`Subnet2ID`)|`**__Requires input__**`|ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+(`Subnet2ID`)|`**__Requires input__**`|ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)|Exiting Domain Controllers Security Group ID
+(`ExistingDomainControllersSG`)|`sg-1234567890abcdef0`|Security Group ID for existing Domain Controllers Security Group. (Only used when JoinAndPromote equals Yes)
 |===
 .Amazon EC2 configuration
 [width="100%",cols="16%,11%,73%",options="header",]
@@ -16,10 +17,11 @@
 (`ADServer1NetBIOSName`)|`DC3`|NetBIOS name of the first additional Active Directory Domain Controller (up to 15 characters)|Domain Controller 1 Private IP Address
 (`ADServer1PrivateIP`)|`10.0.0.11`|Fixed private IP for the first additional Active Directory Domain Controller located in subnet 1|Domain Controller 2 NetBIOS Name
 (`ADServer2NetBIOSName`)|`DC4`|NetBIOS name of the second additional Active Directory Domain Controller (up to 15 characters)|Domain Controller 2 Private IP Address
-(`ADServer2PrivateIP`)|`10.0.32.11`|Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2|SYSVOL and NTDS and Data Drive Size
-(`DataDriveSizeGiB`)|`10`|Size of SYSVOL and NTDS data drive in GiB|Key Pair Name
+(`ADServer2PrivateIP`)|`10.0.32.11`|Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2|SYSVOL and NTDS Data Drive Size
+(`DataDriveSizeGiB`)|`10`|Size of SYSVOL and NTDS data drive in GiB|KMS Key for EBS Encryption
+(`EbsEncryptionKmsKeyId`)|`alias/aws/ebs`|The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN|Key Pair Name
 (`KeyPairName`)|`**__Requires input__**`|Public/private key pairs allow you to securely connect to your instance after it launches|SSM Parameter Value for latest AMI ID
-(`LatestAmiId`)|`/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base`|NO_DESCRIPTION
+(`LatestAmiId`)|`/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base`|Systems Manager parameter value for latest Windows Server AMI
 |===
 .Microsoft Active Directory Domain Services configuration
 [width="100%",cols="16%,11%,73%",options="header",]
