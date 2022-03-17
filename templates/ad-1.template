@@ -12,7 +12,7 @@ Metadata:
         - W9006
         - E9101
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying self-managed AD into an existing VPC'
+    EntrypointName: Parameters for deploying self-managed AD into an existing VPC
     Order: '2'
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -35,6 +35,7 @@ Metadata:
           - ADServer2PrivateIP
           - DataDriveSizeGiB
           - EbsEncryptionKmsKeyId
+          - EnableAdvancedAudtingandMetrics
           - KeyPairName
           - WINFULLBASE
       - Label:
@@ -111,6 +112,8 @@ Metadata:
         default: Domain NetBIOS Name
       EbsEncryptionKmsKeyId:
         default: KMS Key for EBS Encryption
+      EnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics
       EntCaServerNetBIOSName:
         default: Enterprise Root or Subordinate CA NetBIOS Name
       KeyPairName:
@@ -289,6 +292,13 @@ Parameters:
     Default: alias/aws/ebs
     Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
     Type: String
+  EnableAdvancedAudtingandMetrics:
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: String
+    Default: 'false'
   EntCaServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: ENTCA1
@@ -398,19 +408,19 @@ Resources:
       - DomainController2
     Type: AWS::EC2::DHCPOptions
     Properties:
-      DomainName: !Ref 'DomainDNSName'
+      DomainName: !Ref DomainDNSName
       DomainNameServers:
-        - !Ref 'ADServer1PrivateIP'
-        - !Ref 'ADServer2PrivateIP'
+        - !Ref ADServer1PrivateIP
+        - !Ref ADServer2PrivateIP
       Tags:
         - Key: Domain
-          Value: !Ref 'DomainDNSName'
+          Value: !Ref DomainDNSName
   VPCDHCPOptionsAssociation:
     Condition: ShouldCreateDHCPOption
     Type: AWS::EC2::VPCDHCPOptionsAssociation
     Properties:
-      VpcId: !Ref 'VPCID'
-      DhcpOptionsId: !Ref 'DHCPOptions'
+      VpcId: !Ref VPCID
+      DhcpOptionsId: !Ref DHCPOptions
   AWSQuickstartActiveDirectoryDS:
     Type: AWS::SSM::Document
     Properties:
@@ -421,7 +431,6 @@ Resources:
       Content:
         schemaVersion: '0.3'
         description: 'Deploy AD with SSM Automation'
-        # Gathering parameters needed to configure DCs in the Quick Start
         parameters:
           VPCCIDR:
             default: '10.0.0.0/16'
@@ -462,6 +471,9 @@ Resources:
             default: 'example'
             description: 'NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE'
             type: 'String'
+          EnableAdvancedAudtingandMetrics:
+            description: Enable advanced auditing and metrics
+            type: String
           CreateDefaultOUs:
             default: 'No'
             description:
@@ -585,11 +597,15 @@ Resources:
                       },
                       @{
                           Name = 'ComputerManagementDsc'
-                          Version = '8.4.0'
+                          Version = '8.5.0'
                       },
                       @{
                           Name = 'DnsServerDsc'
                           Version = '3.0.0'
+                      },
+                      @{
+                          Name = 'AuditPolicyDsc'
+                          Version = '1.4.0.0'
                       }
                   )
 
@@ -803,6 +819,12 @@ Resources:
                       Exit 1
                   }
                   Set-PostPromoConfig -S3BucketName '{{QSS3BucketName}}' -S3BucketRegion '{{QSS3BucketRegion}}' -S3KeyPrefix '{{QSS3KeyPrefix}}' -CreateDefaultOUs '{{CreateDefaultOUs}}' -TombstoneLifetime '{{TombstoneLifetime}}' -DeletedObjectLifetime '{{DeletedObjectLifetime}}'
+
+                  If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {
+                    Set-DcAuditDscConfiguration
+                    Set-LogsAndMetricsCollection -Role 'DomainController'
+                  }
+
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
               CloudWatchOutputConfig:
                 CloudWatchOutputEnabled: true
@@ -857,14 +879,14 @@ Resources:
               - Effect: Allow
                 Action: s3:GetObject
                 Resource:
-                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*'
-                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-distributor-file-${AWS::Region}/*'
-                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-document-attachments-${AWS::Region}/*'
+                  - !Sub arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*
+                  - !Sub arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*
+                  - !Sub arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*
+                  - !Sub arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*
+                  - !Sub arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*
+                  - !Sub arn:${AWS::Partition}:s3:::aws-ssm-distributor-file-${AWS::Region}/*
+                  - !Sub arn:${AWS::Partition}:s3:::aws-ssm-document-attachments-${AWS::Region}/*
           PolicyName: SSMAgent
         - PolicyDocument:
             Version: '2012-10-17'
@@ -913,14 +935,14 @@ Resources:
                   - secretsmanager:GetSecretValue
                   - secretsmanager:DescribeSecret
                 Resource:
-                  - !Ref 'ADAdminSecrets'
-                  - !Ref 'RestoreModeSecrets'
-                  - !Ref 'ADAltUserSecrets'
+                  - !Ref ADAdminSecrets
+                  - !Ref RestoreModeSecrets
+                  - !Ref ADAltUserSecrets
           PolicyName: AWS-Mgd-AD-Secret-Policy
       Path: /
       ManagedPolicyArns:
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy'
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -936,12 +958,12 @@ Resources:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-        - !Ref 'ADServerRole'
+        - !Ref ADServerRole
       Path: /
   ADAdminSecrets:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub 'ADAdministratorSecret-${AWS::StackName}'
+      Name: !Sub ADAdministratorSecret-${AWS::StackName}
       Description: Administrator Password for AD Quick Start
       GenerateSecretString:
         SecretStringTemplate: '{"username": "Administrator"}'
@@ -951,7 +973,7 @@ Resources:
   RestoreModeSecrets:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub 'RestoreModeSecrets-${AWS::StackName}'
+      Name: !Sub RestoreModeSecrets-${AWS::StackName}
       Description: Restore Mode Password for AD Quick Start
       GenerateSecretString:
         SecretStringTemplate: '{"username": "Administrator"}'
@@ -961,40 +983,40 @@ Resources:
   ADAltUserSecrets:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub 'ADAltUserSecrets-${AWS::StackName}'
+      Name: !Sub ADAltUserSecrets-${AWS::StackName}
       Description: Alternate AD Admin User from AD Quick Start
       SecretString: !Sub '{ "username" : "${DomainAdminUser}", "password" : "${DomainAdminPassword}" }'
   DomainController1:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref 'WINFULLBASE'
-      IamInstanceProfile: !Ref 'ADServerProfile'
-      InstanceType: !Ref 'ADServer1InstanceType'
-      SubnetId: !Ref 'PrivateSubnet1ID'
+      ImageId: !Ref WINFULLBASE
+      IamInstanceProfile: !Ref ADServerProfile
+      InstanceType: !Ref ADServer1InstanceType
+      SubnetId: !Ref PrivateSubnet1ID
       Tags:
         - Key: Name
-          Value: !Ref 'ADServer1NetBIOSName'
+          Value: !Ref ADServer1NetBIOSName
         - Key: Domain
-          Value: !Ref 'DomainDNSName'
+          Value: !Ref DomainDNSName
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
         - DeviceName: /dev/xvdf
           Ebs:
-            VolumeSize: !Ref 'DataDriveSizeGiB'
+            VolumeSize: !Ref DataDriveSizeGiB
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
       SecurityGroupIds:
-        - !Ref 'DomainControllersSG'
-      PrivateIpAddress: !Ref 'ADServer1PrivateIP'
-      KeyName: !Ref 'KeyPairName'
+        - !Ref DomainControllersSG
+      PrivateIpAddress: !Ref ADServer1PrivateIP
+      KeyName: !Ref KeyPairName
   DomainController2:
     CreationPolicy:
       ResourceSignal:
@@ -1003,80 +1025,63 @@ Resources:
     DependsOn: DomainController1
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref 'WINFULLBASE'
-      IamInstanceProfile: !Ref 'ADServerProfile'
-      InstanceType: !Ref 'ADServer2InstanceType'
-      SubnetId: !Ref 'PrivateSubnet2ID'
+      ImageId: !Ref WINFULLBASE
+      IamInstanceProfile: !Ref ADServerProfile
+      InstanceType: !Ref ADServer2InstanceType
+      SubnetId: !Ref PrivateSubnet2ID
       Tags:
         - Key: Name
-          Value: !Ref 'ADServer2NetBIOSName'
+          Value: !Ref ADServer2NetBIOSName
         - Key: Domain
-          Value: !Ref 'DomainDNSName'
+          Value: !Ref DomainDNSName
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
         - DeviceName: /dev/xvdf
           Ebs:
-            VolumeSize: !Ref 'DataDriveSizeGiB'
+            VolumeSize: !Ref DataDriveSizeGiB
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
       SecurityGroupIds:
-        - !Ref 'DomainControllersSG'
-      PrivateIpAddress: !Ref 'ADServer2PrivateIP'
-      KeyName: !Ref 'KeyPairName'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "<powershell>\n"
-            - 'Start-SSMAutomationExecution -DocumentName '
-            - !Sub '"${AWSQuickstartActiveDirectoryDS}"'
-            - ' -Parameter @{'
-            - '"VPCCIDR"='
-            - !Sub '"${VPCCIDR}"'
-            - ';"ADServer1NetBIOSName"='
-            - !Sub '"${ADServer1NetBIOSName}"'
-            - ';"ADServer1PrivateIP"='
-            - !Sub '"${ADServer1PrivateIP}"'
-            - ';"ADServer2NetBIOSName"='
-            - !Sub '"${ADServer2NetBIOSName}"'
-            - ';"ADServer2PrivateIP"='
-            - !Sub '"${ADServer2PrivateIP}"'
-            - ';"ADAdminSecParamName"='
-            - !Sub '"${ADAdminSecrets}"'
-            - ';"ADAltUserSecParamName"='
-            - !Sub '"${ADAltUserSecrets}"'
-            - ';"RestoreModeSecParamName"='
-            - !Sub '"${RestoreModeSecrets}"'
-            - ';"DomainDNSName"='
-            - !Sub '"${DomainDNSName}"'
-            - ';"DomainNetBIOSName"='
-            - !Sub '"${DomainNetBIOSName}"'
-            - ';"CreateDefaultOUs"='
-            - !Sub '"${CreateDefaultOUs}"'
-            - ';"TombstoneLifetime"='
-            - !Sub '"${TombstoneLifetime}"'
-            - ';"DeletedObjectLifetime"='
-            - !Sub '"${DeletedObjectLifetime}"'
-            - ';"QSS3BucketName"='
-            - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
-            - ';"QSS3BucketRegion"='
-            - !If [UsingDefaultBucket, !Sub '"${AWS::Region}"', !Sub '"${QSS3BucketRegion}"']
-            - ';"QSS3KeyPrefix"='
-            - !Sub '"${QSS3KeyPrefix}"'
-            - ';"StackName"='
-            - !Sub '"${AWS::StackName}"'
-            - ';"URLSuffix"='
-            - !Sub '"${AWS::URLSuffix}"'
-            - '}'
-            - "\n"
-            - "</powershell>\n"
+        - !Ref DomainControllersSG
+      PrivateIpAddress: !Ref ADServer2PrivateIP
+      KeyName: !Ref KeyPairName
+      UserData:
+        Fn::Base64: !Sub
+            - |
+                <powershell>
+                $Params = @{
+                    ADAdminSecParamName = '${ADAdminSecrets}'
+                    ADServer1NetBIOSName = '${ADServer1NetBIOSName}'
+                    ADServer1PrivateIP = '${ADServer1PrivateIP}'
+                    ADServer2NetBIOSName = '${ADServer2NetBIOSName}'
+                    ADServer2PrivateIP = '${ADServer2PrivateIP}'
+                    ADAltUserSecParamName = '${ADAltUserSecrets}'
+                    CreateDefaultOUs = '${CreateDefaultOUs}'
+                    DeletedObjectLifetime = '${DeletedObjectLifetime}'
+                    DomainDNSName = '${DomainDNSName}'
+                    DomainNetBIOSName = '${DomainNetBIOSName}'
+                    EnableAdvancedAudtingandMetrics = '${EnableAdvancedAudtingandMetrics}'
+                    RestoreModeSecParamName = '${RestoreModeSecrets}'
+                    QSS3BucketName = '${QSS3BucketName}'
+                    QSS3BucketRegion =  '${QSS3BucketRegion}'
+                    QSS3KeyPrefix = '${QSS3KeyPrefix}'
+                    StackName = '${AWS::StackName}'
+                    TombstoneLifetime = '${TombstoneLifetime}'
+                    URLSuffix = '${AWS::URLSuffix}'
+                    VPCCIDR = '${VPCCIDR}'
+                }
+                Start-SSMAutomationExecution -DocumentName '${AWSQuickstartActiveDirectoryDS}' -Parameter $Params
+                </powershell>
+            - QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Sub '${QSS3BucketName}']
+              QSS3BucketRegion: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Sub '${QSS3BucketRegion}']
   DomainControllersSG:
     Type: AWS::EC2::SecurityGroup
     Metadata:
@@ -1256,32 +1261,32 @@ Resources:
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/templates/one-tier.template'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AMI: !Ref 'CaAmi'
-        AdministratorSecret: !Ref 'ADAltUserSecrets'
-        DirectoryType: 'SelfManaged'
-        DomainController1IP: !Ref 'ADServer1PrivateIP'
-        DomainController2IP: !Ref 'ADServer2PrivateIP'
-        DomainDNSName: !Ref 'DomainDNSName'
-        DomainMembersSG: !Ref 'DomainMembersSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        EntCaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        EntCaKeyLength: !Ref 'CaKeyLength'
-        EntCaServerInstanceType: !Ref 'CaServerInstanceType'
-        EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
-        EntCaServerSubnet: !Ref 'PrivateSubnet1ID'
-        EntCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        KeyPairName: !Ref 'KeyPairName'
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/'
-        S3CRLBucketName: !Ref 'S3CRLBucketName'
-        UseS3ForCRL: !Ref 'UseS3ForCRL'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !Ref 'VPCID'
+        AMI: !Ref CaAmi
+        AdministratorSecret: !Ref ADAltUserSecrets
+        DirectoryType: SelfManaged
+        DomainController1IP: !Ref ADServer1PrivateIP
+        DomainController2IP: !Ref ADServer2PrivateIP
+        DomainDNSName: !Ref DomainDNSName
+        DomainMembersSG: !Ref DomainMembersSG
+        DomainNetBIOSName: !Ref DomainNetBIOSName
+        EntCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        EntCaHashAlgorithm: !Ref CaHashAlgorithm
+        EntCaKeyLength: !Ref CaKeyLength
+        EntCaServerInstanceType: !Ref CaServerInstanceType
+        EntCaServerNetBIOSName: !Ref EntCaServerNetBIOSName
+        EntCaServerSubnet: !Ref PrivateSubnet1ID
+        EntCaValidityPeriodUnits: !Ref CaValidityPeriodUnits
+        KeyPairName: !Ref KeyPairName
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/
+        S3CRLBucketName: !Ref S3CRLBucketName
+        UseS3ForCRL: !Ref UseS3ForCRL
+        VPCCIDR: !Ref VPCCIDR
+        VPCID: !Ref VPCID
   TwoTierCAStack:
     Condition: ShouldCreateTwoTierPkiResource
     DependsOn: DomainController2
@@ -1289,55 +1294,55 @@ Resources:
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/templates/two-tier.template'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AMI: !Ref 'CaAmi'
-        AdministratorSecret: !Ref 'ADAltUserSecrets'
-        DirectoryType: 'SelfManaged'
-        DomainController1IP: !Ref 'ADServer1PrivateIP'
-        DomainController2IP: !Ref 'ADServer2PrivateIP'
-        DomainDNSName: !Ref 'DomainDNSName'
-        DomainMembersSG: !Ref 'DomainMembersSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        KeyPairName: !Ref 'KeyPairName'
-        OrCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        OrCaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        OrCaKeyLength: !Ref 'CaKeyLength'
-        OrCaServerInstanceType: !Ref 'CaServerInstanceType'
-        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
-        OrCaServerSubnet: !Ref 'PrivateSubnet1ID'
-        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/'
-        S3CRLBucketName: !Ref 'S3CRLBucketName'
-        SubCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        SubCaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        SubCaKeyLength: !Ref 'CaKeyLength'
-        SubCaServerInstanceType: !Ref 'CaServerInstanceType'
-        SubCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
-        SubCaServerSubnet: !Ref 'PrivateSubnet1ID'
-        SubCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        UseS3ForCRL: !Ref 'UseS3ForCRL'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !Ref 'VPCID'
+        AMI: !Ref CaAmi
+        AdministratorSecret: !Ref ADAltUserSecrets
+        DirectoryType: SelfManaged
+        DomainController1IP: !Ref ADServer1PrivateIP
+        DomainController2IP: !Ref ADServer2PrivateIP
+        DomainDNSName: !Ref DomainDNSName
+        DomainMembersSG: !Ref DomainMembersSG
+        DomainNetBIOSName: !Ref DomainNetBIOSName
+        KeyPairName: !Ref KeyPairName
+        OrCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        OrCaHashAlgorithm: !Ref CaHashAlgorithm
+        OrCaKeyLength: !Ref CaKeyLength
+        OrCaServerInstanceType: !Ref CaServerInstanceType
+        OrCaServerNetBIOSName: !Ref OrCaServerNetBIOSName
+        OrCaServerSubnet: !Ref PrivateSubnet1ID
+        OrCaValidityPeriodUnits: !Ref OrCaValidityPeriodUnits
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/
+        S3CRLBucketName: !Ref S3CRLBucketName
+        SubCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        SubCaHashAlgorithm: !Ref CaHashAlgorithm
+        SubCaKeyLength: !Ref CaKeyLength
+        SubCaServerInstanceType: !Ref CaServerInstanceType
+        SubCaServerNetBIOSName: !Ref EntCaServerNetBIOSName
+        SubCaServerSubnet: !Ref PrivateSubnet1ID
+        SubCaValidityPeriodUnits: !Ref CaValidityPeriodUnits
+        UseS3ForCRL: !Ref UseS3ForCRL
+        VPCCIDR: !Ref VPCCIDR
+        VPCID: !Ref VPCID
 Outputs:
   ADSecretsArn:
     Description: Alternate AD User Secrets ARN
-    Value: !Ref 'ADAltUserSecrets'
+    Value: !Ref ADAltUserSecrets
   DC1InstanceId:
     Description: DomainController 1 instance ID
-    Value: !Ref 'DomainController1'
+    Value: !Ref DomainController1
   DC2InstanceId:
     Description: DomainController 2 instance ID
-    Value: !Ref 'DomainController2'
+    Value: !Ref DomainController2
   DomainAdmin:
     Description: Domain administrator account
     Value: !Sub ${DomainNetBIOSName}\${DomainAdminUser}
   DomainControllersSGID:
     Description: Domain Controllers Security Group ID
-    Value: !Ref 'DomainControllersSG'
+    Value: !Ref DomainControllersSG
   DomainMemberSGID:
     Description: Domain Member Security Group ID
-    Value: !Ref 'DomainMembersSG'
+    Value: !Ref DomainMembersSG
