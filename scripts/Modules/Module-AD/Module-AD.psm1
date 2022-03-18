@@ -573,7 +573,7 @@ Function Set-DnsDscConfiguration {
     
         Import-DscResource -ModuleName 'NetworkingDsc', 'DnsServerDsc'
         
-        Node $ADServer1 {
+        Node ADServer1 {
             DnsServerAddress DnsServerAddress {
                 Address        = $ADServer2PrivateIP, $ADServer1PrivateIP, '127.0.0.1'
                 InterfaceAlias = 'Primary'
@@ -605,7 +605,7 @@ Function Set-DnsDscConfiguration {
             }
         }
 
-        Node $ADServer2 {
+        Node ADServer2 {
             DnsServerAddress DnsServerAddress {
                 Address        = $ADServer1PrivateIP, $ADServer2PrivateIP, '127.0.0.1'
                 InterfaceAlias = 'Primary'
@@ -3419,8 +3419,7 @@ Function Set-LogsAndMetricsCollection {
     (New-Object -TypeName 'System.Net.WebClient').DownloadFile("https://s3-us-west-2.amazonaws.com/kinesis-agent-windows/downloads/AWSKinesisTap.$Version.msi", 'C:\AWSQuickstart\AWSKinesisTap.msi')
 
     Write-Output 'Installing KinesisTap'
-    $DeployArguments = @('/quiet', '/l', 'C:\AWSQuickstart\ktap-install-log.txt')
-    $Process = Start-Process 'C:\AWSQuickstart\AWSKinesisTap.msi' -ArgumentList $DeployArguments -Wait -PassThru
+    $Process = Start-Process -FilePath 'msiexec.exe' -ArgumentList '/I C:\AWSQuickstart\AWSKinesisTap.msi /quiet /l C:\AWSQuickstart\ktap-install-log.txt' -NoNewWindow -PassThru -Wait -ErrorAction Stop
     
     If ($Process.ExitCode -ne 0) {
         Write-Output "Error installing KinesisTap -exit code $($Process.ExitCode)"
