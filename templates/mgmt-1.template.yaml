@@ -30,6 +30,7 @@ Metadata:
           - DomainController2IP
           - DomainDNSName
           - DomainNetBIOSName
+          - EnableAdvancedAudtingandMetrics
       - Label:
           default: AWS Quick Start Configuration
         Parameters:
@@ -53,6 +54,8 @@ Metadata:
         default: Domain NetBIOS Name
       EbsEncryptionKmsKeyId:
         default: KMS Key for EBS Encryption
+      EnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics
       KeyPairName:
         default: Key Pair Name
       MgmtAmi:
@@ -109,6 +112,13 @@ Parameters:
     Default: alias/aws/ebs
     Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
     Type: String
+  EnableAdvancedAudtingandMetrics:
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: String
+    Default: 'false'
   KeyPairName:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
@@ -143,15 +153,15 @@ Parameters:
     Description: ID of the Management Instance subnet (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   NonWindowsDomainJoin:
-    Description: 'Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain'
+    Description: Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain
     AllowedValues:
       - 'true'
       - 'false'
-    Type: 'String'
+    Type: String
     Default: 'false'
   NonWindowsDomainJoinSecret:
-    Description: 'ARN for the Secret that has Password and User bane for the domain join user'
-    Type: 'String'
+    Description: ARN for the Secret that has Password and User bane for the domain join user
+    Type: String
     Default: ''
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -175,7 +185,7 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
-  VPCID: # VPCID is required as it is being used in the Assertion Rule
+  VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
 Rules:
@@ -257,10 +267,10 @@ Resources:
                 Resource: '*'
               - Effect: Allow
                 Action: cloudformation:SignalResource
-                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
+                Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*
               - Effect: Allow
                 Action: ds:CreateConditionalForwarder
-                Resource: !Sub 'arn:${AWS::Partition}:ds:${AWS::Region}:${AWS::AccountId}:directory/${DirectoryID}'
+                Resource: !Sub arn:${AWS::Partition}:ds:${AWS::Region}:${AWS::AccountId}:directory/${DirectoryID}
           PolicyName: AWS-Mgmt-Quick-Start-Policy
         - PolicyDocument:
             Version: '2012-10-17'
@@ -270,13 +280,13 @@ Resources:
                   - secretsmanager:GetSecretValue
                   - secretsmanager:DescribeSecret
                 Resource: 
-                  - !Ref 'AdministratorSecret'
-                  - !If [ShouldCreateNonWindowsDomainJoinADUser, !Ref 'NonWindowsDomainJoinSecret', !Ref 'AWS::NoValue']
+                  - !Ref AdministratorSecret
+                  - !If [ShouldCreateNonWindowsDomainJoinADUser, !Ref NonWindowsDomainJoinSecret, !Ref AWS::NoValue]
           PolicyName: AWS-Mgd-AD-Secret-Policy
       Path: /
       ManagedPolicyArns:
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy'
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -292,7 +302,7 @@ Resources:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-        - !Ref 'InstanceRole'
+        - !Ref InstanceRole
       Path: /
   AWSQuickstartMgmt:
     Type: AWS::SSM::Document
@@ -303,60 +313,56 @@ Resources:
           Value: !Ref AWS::StackName
       Content:
         schemaVersion: '0.3'
-        description: 'Deploy AD with SSM Automation'
-        # Gathering parameters needed to configure DCs in the Quick Start
+        description: Deploy AD with SSM Automation
         parameters:
-          VPCCIDR:
-            default: '10.0.0.0/16'
-            description: 'CIDR Block for the VPC'
-            type: 'String'
           AdministratorSecret:
-            description: 'AWS Secrets Parameter Name that has Password and User namer for the domain administrator.'
-            type: 'String'
+            description: AWS Secrets Parameter Name that has Password and User namer for the domain administrator
+            type: String
           DirectoryID:
-            description: 'The Directory Services ID of the AWS Managed Microsoft AD Domain'
-            type: 'String'
-          MgmtServerNetBIOSName:
-            description: 'NetBIOS name of the Management Instance server (up to 15 characters)'
-            type: 'String'
-          NonWindowsDomainJoin:
-            description: 'Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain'
-            type: 'String'
-          NonWindowsDomainJoinSecret:
-            description: 'The Secrets Parameter Name that has Password and User bane for the domain join user'
-            type: 'String'
+            description: The Directory Services ID of the AWS Managed Microsoft AD Domain
+            type: String
           DomainController1IP:
-            description: 'IP of DNS server that can resolve domain (Must be accessible)'
-            type: 'String'
+            description: IP of DNS server that can resolve domain (Must be accessible)
+            type: String
           DomainController2IP:
-            description: 'IP of DNS server that can resolve domain (Must be accessible)'
-            type: 'String'
+            description: IP of DNS server that can resolve domain (Must be accessible)
+            type: String
           DomainDNSName:
-            description: 'Fully qualified domain name (FQDN) of the forest root domain e.g. example.com'
-            type: 'String'
+            description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
+            type: String
           DomainNetBIOSName:
-            description: 'NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE'
-            type: 'String'
+            description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
+            type: String
+          EnableAdvancedAudtingandMetrics:
+            description: Enable advanced auditing and metrics
+            type: String
+          MgmtServerNetBIOSName:
+            description: NetBIOS name of the Management Instance server (up to 15 characters)
+            type: String
+          NonWindowsDomainJoin:
+            description: Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain
+            type: String
+          NonWindowsDomainJoinSecret:
+            description: The Secrets Parameter Name that has Password and User bane for the domain join user
+            type: String
           QSS3BucketName:
-            default: 'aws-quickstart'
-            description: 'S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).'
-            type: 'String'
+            description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+            type: String
           QSS3BucketRegion:
-            default: 'us-east-1'
-            description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
-            type: 'String'
+            description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
+            type: String
           QSS3KeyPrefix:
-            default: 'quickstart-microsoft-activedirectory/'
-            description: 'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).'
-            type: 'String'
+            description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).
+            type: String
           StackName:
-            default: ''
-            description: 'Stack Name Input for cfn resource signal'
-            type: 'String'
+            description: Stack Name Input for cfn resource signal
+            type: String
           URLSuffix:
-            default: 'amazonaws.com'
-            description: 'AWS URL suffix'
-            type: 'String'
+            description: AWS URL suffix
+            type: String
+          VPCCIDR:
+            description: CIDR Block for the VPC
+            type: String
         mainSteps:
           - name: mgmtInstanceId
             action: aws:executeAwsApi
@@ -406,11 +412,15 @@ Resources:
                       },
                       @{
                           Name = 'ComputerManagementDsc'
-                          Version = '8.4.0'
+                          Version = '8.5.0'
                       },
                       @{
                           Name = 'DnsServerDsc'
                           Version = '3.0.0'
+                      },
+                      @{
+                          Name = 'AuditPolicyDsc'
+                          Version = '1.4.0.0'
                       }
                   )
 
@@ -473,7 +483,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   New-VolumeFromRawDisk
@@ -494,7 +504,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   $EniConfig = Get-EniConfig
@@ -516,7 +526,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigInstance' -Wait -Verbose -Force
@@ -536,15 +546,22 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   Set-MgmtPostConfig -DirectoryID '{{DirectoryID}}' -VPCCIDR '{{VPCCIDR}}'
+
                   If ('{{NonWindowsDomainJoin}}'  -eq 'true' )  {
                     Write-Output "Obtaining AD Admin Credential to authorize AD actions"
                     $AltSecretAdmin = Get-SecretInfo -Domain '{{DomainNetBIOSName}}' -SecretArn '{{AdministratorSecret}}'
                     Set-NonWindowsDomainJoin-Credentials -SecretArn '{{NonWindowsDomainJoinSecret}}' -Credential $AltSecretAdmin.Credentials
                   }
+
+                  If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {
+                    Set-MgmtAuditDscConfiguration
+                    Set-LogsAndMetricsCollection -Role 'Management'
+                  }
+
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
               CloudWatchOutputConfig:
                 CloudWatchOutputEnabled: true
@@ -592,74 +609,62 @@ Resources:
         Timeout: PT30M
         Count: 1
     Properties:
-      ImageId: !Ref 'MgmtAmi'
-      IamInstanceProfile: !Ref 'InstanceProfile'
-      InstanceType: !Ref 'MgmtServerInstanceType'
-      SubnetId: !Ref 'MgmtServerSubnet'
+      ImageId: !Ref MgmtAmi
+      IamInstanceProfile: !Ref InstanceProfile
+      InstanceType: !Ref MgmtServerInstanceType
+      SubnetId: !Ref MgmtServerSubnet
       Tags:
         - Key: Name
-          Value: !Ref 'MgmtServerNetBIOSName'
+          Value: !Ref MgmtServerNetBIOSName
         - Key: Domain
-          Value: !Ref 'DomainDNSName'
+          Value: !Ref DomainDNSName
+        - Key: Role
+          Value: Management Instance
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
         - DeviceName: /dev/xvdf
           Ebs:
-            VolumeSize: !Ref 'MgmtDataDriveSizeGiB'
+            VolumeSize: !Ref MgmtDataDriveSizeGiB
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
       SecurityGroupIds:
-        - !Ref 'DomainMembersSG'
-      KeyName: !Ref 'KeyPairName'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "<powershell>\n"
-            - 'Start-SSMAutomationExecution -DocumentName '
-            - !Sub '"${AWSQuickstartMgmt}"'
-            - ' -Parameter @{'
-            - '"VPCCIDR"='
-            - !Sub '"${VPCCIDR}"'
-            - ';"AdministratorSecret"='
-            - !Sub '"${AdministratorSecret}"'
-            - ';"DirectoryID"='
-            - !Sub '"${DirectoryID}"'
-            - ';"MgmtServerNetBIOSName"='
-            - !Sub '"${MgmtServerNetBIOSName}"'
-            - ';"DomainController1IP"='
-            - !Sub '"${DomainController1IP}"'
-            - ';"DomainController2IP"='
-            - !Sub '"${DomainController2IP}"'
-            - ';"DomainDNSName"='
-            - !Sub '"${DomainDNSName}"'
-            - ';"DomainNetBIOSName"='
-            - !Sub '"${DomainNetBIOSName}"'
-            - ';"NonWindowsDomainJoin"='
-            - !Sub '"${NonWindowsDomainJoin}"'
-            - ';"NonWindowsDomainJoinSecret"='
-            - !Sub '"${NonWindowsDomainJoinSecret}"'
-            - ';"QSS3BucketName"='
-            - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
-            - ';"QSS3BucketRegion"='
-            - !If [UsingDefaultBucket, !Sub '"${AWS::Region}"', !Sub '"${QSS3BucketRegion}"']
-            - ';"QSS3KeyPrefix"='
-            - !Sub '"${QSS3KeyPrefix}"'
-            - ';"StackName"='
-            - !Sub '"${AWS::StackName}"'
-            - ';"URLSuffix"='
-            - !Sub '"${AWS::URLSuffix}"'
-            - '}'
-            - "\n"
-            - "</powershell>\n"
+        - !Ref DomainMembersSG
+      KeyName: !Ref KeyPairName
+      UserData:
+        Fn::Base64: !Sub
+            - |
+                <powershell>
+                $Params = @{
+                    AdministratorSecret = '${AdministratorSecret}'
+                    DirectoryID = '${DirectoryID}'
+                    DomainController1IP = '${DomainController1IP}'
+                    DomainController2IP = '${DomainController2IP}'
+                    DomainDNSName = '${DomainDNSName}'
+                    DomainNetBIOSName = '${DomainNetBIOSName}'
+                    EnableAdvancedAudtingandMetrics = '${EnableAdvancedAudtingandMetrics}'
+                    MgmtServerNetBIOSName = '${MgmtServerNetBIOSName}'
+                    NonWindowsDomainJoin = '${NonWindowsDomainJoin}'
+                    NonWindowsDomainJoinSecret = '${NonWindowsDomainJoinSecret}'
+                    QSS3BucketName = '${QSS3BucketName}'
+                    QSS3BucketRegion =  '${QSS3BucketRegion}'
+                    QSS3KeyPrefix = '${QSS3KeyPrefix}'
+                    StackName = '${AWS::StackName}'
+                    URLSuffix = '${AWS::URLSuffix}'
+                    VPCCIDR = '${VPCCIDR}'
+                }
+                Start-SSMAutomationExecution -DocumentName '${AWSQuickstartMgmt}' -Parameter $Params
+                </powershell>
+            - QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Sub '${QSS3BucketName}']
+              QSS3BucketRegion: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Sub '${QSS3BucketRegion}']
 Outputs:
   MgmtInstanceId:
-    Value: !Ref 'MgmtInstance'
+    Value: !Ref MgmtInstance
     Description: MgmtInstance instance ID

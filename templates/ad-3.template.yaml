@@ -11,7 +11,7 @@ Metadata:
         - W9006
         - E9101
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into an existing VPC'
+    EntrypointName: Parameters for deploying AWS Managed Microsoft AD into an existing VPC
     Order: '6'
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -35,6 +35,7 @@ Metadata:
           default: Microsoft Windows Server management instance
         Parameters:
           - MgmtServer
+          - MgmtServerEnableAdvancedAudtingandMetrics
           - MgmtServerInstanceType
           - MgmtAmi
           - MgmtDataDriveSizeGiB
@@ -94,6 +95,8 @@ Metadata:
         default: Data Drive Size
       MgmtServer:
         default: Deploy Management Server
+      MgmtServerEnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics
       MgmtServerInstanceType:
         default: Management Server Instance Type
       MgmtServerNetBIOSName:
@@ -226,6 +229,13 @@ Parameters:
     Default: 'true'
     Description: Do you want to deploy a Management Server
     Type: String
+  MgmtServerEnableAdvancedAudtingandMetrics:
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: String
+    Default: 'false'
   MgmtServerInstanceType:
     AllowedValues:
       - t3.medium
@@ -350,28 +360,28 @@ Resources:
     Condition: ShouldCreateDHCPOption
     Type: AWS::EC2::DHCPOptions
     Properties:
-      DomainName: !Ref 'DomainDNSName'
-      DomainNameServers: !GetAtt 'MicrosoftAD.DnsIpAddresses'
+      DomainName: !Ref DomainDNSName
+      DomainNameServers: !GetAtt MicrosoftAD.DnsIpAddresses
       Tags:
         - Key: Domain
-          Value: !Ref 'DomainDNSName'
+          Value: !Ref DomainDNSName
   VPCDHCPOptionsAssociation:
     Condition: ShouldCreateDHCPOption
     Type: AWS::EC2::VPCDHCPOptionsAssociation
     Properties:
-      VpcId: !Ref 'VPCID'
-      DhcpOptionsId: !Ref 'DHCPOptions'
+      VpcId: !Ref VPCID
+      DhcpOptionsId: !Ref DHCPOptions
   ADAdminSecrets:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub 'ADAdminSecret-${AWS::StackName}'
+      Name: !Sub ADAdminSecret-${AWS::StackName}
       Description: Admin User Secrets for Managed AD Quick Start
       SecretString: !Sub '{"username":"Admin","password":"${DomainAdminPassword}"}'
   NonWindowsDomainJoinSecrets:
     Type: AWS::SecretsManager::Secret
     Condition: ShouldCreateNonWindowsDomainJoinADUser
     Properties:
-      Name: !Sub 'aws/directory-services/${MicrosoftAD}/seamless-domain-join'
+      Name: !Sub aws/directory-services/${MicrosoftAD}/seamless-domain-join
       Description: User Secrets for seamless domain joins in context of the Managed AD Quick Start
       GenerateSecretString:
         RequireEachIncludedType: True
@@ -395,15 +405,15 @@ Resources:
   MicrosoftAD:
     Type: AWS::DirectoryService::MicrosoftAD
     Properties:
-      Name: !Ref 'DomainDNSName'
-      Edition: !Ref 'ADEdition'
-      ShortName: !Ref 'DomainNetBIOSName'
-      Password: !Ref 'DomainAdminPassword'
+      Name: !Ref DomainDNSName
+      Edition: !Ref ADEdition
+      ShortName: !Ref DomainNetBIOSName
+      Password: !Ref DomainAdminPassword
       VpcSettings:
         SubnetIds:
-          - !Ref 'PrivateSubnet1ID'
-          - !Ref 'PrivateSubnet2ID'
-        VpcId: !Ref 'VPCID'
+          - !Ref PrivateSubnet1ID
+          - !Ref PrivateSubnet2ID
+        VpcId: !Ref VPCID
   DomainMemberSG:
     Type: AWS::EC2::SecurityGroup
     Metadata:
@@ -413,7 +423,7 @@ Resources:
             reason: "Standard Amazon practice"
     Properties:
       GroupDescription: Domain Members
-      VpcId: !Ref 'VPCID'
+      VpcId: !Ref VPCID
       Tags:
         - Key: Name
           Value: DomainMembersSecurityGroup
@@ -450,119 +460,120 @@ Resources:
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/mgmt-1.template.yaml'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AdministratorSecret: !Ref 'ADAdminSecrets'
-        DirectoryID: !Ref 'MicrosoftAD'
-        DomainController1IP: !Select ['0', !GetAtt 'MicrosoftAD.DnsIpAddresses']
-        DomainController2IP: !Select ['1', !GetAtt 'MicrosoftAD.DnsIpAddresses']
-        DomainDNSName: !Ref 'DomainDNSName'
-        DomainMembersSG: !Ref 'DomainMemberSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        KeyPairName: !Ref 'KeyPairName'
-        MgmtAmi: !Ref 'MgmtAmi'
-        MgmtDataDriveSizeGiB: !Ref 'MgmtDataDriveSizeGiB'
-        MgmtServerInstanceType: !Ref 'MgmtServerInstanceType'
-        MgmtServerNetBIOSName: !Ref 'MgmtServerNetBIOSName'
-        MgmtServerSubnet: !Ref 'PrivateSubnet1ID'
-        NonWindowsDomainJoin: !Ref 'NonWindowsDomainJoin'
-        NonWindowsDomainJoinSecret: !If [ShouldCreateNonWindowsDomainJoinADUser, !Ref 'NonWindowsDomainJoinSecrets', !Ref 'AWS::NoValue']
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !Ref 'VPCID'
+        AdministratorSecret: !Ref ADAdminSecrets
+        DirectoryID: !Ref MicrosoftAD
+        DomainController1IP: !Select [0, !GetAtt MicrosoftAD.DnsIpAddresses]
+        DomainController2IP: !Select [1, !GetAtt MicrosoftAD.DnsIpAddresses]
+        DomainDNSName: !Ref DomainDNSName
+        DomainMembersSG: !Ref DomainMemberSG
+        DomainNetBIOSName: !Ref DomainNetBIOSName
+        EnableAdvancedAudtingandMetrics: !Ref MgmtServerEnableAdvancedAudtingandMetrics
+        KeyPairName: !Ref KeyPairName
+        MgmtAmi: !Ref MgmtAmi
+        MgmtDataDriveSizeGiB: !Ref MgmtDataDriveSizeGiB
+        MgmtServerInstanceType: !Ref MgmtServerInstanceType
+        MgmtServerNetBIOSName: !Ref MgmtServerNetBIOSName
+        MgmtServerSubnet: !Ref PrivateSubnet1ID
+        NonWindowsDomainJoin: !Ref NonWindowsDomainJoin
+        NonWindowsDomainJoinSecret: !If [ShouldCreateNonWindowsDomainJoinADUser, !Ref NonWindowsDomainJoinSecrets, !Ref AWS::NoValue]
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        VPCCIDR: !Ref VPCCIDR
+        VPCID: !Ref VPCID
   EntCAStack:
     Condition: ShouldCreateOneTierPkiResource
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/templates/one-tier.template'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AMI: !Ref 'CaAmi'
-        AdministratorSecret: !Ref 'ADAdminSecrets'
-        DirectoryType: 'AWSManaged'
-        DomainController1IP: !Select ['0', !GetAtt 'MicrosoftAD.DnsIpAddresses']
-        DomainController2IP: !Select ['1', !GetAtt 'MicrosoftAD.DnsIpAddresses']
-        DomainDNSName: !Ref 'DomainDNSName'
-        DomainMembersSG: !Ref 'DomainMemberSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        EntCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        EntCaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        EntCaKeyLength: !Ref 'CaKeyLength'
-        EntCaServerInstanceType: !Ref 'CaServerInstanceType'
-        EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
-        EntCaServerSubnet: !Ref 'PrivateSubnet1ID'
-        EntCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        KeyPairName: !Ref 'KeyPairName'
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        AMI: !Ref CaAmi
+        AdministratorSecret: !Ref ADAdminSecrets
+        DirectoryType: AWSManaged
+        DomainController1IP: !Select [0, !GetAtt MicrosoftAD.DnsIpAddresses]
+        DomainController2IP: !Select [1, !GetAtt MicrosoftAD.DnsIpAddresses]
+        DomainDNSName: !Ref DomainDNSName
+        DomainMembersSG: !Ref DomainMemberSG
+        DomainNetBIOSName: !Ref DomainNetBIOSName
+        EntCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        EntCaHashAlgorithm: !Ref CaHashAlgorithm
+        EntCaKeyLength: !Ref CaKeyLength
+        EntCaServerInstanceType: !Ref CaServerInstanceType
+        EntCaServerNetBIOSName: !Ref EntCaServerNetBIOSName
+        EntCaServerSubnet: !Ref PrivateSubnet1ID
+        EntCaValidityPeriodUnits: !Ref CaValidityPeriodUnits
+        KeyPairName: !Ref KeyPairName
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
         QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/'
-        S3CRLBucketName: !Ref 'S3CRLBucketName'
-        UseS3ForCRL: !Ref 'UseS3ForCRL'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !Ref 'VPCID'
+        S3CRLBucketName: !Ref S3CRLBucketName
+        UseS3ForCRL: !Ref UseS3ForCRL
+        VPCCIDR: !Ref VPCCIDR
+        VPCID: !Ref VPCID
   TwoTierCAStack:
     Condition: ShouldCreateTwoTierPkiResource
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/templates/two-tier.template'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AMI: !Ref 'CaAmi'
-        AdministratorSecret: !Ref 'ADAdminSecrets'
+        AMI: !Ref CaAmi
+        AdministratorSecret: !Ref ADAdminSecrets
         DirectoryType: 'AWSManaged'
-        DomainController1IP: !Select ['0', !GetAtt 'MicrosoftAD.DnsIpAddresses']
-        DomainController2IP: !Select ['1', !GetAtt 'MicrosoftAD.DnsIpAddresses']
-        DomainDNSName: !Ref 'DomainDNSName'
-        DomainMembersSG: !Ref 'DomainMemberSG'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        KeyPairName: !Ref 'KeyPairName'
-        OrCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        OrCaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        OrCaKeyLength: !Ref 'CaKeyLength'
-        OrCaServerInstanceType: !Ref 'CaServerInstanceType'
-        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
-        OrCaServerSubnet: !Ref 'PrivateSubnet1ID'
-        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/'
-        S3CRLBucketName: !Ref 'S3CRLBucketName'
-        SubCaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        SubCaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        SubCaKeyLength: !Ref 'CaKeyLength'
-        SubCaServerInstanceType: !Ref 'CaServerInstanceType'
-        SubCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
-        SubCaServerSubnet: !Ref 'PrivateSubnet1ID'
-        SubCaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        UseS3ForCRL: !Ref 'UseS3ForCRL'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !Ref 'VPCID'
+        DomainController1IP: !Select [0, !GetAtt MicrosoftAD.DnsIpAddresses]
+        DomainController2IP: !Select [1, !GetAtt MicrosoftAD.DnsIpAddresses]
+        DomainDNSName: !Ref DomainDNSName
+        DomainMembersSG: !Ref DomainMemberSG
+        DomainNetBIOSName: !Ref DomainNetBIOSName
+        KeyPairName: !Ref KeyPairName
+        OrCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        OrCaHashAlgorithm: !Ref CaHashAlgorithm
+        OrCaKeyLength: !Ref CaKeyLength
+        OrCaServerInstanceType: !Ref CaServerInstanceType
+        OrCaServerNetBIOSName: !Ref OrCaServerNetBIOSName
+        OrCaServerSubnet: !Ref PrivateSubnet1ID
+        OrCaValidityPeriodUnits: !Ref OrCaValidityPeriodUnits
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-microsoft-pki/
+        S3CRLBucketName: !Ref S3CRLBucketName
+        SubCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        SubCaHashAlgorithm: !Ref CaHashAlgorithm
+        SubCaKeyLength: !Ref CaKeyLength
+        SubCaServerInstanceType: !Ref CaServerInstanceType
+        SubCaServerNetBIOSName: !Ref EntCaServerNetBIOSName
+        SubCaServerSubnet: !Ref PrivateSubnet1ID
+        SubCaValidityPeriodUnits: !Ref CaValidityPeriodUnits
+        UseS3ForCRL: !Ref UseS3ForCRL
+        VPCCIDR: !Ref VPCCIDR
+        VPCID: !Ref VPCID
 Outputs:
   ADSecretsArn:
     Description: Managed AD Admin Secrets
-    Value: !Ref 'ADAdminSecrets'
+    Value: !Ref ADAdminSecrets
   ADServer1PrivateIP:
     Description: AD Server 1 Private IP Address (this may vary based on Directory Service order of IP addresses)
-    Value: !Select ['0', !GetAtt 'MicrosoftAD.DnsIpAddresses']
+    Value: !Select [0, !GetAtt MicrosoftAD.DnsIpAddresses]
   ADServer2PrivateIP:
     Description: AD Server 2 Private IP Address (this may vary based on Directory Service order of IP addresses)
-    Value: !Select ['1', !GetAtt 'MicrosoftAD.DnsIpAddresses']
+    Value: !Select [1, !GetAtt MicrosoftAD.DnsIpAddresses]
   DirectoryID:
     Description: Directory Services ID
-    Value: !Ref 'MicrosoftAD'
+    Value: !Ref MicrosoftAD
   DomainAdmin:
     Description: Domain administrator account
     Value: !Sub ${DomainNetBIOSName}\admin
   DomainMemberSGID:
     Description: Domain Member Security Group ID
-    Value: !Ref 'DomainMemberSG'
+    Value: !Ref DomainMemberSG
   NonWindowsDomainJoinSecrets:
     Condition: ShouldCreateNonWindowsDomainJoinADUser
     Description: ARN for the Secret that has Password and User bane for the domain join user

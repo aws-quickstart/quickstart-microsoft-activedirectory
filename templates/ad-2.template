@@ -32,6 +32,7 @@ Metadata:
           - ADServer2PrivateIP
           - DataDriveSizeGiB
           - EbsEncryptionKmsKeyId
+          - EnableAdvancedAudtingandMetrics
           - KeyPairName
           - LatestAmiId
       - Label:
@@ -71,6 +72,8 @@ Metadata:
         default: Domain NetBIOS Name
       EbsEncryptionKmsKeyId:
         default: KMS Key for EBS Encryption
+      EnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics
       ExistingDomainController1IP:
         default: IP used for DNS (Must be accessible)
       ExistingDomainController2IP:
@@ -163,6 +166,13 @@ Parameters:
     Default: alias/aws/ebs
     Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
     Type: String
+  EnableAdvancedAudtingandMetrics:
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: String
+    Default: 'false'
   ExistingDomainController1IP:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
     Default: 10.0.0.10
@@ -259,59 +269,46 @@ Resources:
         schemaVersion: '0.3'
         description: 'Deploy non-promoted domain contollers with SSM Automation'
         parameters:
-          VPCCIDR:
-            default: '10.0.0.0/16'
-            description: 'CIDR Block for the VPC'
-            type: 'String'
           ADServer1NetBIOSName:
-            default: 'DC1'
-            description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
-            type: 'String'
+            description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
+            type: String
           ADServer2NetBIOSName:
-            default: 'DC2'
-            description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
-            type: 'String'
-          ExistingDomainController1IP:
-            description: 'IP of DNS server that can resolve domain (Must be accessible)'
-            type: 'String'
-          ExistingDomainController2IP:
-            description: 'IP of DNS server that can resolve domain (Must be accessible)'
-            type: 'String'
+            description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
+            type: String
           DomainDNSName:
-            default: 'example.com'
-            description: 'Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com'
-            type: 'String'
+            description: Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com
+            type: String
           DomainNetBIOSName:
-            default: 'example'
-            description:
-              'NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g.
-              EXAMPLE'
-            type: 'String'
+            description: NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g. EXAMPLE
+            type: String
+          EnableAdvancedAudtingandMetrics:
+            description: Enable advanced auditing and metrics
+            type: String
+          ExistingDomainController1IP:
+            description: IP of DNS server that can resolve domain (Must be accessible)
+            type: String
+          ExistingDomainController2IP:
+            description: IP of DNS server that can resolve domain (Must be accessible)
+            type: String
           QSS3BucketName:
-            default: 'aws-quickstart'
-            description:
-              'S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and
-              hyphens (-). It cannot start or end with a hyphen (-)'
-            type: 'String'
+            description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+            type: String
           QSS3BucketRegion:
-            default: 'us-east-1'
-            description:
-              'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value'
-            type: 'String'
+            description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
+            type: String
           QSS3KeyPrefix:
             default: 'quickstart-microsoft-activedirectory/'
-            description:
-              'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens
-              (-), and forward slash (/)'
-            type: 'String'
+            description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
+            type: String
           StackName:
-            default: ''
-            description: 'Stack Name Input for cfn resource signal'
-            type: 'String'
+            description: Stack Name Input for cfn resource signal
+            type: String
           URLSuffix:
-            default: 'amazonaws.com'
-            description: 'AWS URL suffix'
-            type: 'String'
+            description: AWS URL suffix
+            type: String
+          VPCCIDR:
+            description: CIDR Block for the VPC
+            type: String
         mainSteps:
           - name: dcsInstanceIds
             action: aws:executeAwsApi
@@ -397,11 +394,15 @@ Resources:
                       },
                       @{
                           Name = 'ComputerManagementDsc'
-                          Version = '8.4.0'
+                          Version = '8.5.0'
                       },
                       @{
                           Name = 'DnsServerDsc'
                           Version = '3.0.0'
+                      },
+                      @{
+                          Name = 'AuditPolicyDsc'
+                          Version = '1.4.0.0'
                       }
                   )
 
@@ -464,7 +465,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   New-VolumeFromRawDisk
@@ -485,7 +486,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   $EniConfig = Get-EniConfig
@@ -506,7 +507,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigInstance' -Wait -Verbose -Force
@@ -526,7 +527,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   $EniConfig = Get-EniConfig
@@ -547,7 +548,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigInstance' -Wait -Verbose -Force
@@ -567,10 +568,16 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   Set-AD2PostConfig
+
+                  If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {
+                    Set-DcAuditDscConfiguration
+                    Set-LogsAndMetricsCollection -Role 'DomainController'
+                  }
+
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
               CloudWatchOutputConfig:
                 CloudWatchOutputEnabled: true
@@ -622,72 +629,54 @@ Resources:
         schemaVersion: '0.3'
         description: 'Deploy promoted domain contollers with SSM Automation'
         parameters:
-          VPCCIDR:
-            default: '10.0.0.0/16'
-            description: 'CIDR block for private subnet 1 located in Availability Zone 1'
-            type: 'String'
-          ADServer1NetBIOSName:
-            default: 'DC1'
-            description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
-            type: 'String'
-          ADServer1PrivateIP:
-            default: '10.0.0.11'
-            description: 'Fixed private IP for the first additional Active Directory Domain Controller located in subnet 1'
-            type: 'String'
-          ADServer2NetBIOSName:
-            default: 'DC2'
-            description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
-            type: 'String'
-          ADServer2PrivateIP:
-            default: '10.0.32.11'
-            description: 'Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2'
-            type: 'String'
           ADAdminSecParamName:
-            description:
-              'ARN for the Administrator credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)'
-            type: 'String'
-          RestoreModeSecParamName:
-            description:
-              'ARN for the Restore Mode credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)'
-            type: 'String'
-          ExistingDomainController1IP:
-            description: 'IP of DNS server that can resolve domain (Must be accessible)'
-            type: 'String'
+            description: ARN for the Administrator credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)
+            type: String
+          ADServer1NetBIOSName:
+            description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
+            type: String
+          ADServer1PrivateIP:
+            description: Fixed private IP for the first additional Active Directory Domain Controller located in subnet 1
+            type: String
+          ADServer2NetBIOSName:
+            description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
+            type: String
+          ADServer2PrivateIP:
+            description: Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2
+            type: String
           DomainDNSName:
-            default: 'example.com'
-            description: 'Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com'
-            type: 'String'
+            description: Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com
+            type: String
           DomainNetBIOSName:
-            default: 'example'
-            description:
-              'NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g.
-              EXAMPLE'
-            type: 'String'
+            description: NetBIOS name of the domain (up to 15 characters) you would like to join and promote to for users of earlier versions of Windows e.g. EXAMPLE
+            type: String
+          EnableAdvancedAudtingandMetrics:
+            description: Enable advanced auditing and metrics
+            type: String
+          ExistingDomainController1IP:
+            description: IP of DNS server that can resolve domain (Must be accessible)
+            type: String
+          RestoreModeSecParamName:
+            description: ARN for the Restore Mode credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)
+            type: String
           QSS3BucketName:
-            default: 'aws-quickstart'
-            description:
-              'S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and
-              hyphens (-). It cannot start or end with a hyphen (-)'
-            type: 'String'
+            description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+            type: String
           QSS3BucketRegion:
-            default: 'us-east-1'
-            description:
-              'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value'
-            type: 'String'
+            description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
+            type: String
           QSS3KeyPrefix:
-            default: 'quickstart-microsoft-activedirectory/'
-            description:
-              'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens
-              (-), and forward slash (/)'
-            type: 'String'
+            description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
+            type: String
           StackName:
-            default: ''
-            description: 'Stack Name Input for cfn resource signal'
-            type: 'String'
+            description: Stack Name Input for cfn resource signal
+            type: String
           URLSuffix:
-            default: 'amazonaws.com'
-            description: 'AWS URL suffix'
-            type: 'String'
+            description: AWS URL suffix
+            type: String
+          VPCCIDR:
+            description: CIDR block for private subnet 1 located in Availability Zone 1
+            type: String
         mainSteps:
           - name: dcsInstanceIds
             action: aws:executeAwsApi
@@ -773,11 +762,15 @@ Resources:
                       },
                       @{
                           Name = 'ComputerManagementDsc'
-                          Version = '8.4.0'
+                          Version = '8.5.0'
                       },
                       @{
                           Name = 'DnsServerDsc'
                           Version = '3.0.0'
+                      },
+                      @{
+                          Name = 'AuditPolicyDsc'
+                          Version = '1.4.0.0'
                       }
                   )
 
@@ -840,7 +833,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   New-VolumeFromRawDisk
@@ -861,7 +854,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   $EniConfig = Get-EniConfig
@@ -883,7 +876,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   $EniConfig = Get-EniConfig
@@ -906,7 +899,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   Start-DscConfiguration 'C:\AWSQuickstart\ConfigInstance' -Wait -Verbose -Force
@@ -945,7 +938,7 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   $DaSecret = Get-SecretInfo -Domain '{{DomainNetBIOSName}}' -SecretArn '{{ADAdminSecParamName}}'
@@ -965,10 +958,16 @@ Resources:
                   Try {
                       Import-Module -Name 'C:\AWSQuickstart\Module-AD\Module-AD.psm1' -Force
                   } Catch [System.Exception] {
-                      Write-Output "Failed to import AD PS Module $_"
+                      Write-Output "Failed to import AWSQuickstart AD PS Module $_"
                       Exit 1
                   }
                   Set-AD2PostConfig
+
+                  If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {
+                    Set-DcAuditDscConfiguration
+                    Set-LogsAndMetricsCollection -Role 'DomainController'
+                  }
+
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
               CloudWatchOutputConfig:
                 CloudWatchOutputEnabled: true
@@ -1077,12 +1076,12 @@ Resources:
                 Resource: '*'
               - Effect: Allow
                 Action: cloudformation:SignalResource
-                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
+                Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*
           PolicyName: AWS-Mgmt-Quick-Start-Policy
       Path: /
       ManagedPolicyArns:
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy'
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -1098,7 +1097,7 @@ Resources:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-        - !Ref 'ADServerRole'
+        - !Ref ADServerRole
       Path: /
   SecretRolePolicy:
     Condition: DoJoinAndPromote
@@ -1113,15 +1112,15 @@ Resources:
               - secretsmanager:GetSecretValue
               - secretsmanager:DescribeSecret
             Resource:
-              - !Ref 'AdministratorSecret'
-              - !Ref 'RestoreModeSecret'
+              - !Ref AdministratorSecret
+              - !Ref RestoreModeSecret
       Roles:
-        - !Ref 'ADServerRole'
+        - !Ref ADServerRole
   DomainControllersSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Domain Controllers Security Group
-      VpcId: !Ref 'VPCID'
+      VpcId: !Ref VPCID
       Tags:
         - Key: Name
           Value: DomainControllersSecurityGroup
@@ -1147,34 +1146,36 @@ Resources:
   DomainController1:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref 'LatestAmiId'
-      IamInstanceProfile: !Ref 'ADServerProfile'
-      InstanceType: !Ref 'ADServerInstanceType'
-      SubnetId: !Ref 'Subnet1ID'
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref ADServerProfile
+      InstanceType: !Ref ADServerInstanceType
+      SubnetId: !Ref Subnet1ID
       Tags:
         - Key: Name
-          Value: !Ref 'ADServer1NetBIOSName'
+          Value: !Ref ADServer1NetBIOSName
         - Key: Domain
-          Value: !Ref 'DomainDNSName'
+          Value: !Ref DomainDNSName
+        - Key: Role
+          Value: Domain Controller
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
         - DeviceName: /dev/xvdf
           Ebs:
-            VolumeSize: !Ref 'DataDriveSizeGiB'
+            VolumeSize: !Ref DataDriveSizeGiB
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
       SecurityGroupIds:
-        - !Ref 'DomainControllersSG'
-      PrivateIpAddress: !Ref 'ADServer1PrivateIP'
-      KeyName: !Ref 'KeyPairName'
+        - !Ref DomainControllersSG
+      PrivateIpAddress: !Ref ADServer1PrivateIP
+      KeyName: !Ref KeyPairName
   DomainController2:
     Condition: DoNOTJoinAndPromote
     CreationPolicy:
@@ -1184,68 +1185,59 @@ Resources:
     DependsOn: DomainController1
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref 'LatestAmiId'
-      IamInstanceProfile: !Ref 'ADServerProfile'
-      InstanceType: !Ref 'ADServerInstanceType'
-      SubnetId: !Ref 'Subnet2ID'
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref ADServerProfile
+      InstanceType: !Ref ADServerInstanceType
+      SubnetId: !Ref Subnet2ID
       Tags:
         - Key: Name
-          Value: !Ref 'ADServer2NetBIOSName'
+          Value: !Ref ADServer2NetBIOSName
         - Key: Domain
-          Value: !Ref 'DomainDNSName'
+          Value: !Ref DomainDNSName
+        - Key: Role
+          Value: Domain Controller
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
         - DeviceName: /dev/xvdf
           Ebs:
-            VolumeSize: !Ref 'DataDriveSizeGiB'
+            VolumeSize: !Ref DataDriveSizeGiB
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
       SecurityGroupIds:
-        - !Ref 'DomainControllersSG'
-      PrivateIpAddress: !Ref 'ADServer2PrivateIP'
-      KeyName: !Ref 'KeyPairName'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "<powershell>\n"
-            - 'Start-SSMAutomationExecution -DocumentName '
-            - !Sub '"${AWSQuickstartActiveDirectoryDS}"'
-            - ' -Parameter @{'
-            - '"VPCCIDR"='
-            - !Sub '"${VPCCIDR}"'
-            - ';"ADServer1NetBIOSName"='
-            - !Sub '"${ADServer1NetBIOSName}"'
-            - ';"ADServer2NetBIOSName"='
-            - !Sub '"${ADServer2NetBIOSName}"'
-            - ';"ExistingDomainController1IP"='
-            - !Sub '"${ExistingDomainController1IP}"'
-            - ';"ExistingDomainController2IP"='
-            - !Sub '"${ExistingDomainController2IP}"'
-            - ';"DomainDNSName"='
-            - !Sub '"${DomainDNSName}"'
-            - ';"DomainNetBIOSName"='
-            - !Sub '"${DomainNetBIOSName}"'
-            - ';"QSS3BucketName"='
-            - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
-            - ';"QSS3BucketRegion"='
-            - !If [UsingDefaultBucket, !Sub '"${AWS::Region}"', !Sub '"${QSS3BucketRegion}"']
-            - ';"QSS3KeyPrefix"='
-            - !Sub '"${QSS3KeyPrefix}"'
-            - ';"StackName"='
-            - !Sub '"${AWS::StackName}"'
-            - ';"URLSuffix"='
-            - !Sub '"${AWS::URLSuffix}"'
-            - '}'
-            - "\n"
-            - "</powershell>\n"
+        - !Ref DomainControllersSG
+      PrivateIpAddress: !Ref ADServer2PrivateIP
+      KeyName: !Ref KeyPairName
+      UserData:
+        Fn::Base64: !Sub
+            - |
+                <powershell>
+                $Params = @{
+                    ADServer1NetBIOSName = '${ADServer1NetBIOSName}'
+                    ADServer2NetBIOSName = '${ADServer2NetBIOSName}'
+                    DomainDNSName = '${DomainDNSName}'
+                    DomainNetBIOSName = '${DomainNetBIOSName}'
+                    EnableAdvancedAudtingandMetrics = '${EnableAdvancedAudtingandMetrics}'
+                    ExistingDomainController1IP = '${ExistingDomainController1IP}'
+                    ExistingDomainController2IP = '${ExistingDomainController2IP}'
+                    QSS3BucketName = '${QSS3BucketName}'
+                    QSS3BucketRegion =  '${QSS3BucketRegion}'
+                    QSS3KeyPrefix = '${QSS3KeyPrefix}'
+                    StackName = '${AWS::StackName}'
+                    URLSuffix = '${AWS::URLSuffix}'
+                    VPCCIDR = '${VPCCIDR}'
+                }
+                Start-SSMAutomationExecution -DocumentName '${AWSQuickstartActiveDirectoryDS}' -Parameter $Params
+                </powershell>
+            - QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Sub '${QSS3BucketName}']
+              QSS3BucketRegion: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Sub '${QSS3BucketRegion}']
   DomainController2Promote:
     Condition: DoJoinAndPromote
     CreationPolicy:
@@ -1255,75 +1247,63 @@ Resources:
     DependsOn: DomainController1
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref 'LatestAmiId'
-      IamInstanceProfile: !Ref 'ADServerProfile'
-      InstanceType: !Ref 'ADServerInstanceType'
-      SubnetId: !Ref 'Subnet2ID'
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref ADServerProfile
+      InstanceType: !Ref ADServerInstanceType
+      SubnetId: !Ref Subnet2ID
       Tags:
         - Key: Name
-          Value: !Ref 'ADServer2NetBIOSName'
+          Value: !Ref ADServer2NetBIOSName
         - Key: Domain
-          Value: !Ref 'DomainDNSName'
+          Value: !Ref DomainDNSName
+        - Key: Role
+          Value: Domain Controller
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 60
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
         - DeviceName: /dev/xvdf
           Ebs:
-            VolumeSize: !Ref 'DataDriveSizeGiB'
+            VolumeSize: !Ref DataDriveSizeGiB
             VolumeType: gp3
             Encrypted: true
-            KmsKeyId: !Ref 'EbsEncryptionKmsKeyId'
+            KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeleteOnTermination: true
       SecurityGroupIds:
-        - !Ref 'DomainControllersSG'
-      PrivateIpAddress: !Ref 'ADServer2PrivateIP'
-      KeyName: !Ref 'KeyPairName'
-      UserData: !Base64
-        Fn::Join:
-          - ''
-          - - "<powershell>\n"
-            - 'Start-SSMAutomationExecution -DocumentName '
-            - !Sub '"${AWSQuickstartActiveDirectoryDSPromote}"'
-            - ' -Parameter @{'
-            - '"VPCCIDR"='
-            - !Sub '"${VPCCIDR}"'
-            - ';"ADServer1NetBIOSName"='
-            - !Sub '"${ADServer1NetBIOSName}"'
-            - ';"ADServer1PrivateIP"='
-            - !Sub '"${ADServer1PrivateIP}"'
-            - ';"ADServer2NetBIOSName"='
-            - !Sub '"${ADServer2NetBIOSName}"'
-            - ';"ADServer2PrivateIP"='
-            - !Sub '"${ADServer2PrivateIP}"'
-            - ';"ADAdminSecParamName"='
-            - !Sub '"${AdministratorSecret}"'
-            - ';"RestoreModeSecParamName"='
-            - !Sub '"${RestoreModeSecret}"'
-            - ';"ExistingDomainController1IP"='
-            - !Sub '"${ExistingDomainController1IP}"'
-            - ';"DomainDNSName"='
-            - !Sub '"${DomainDNSName}"'
-            - ';"DomainNetBIOSName"='
-            - !Sub '"${DomainNetBIOSName}"'
-            - ';"QSS3BucketName"='
-            - !If [UsingDefaultBucket, !Sub '"${QSS3BucketName}-${AWS::Region}"', !Sub '"${QSS3BucketName}"']
-            - ';"QSS3BucketRegion"='
-            - !If [UsingDefaultBucket, !Sub '"${AWS::Region}"', !Sub '"${QSS3BucketRegion}"']
-            - ';"QSS3KeyPrefix"='
-            - !Sub '"${QSS3KeyPrefix}"'
-            - ';"StackName"='
-            - !Sub '"${AWS::StackName}"'
-            - ';"URLSuffix"='
-            - !Sub '"${AWS::URLSuffix}"'
-            - '}'
-            - "\n"
-            - "</powershell>\n"
+        - !Ref DomainControllersSG
+      PrivateIpAddress: !Ref ADServer2PrivateIP
+      KeyName: !Ref KeyPairName
+      UserData:
+        Fn::Base64: !Sub
+            - |
+                <powershell>
+                $Params = @{
+                    ADAdminSecParamName = '${AdministratorSecret}'
+                    ADServer1NetBIOSName = '${ADServer1NetBIOSName}'
+                    ADServer1PrivateIP = '${ADServer1PrivateIP}'
+                    ADServer2NetBIOSName = '${ADServer2NetBIOSName}'
+                    ADServer2PrivateIP = '${ADServer2PrivateIP}'
+                    DomainDNSName = '${DomainDNSName}'
+                    DomainNetBIOSName = '${DomainNetBIOSName}'
+                    EnableAdvancedAudtingandMetrics = '${EnableAdvancedAudtingandMetrics}'
+                    ExistingDomainController1IP = '${ExistingDomainController1IP}'
+                    RestoreModeSecParamName = '${RestoreModeSecret}'
+                    QSS3BucketName = '${QSS3BucketName}'
+                    QSS3BucketRegion =  '${QSS3BucketRegion}'
+                    QSS3KeyPrefix = '${QSS3KeyPrefix}'
+                    StackName = '${AWS::StackName}'
+                    URLSuffix = '${AWS::URLSuffix}'
+                    VPCCIDR = '${VPCCIDR}'
+                }
+                Start-SSMAutomationExecution -DocumentName '${AWSQuickstartActiveDirectoryDSPromote}' -Parameter $Params
+                </powershell>
+            - QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Sub '${QSS3BucketName}']
+              QSS3BucketRegion: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Sub '${QSS3BucketRegion}']
 Outputs:
   DC1InstanceId:
-    Value: !Ref 'DomainController1'
+    Value: !Ref DomainController1
     Description: Domain Controller instance ID
