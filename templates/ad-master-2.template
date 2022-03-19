@@ -11,7 +11,7 @@ Metadata:
       ignore_checks:
         - W9006
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for extending on-premises AD into a new VPC'
+    EntrypointName: Parameters for extending on-premises AD into a new VPC
     Order: '3'
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -35,6 +35,7 @@ Metadata:
           - ADServer1PrivateIP
           - ADServer2NetBIOSName
           - ADServer2PrivateIP
+          - ADServerEnableAdvancedAudtingandMetrics
           - DataDriveSizeGiB
           - KeyPairName
       - Label:
@@ -67,6 +68,8 @@ Metadata:
         default: Domain Controller 2 NetBIOS Name
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
+      ADServerEnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics
       ADServerInstanceType:
         default: Domain Controllers Instance Type
       AdminPassword:
@@ -140,6 +143,13 @@ Parameters:
     Default: 10.0.32.11
     Description: Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2
     Type: String
+  ADServerEnableAdvancedAudtingandMetrics:
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: String
+    Default: 'false'
   ADServerInstanceType:
     AllowedValues:
       - t3.medium
@@ -215,7 +225,7 @@ Parameters:
       - '2'
       - '3'
       - '4'
-    Default: '1'
+    Default: '0'
     Description: Enter the number of Remote Desktop Gateway hosts to create
     Type: String
   PrivateSubnet1CIDR:
@@ -269,6 +279,7 @@ Parameters:
   RDGWCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
+    Default: 10.0.0.0/16
     Description: Allowed CIDR Block for external access to the Remote Desktop Gateways
     Type: String
   RDGWInstanceType:
@@ -294,7 +305,7 @@ Parameters:
     Type: String
 Conditions:
   IncludeRDGW: !Not [!Equals [!Ref NumberOfRDGWHosts, '0']]
-  IsTwoAz: !Equals [!Ref 'NumberOfAZs', '2']
+  IsTwoAz: !Equals [!Ref NumberOfAZs, '2']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Resources:
   VPCStack:
@@ -302,45 +313,46 @@ Resources:
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template.yaml'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AvailabilityZones: !Join [',', !Ref 'AvailabilityZones']
+        AvailabilityZones: !Join [',', !Ref AvailabilityZones]
         NumberOfAZs: !If [IsTwoAz, '2', '3']
-        PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
-        PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'
-        PrivateSubnet3ACIDR: !If [IsTwoAz, !Ref 'AWS::NoValue', !Ref 'PrivateSubnet3CIDR']
-        PublicSubnet1CIDR: !Ref 'PublicSubnet1CIDR'
-        PublicSubnet2CIDR: !Ref 'PublicSubnet2CIDR'
-        PublicSubnet3CIDR: !If [IsTwoAz, !Ref 'AWS::NoValue', !Ref 'PublicSubnet3CIDR']
-        VPCCIDR: !Ref 'VPCCIDR'
+        PrivateSubnet1ACIDR: !Ref PrivateSubnet1CIDR
+        PrivateSubnet2ACIDR: !Ref PrivateSubnet2CIDR
+        PrivateSubnet3ACIDR: !If [IsTwoAz, !Ref AWS::NoValue, !Ref PrivateSubnet3CIDR]
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+        PublicSubnet3CIDR: !If [IsTwoAz, !Ref AWS::NoValue, !Ref PublicSubnet3CIDR]
+        VPCCIDR: !Ref VPCCIDR
   ADStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
-        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-2.template'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-2.template.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        ADServer1NetBIOSName: !Ref 'ADServer1NetBIOSName'
-        ADServer1PrivateIP: !Ref 'ADServer1PrivateIP'
-        ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
-        ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
-        ADServerInstanceType: !Ref 'ADServerInstanceType'
-        DataDriveSizeGiB: !Ref 'DataDriveSizeGiB'
-        DomainDNSName: !Ref 'DomainDNSName'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        ExistingDomainController1IP: !Ref 'ExistingDomainController1IP'
-        ExistingDomainController2IP: !Ref 'ExistingDomainController2IP'
+        ADServer1NetBIOSName: !Ref ADServer1NetBIOSName
+        ADServer1PrivateIP: !Ref ADServer1PrivateIP
+        ADServer2NetBIOSName: !Ref ADServer2NetBIOSName
+        ADServer2PrivateIP: !Ref ADServer2PrivateIP
+        EnableAdvancedAudtingandMetrics: !Ref ADServerEnableAdvancedAudtingandMetrics
+        ADServerInstanceType: !Ref ADServerInstanceType
+        DataDriveSizeGiB: !Ref DataDriveSizeGiB
+        DomainDNSName: !Ref DomainDNSName
+        DomainNetBIOSName: !Ref DomainNetBIOSName
+        ExistingDomainController1IP: !Ref ExistingDomainController1IP
+        ExistingDomainController2IP: !Ref ExistingDomainController2IP
         JoinAndPromote: 'No'
-        KeyPairName: !Ref 'KeyPairName'
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
-        Subnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
-        Subnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        KeyPairName: !Ref KeyPairName
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        Subnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+        Subnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+        VPCCIDR: !Ref VPCCIDR
+        VPCID: !GetAtt VPCStack.Outputs.VPCID
   RDGWStack:
     Condition: IncludeRDGW
     DependsOn: ADStack
@@ -348,19 +360,19 @@ Resources:
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/templates/rdgw-standalone.template'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AdminPassword: !Ref 'AdminPassword'
-        AdminUser: !Ref 'AdminUser'
-        DomainDNSName: !Ref 'DomainDNSName'
-        KeyPairName: !Ref 'KeyPairName'
-        NumberOfRDGWHosts: !Ref 'NumberOfRDGWHosts'
-        PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
-        PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/'
-        RDGWInstanceType: !Ref 'RDGWInstanceType'
-        RDGWCIDR: !Ref 'RDGWCIDR'
-        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        AdminPassword: !Ref AdminPassword
+        AdminUser: !Ref AdminUser
+        DomainDNSName: !Ref DomainDNSName
+        KeyPairName: !Ref KeyPairName
+        NumberOfRDGWHosts: !Ref NumberOfRDGWHosts
+        PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
+        PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/
+        RDGWInstanceType: !Ref RDGWInstanceType
+        RDGWCIDR: !Ref RDGWCIDR
+        VPCID: !GetAtt VPCStack.Outputs.VPCID

@@ -12,7 +12,7 @@ Metadata:
       ignore_checks:
         - W9006
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into a new VPC'
+    EntrypointName: Parameters for deploying AWS Managed Microsoft AD into a new VPC
     Order: '5'
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -48,6 +48,7 @@ Metadata:
           - MgmtServerInstanceType
           - MgmtDataDriveSizeGiB
           - MgmtServerNetBIOSName
+          - MgmtServerEnableAdvancedAudtingandMetrics
       - Label:
           default: Microsoft Active Directory Certificate Services configuration
         Parameters:
@@ -105,6 +106,8 @@ Metadata:
         default: Data Drive Size
       MgmtServer:
         default: Deploy Management Server
+      MgmtServerEnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics
       MgmtServerInstanceType:
         default: Management Server Instance Type
       MgmtServerNetBIOSName:
@@ -246,6 +249,13 @@ Parameters:
     Default: 'true'
     Description: Do you want to deploy a Management Server
     Type: String
+  MgmtServerEnableAdvancedAudtingandMetrics:
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: String
+    Default: 'false'
   MgmtServerInstanceType:
     AllowedValues:
       - t3.medium
@@ -289,7 +299,7 @@ Parameters:
       - '2'
       - '3'
       - '4'
-    Default: '1'
+    Default: '0'
     Description: Enter the number of Remote Desktop Gateway instances to create
     Type: String
   OrCaServerNetBIOSName:
@@ -362,6 +372,7 @@ Parameters:
   RDGWCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
+    Default: 10.0.0.0/16
     Description: Allowed CIDR Block for external access to the Remote Desktop Gateways
     Type: String
   RDGWInstanceType:
@@ -399,7 +410,7 @@ Parameters:
     Type: String
 Conditions:
   IncludeRDGW: !Not [!Equals [!Ref NumberOfRDGWHosts, '0']]
-  IsTwoAz: !Equals [!Ref 'NumberOfAZs', '2']
+  IsTwoAz: !Equals [!Ref NumberOfAZs, '2']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Rules:
   NonWindowsDomainJoin:
@@ -420,76 +431,77 @@ Resources:
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template.yaml'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AvailabilityZones: !Join [',', !Ref 'AvailabilityZones']
+        AvailabilityZones: !Join [',', !Ref AvailabilityZones]
         NumberOfAZs: !If [IsTwoAz, '2', '3']
-        PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
-        PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'
-        PrivateSubnet3ACIDR: !If [IsTwoAz, !Ref 'AWS::NoValue', !Ref 'PrivateSubnet3CIDR']
-        PublicSubnet1CIDR: !Ref 'PublicSubnet1CIDR'
-        PublicSubnet2CIDR: !Ref 'PublicSubnet2CIDR'
-        PublicSubnet3CIDR: !If [IsTwoAz, !Ref 'AWS::NoValue', !Ref 'PublicSubnet3CIDR']
-        VPCCIDR: !Ref 'VPCCIDR'
+        PrivateSubnet1ACIDR: !Ref PrivateSubnet1CIDR
+        PrivateSubnet2ACIDR: !Ref PrivateSubnet2CIDR
+        PrivateSubnet3ACIDR: !If [IsTwoAz, !Ref AWS::NoValue, !Ref PrivateSubnet3CIDR]
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+        PublicSubnet3CIDR: !If [IsTwoAz, !Ref AWS::NoValue, !Ref PublicSubnet3CIDR]
+        VPCCIDR: !Ref VPCCIDR
   ADStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/ad-3.template.yaml'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        ADEdition: !Ref 'ADEdition'
-        CaDataDriveSizeGiB: !Ref 'CaDataDriveSizeGiB'
-        CaHashAlgorithm: !Ref 'CaHashAlgorithm'
-        CaKeyLength: !Ref 'CaKeyLength'
-        CaServerInstanceType: !Ref 'CaServerInstanceType'
-        CaValidityPeriodUnits: !Ref 'CaValidityPeriodUnits'
-        DHCPOptionSet: !Ref 'DHCPOptionSet'
-        DomainAdminPassword: !Ref 'DomainAdminPassword'
-        DomainDNSName: !Ref 'DomainDNSName'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        EntCaServerNetBIOSName: !Ref 'EntCaServerNetBIOSName'
-        KeyPairName: !Ref 'KeyPairName'
-        MgmtDataDriveSizeGiB: !Ref 'MgmtDataDriveSizeGiB'
-        MgmtServer: !Ref 'MgmtServer'
-        MgmtServerInstanceType: !Ref 'MgmtServerInstanceType'
-        MgmtServerNetBIOSName: !Ref 'MgmtServerNetBIOSName'
-        NonWindowsDomainJoin: !Ref 'NonWindowsDomainJoin'
-        OrCaServerNetBIOSName: !Ref 'OrCaServerNetBIOSName'
-        OrCaValidityPeriodUnits: !Ref 'OrCaValidityPeriodUnits'
-        PKI: !Ref 'PKI'
-        PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
-        PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
-        S3CRLBucketName: !Ref 'S3CRLBucketName'
-        UseS3ForCRL: !Ref 'UseS3ForCRL'
-        VPCCIDR: !Ref 'VPCCIDR'
-        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        ADEdition: !Ref ADEdition
+        CaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        CaHashAlgorithm: !Ref CaHashAlgorithm
+        CaKeyLength: !Ref CaKeyLength
+        CaServerInstanceType: !Ref CaServerInstanceType
+        CaValidityPeriodUnits: !Ref CaValidityPeriodUnits
+        DHCPOptionSet: !Ref DHCPOptionSet
+        DomainAdminPassword: !Ref DomainAdminPassword
+        DomainDNSName: !Ref DomainDNSName
+        DomainNetBIOSName: !Ref DomainNetBIOSName
+        EntCaServerNetBIOSName: !Ref EntCaServerNetBIOSName
+        KeyPairName: !Ref KeyPairName
+        MgmtDataDriveSizeGiB: !Ref MgmtDataDriveSizeGiB
+        MgmtServer: !Ref MgmtServer
+        MgmtServerEnableAdvancedAudtingandMetrics: !Ref MgmtServerEnableAdvancedAudtingandMetrics
+        MgmtServerInstanceType: !Ref MgmtServerInstanceType
+        MgmtServerNetBIOSName: !Ref MgmtServerNetBIOSName
+        NonWindowsDomainJoin: !Ref NonWindowsDomainJoin
+        OrCaServerNetBIOSName: !Ref OrCaServerNetBIOSName
+        OrCaValidityPeriodUnits: !Ref OrCaValidityPeriodUnits
+        PKI: !Ref PKI
+        PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
+        PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        S3CRLBucketName: !Ref S3CRLBucketName
+        UseS3ForCRL: !Ref UseS3ForCRL
+        VPCCIDR: !Ref VPCCIDR
+        VPCID: !GetAtt VPCStack.Outputs.VPCID
   RDGWStack:
     Condition: IncludeRDGW
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/templates/rdgw-domain.template'
-        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        DomainAdminPassword: !Ref 'DomainAdminPassword'
+        DomainAdminPassword: !Ref DomainAdminPassword
         DomainAdminUser: admin
-        DomainDNSName: !Ref 'DomainDNSName'
-        DomainMemberSGID: !GetAtt 'ADStack.Outputs.DomainMemberSGID'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        KeyPairName: !Ref 'KeyPairName'
-        NumberOfRDGWHosts: !Ref 'NumberOfRDGWHosts'
-        PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
-        PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
-        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/'
-        RDGWCIDR: !Ref 'RDGWCIDR'
-        RDGWInstanceType: !Ref 'RDGWInstanceType'
-        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        DomainDNSName: !Ref DomainDNSName
+        DomainMemberSGID: !GetAtt ADStack.Outputs.DomainMemberSGID
+        DomainNetBIOSName: !Ref DomainNetBIOSName
+        KeyPairName: !Ref KeyPairName
+        NumberOfRDGWHosts: !Ref NumberOfRDGWHosts
+        PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
+        PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/
+        RDGWCIDR: !Ref RDGWCIDR
+        RDGWInstanceType: !Ref RDGWInstanceType
+        VPCID: !GetAtt VPCStack.Outputs.VPCID
