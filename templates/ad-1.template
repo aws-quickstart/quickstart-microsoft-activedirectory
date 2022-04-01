@@ -822,7 +822,7 @@ Resources:
 
                   If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {
                     Set-DcAuditDscConfiguration
-                    Set-LogsAndMetricsCollection -Role 'DomainController'
+                    Set-LogsAndMetricsCollection -Role 'DomainController' -Stackname '{{StackName}}'
                   }
 
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
@@ -998,6 +998,8 @@ Resources:
           Value: !Ref ADServer1NetBIOSName
         - Key: Domain
           Value: !Ref DomainDNSName
+        - Key: Role
+          Value: Domain Controller
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -1034,6 +1036,8 @@ Resources:
           Value: !Ref ADServer2NetBIOSName
         - Key: Domain
           Value: !Ref DomainDNSName
+        - Key: Role
+          Value: Domain Controller
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
