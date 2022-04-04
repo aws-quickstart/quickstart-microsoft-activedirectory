@@ -559,7 +559,7 @@ Resources:
 
                   If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {
                     Set-MgmtAuditDscConfiguration
-                    Set-LogsAndMetricsCollection -Role 'Management'
+                    Set-LogsAndMetricsCollection -Role 'Management' -Stackname '{{StackName}}'
                   }
 
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'

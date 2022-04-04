@@ -575,7 +575,7 @@ Resources:
 
                   If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {
                     Set-DcAuditDscConfiguration
-                    Set-LogsAndMetricsCollection -Role 'DomainController'
+                    Set-LogsAndMetricsCollection -Role 'DomainController' -Stackname '{{StackName}}'
                   }
 
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
@@ -965,7 +965,7 @@ Resources:
 
                   If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {
                     Set-DcAuditDscConfiguration
-                    Set-LogsAndMetricsCollection -Role 'DomainController'
+                    Set-LogsAndMetricsCollection -Role 'DomainController' -Stackname '{{StackName}}'
                   }
 
                   Invoke-Cleanup -VPCCIDR '{{VPCCIDR}}'
