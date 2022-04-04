@@ -1343,7 +1343,7 @@ Function Set-CredSSP {
     # Variables
     #==================================================
 
-    $RootKey = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows'
+    $RootKey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows'
     $CredDelKey = 'CredentialsDelegation'
     $FreshCredKey = 'AllowFreshCredentials'
     $FreshCredKeyNTLM = 'AllowFreshCredentialsWhenNTLMOnly'
@@ -1355,48 +1355,46 @@ Function Set-CredSSP {
     Switch ($Action) {
         'Enable' {
             Write-Output 'Enabling CredSSP'
-            Try {
-                $Null = Enable-WSManCredSSP -Role 'Client' -DelegateComputer '*' -Force -ErrorAction Stop
-                $Null = Enable-WSManCredSSP -Role 'Server' -Force -ErrorAction Stop
-            } Catch [System.Exception] {
-                Write-Output "Failed to enable CredSSP $_"
-                $Null = Disable-WSManCredSSP -Role 'Client' -ErrorAction SilentlyContinue
-                $Null = Disable-WSManCredSSP -Role 'Server' -ErrorAction SilentlyContinue
-                Exit 1
-            }
-
-            $CredDelKeyPresent = Test-Path -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -ErrorAction SilentlyContinue
+            $CredDelKeyPresent = Test-Path -Path (Join-Path -Path "Registry::$RootKey" -ChildPath $CredDelKey) -ErrorAction SilentlyContinue
             If (-not $CredDelKeyPresent) {
-                Write-Output 'Setting CredSSP registry entries'
+                Write-Output "Setting CredSSP registry entry $CredDelKey"
                 Try {
-                    $CredDelPath = New-Item -Path $RootKey -Name $CredDelKey -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
+                    $CredDelPath = New-Item -Path "Registry::$RootKey" -Name $CredDelKey -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
                 } Catch [System.Exception] {
-                    Write-Output "Failed to create CredSSP registry entries $_"
-                    Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+                    Write-Output "Failed to create CredSSP registry entry $CredDelKey $_"
+                    Remove-Item -Path (Join-Path -Path "Registry::$RootKey" -ChildPath $CredDelKey) -Force -Recurse
                     Exit 1
                 }
+            } Else {
+                $CredDelPath = Join-Path -Path $RootKey -ChildPath $CredDelKey
             }
 
             $FreshCredKeyPresent = Test-Path -Path (Join-Path -Path "Registry::$CredDelPath" -ChildPath $FreshCredKey) -ErrorAction SilentlyContinue
             If (-not $FreshCredKeyPresent) {
+                Write-Output "Setting CredSSP registry entry $FreshCredKey"
                 Try {
                     $FreshCredKeyPath = New-Item -Path "Registry::$CredDelPath" -Name $FreshCredKey -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
                 } Catch [System.Exception] {
-                    Write-Output "Failed to create CredSSP registry entries $_"
-                    Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+                    Write-Output "Failed to create CredSSP registry entry $FreshCredKey $_"
+                    Remove-Item -Path (Join-Path -Path "Registry::$RootKey" -ChildPath $CredDelKey) -Force -Recurse
                     Exit 1
                 }
+            } Else {
+                $FreshCredKeyPath = Join-Path -Path $CredDelPath -ChildPath $FreshCredKey
             }
 
             $FreshCredKeyNTLMPresent = Test-Path -Path (Join-Path -Path "Registry::$CredDelPath" -ChildPath $FreshCredKeyNTLM) -ErrorAction SilentlyContinue
             If (-not $FreshCredKeyNTLMPresent) {
+                Write-Output "Setting CredSSP registry entry $FreshCredKeyNTLM"
                 Try {
                     $FreshCredKeyNTLMPath = New-Item -Path "Registry::$CredDelPath" -Name $FreshCredKeyNTLM -ErrorAction Stop | Select-Object -ExpandProperty 'Name'
                 } Catch [System.Exception] {
-                    Write-Output "Failed to create CredSSP registry entries $_"
-                    Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+                    Write-Output "Failed to create CredSSP registry entry $FreshCredKeyNTLM $_"
+                    Remove-Item -Path (Join-Path -Path "Registry::$RootKey" -ChildPath $CredDelKey) -Force -Recurse
                     Exit 1
                 }
+            } Else {
+                $FreshCredKeyNTLMPath = Join-Path -Path $CredDelPath -ChildPath $FreshCredKeyNTLM
             }
 
             Try {
@@ -1407,8 +1405,18 @@ Function Set-CredSSP {
                 $Null = Set-ItemProperty -Path "Registry::$FreshCredKeyPath" -Name '1' -Value 'WSMAN/*' -Type 'String' -Force -ErrorAction Stop
                 $Null = Set-ItemProperty -Path "Registry::$FreshCredKeyNTLMPath" -Name '1' -Value 'WSMAN/*' -Type 'String' -Force -ErrorAction Stop
             } Catch [System.Exception] {
-                Write-Output "Failed to create CredSSP registry entries $_"
-                Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+                Write-Output "Failed to create CredSSP registry properties $_"
+                Remove-Item -Path (Join-Path -Path "Registry::$RootKey" -ChildPath $CredDelKey) -Force -Recurse
+                Exit 1
+            }
+
+            Try {
+                $Null = Enable-WSManCredSSP -Role 'Client' -DelegateComputer '*' -Force -ErrorAction Stop
+                $Null = Enable-WSManCredSSP -Role 'Server' -Force -ErrorAction Stop
+            } Catch [System.Exception] {
+                Write-Output "Failed to enable CredSSP $_"
+                $Null = Disable-WSManCredSSP -Role 'Client' -ErrorAction SilentlyContinue
+                $Null = Disable-WSManCredSSP -Role 'Server' -ErrorAction SilentlyContinue
                 Exit 1
             }
         }
@@ -1424,7 +1432,7 @@ Function Set-CredSSP {
 
             Write-Output 'Removing CredSSP registry entries'
             Try {
-                Remove-Item -Path (Join-Path -Path $RootKey -ChildPath $CredDelKey) -Force -Recurse
+                Remove-Item -Path (Join-Path -Path "Registry::$RootKey" -ChildPath $CredDelKey) -Force -Recurse -ErrorAction Stop
             } Catch [System.Exception] {
                 Write-Output "Failed to remove CredSSP registry entries $_"
                 Exit 1
@@ -1769,12 +1777,12 @@ Function Set-MgmtAuditDscConfiguration {
             AuditPolicySubcategory CertificationServicesSuccess {
                 Name = 'Certification Services'
                 AuditFlag = 'Success'
-                Ensure = 'Present'
+                Ensure = 'Absent'
             }
             AuditPolicySubcategory CertificationServicesFailure {
                 Name = 'Certification Services'
                 AuditFlag = 'Failure'
-                Ensure = 'Present'
+                Ensure = 'Absent'
             }
             AuditPolicySubcategory DetailedFileShareSuccess {
                 Name = 'Detailed File Share'
@@ -2610,7 +2618,8 @@ Function Set-DcAuditDscConfiguration {
 Function Set-LogsAndMetricsCollection {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)][ValidateSet('Management', 'DomainController')][string]$Role
+        [Parameter(Mandatory = $true)][ValidateSet('Management', 'DomainController')][string]$Role,
+        [Parameter(Mandatory = $true)][string]$Stackname
     )
 
     #==================================================
@@ -2769,7 +2778,7 @@ Function Set-LogsAndMetricsCollection {
                 )
                 'Sinks'      = @(
                     @{
-                        'Namespace' = 'EC2-Domain-Member-Metrics'
+                        'Namespace' = "EC2-Domain-Member-Metrics-$Stackname"
                         'Region'    = 'ReplaceMe'
                         'Id'        = 'CloudWatchSink'
                         'Interval'  = '60'
@@ -2779,7 +2788,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'ApplicationLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'ApplicationLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -2788,7 +2797,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'SecurityLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'SecurityLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -2797,7 +2806,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'SystemLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'SystemLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -2806,7 +2815,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'CertificateServicesClient-Lifecycle-SystemOperationalLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'CertificateServicesClient-Lifecycle-SystemOperationalLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3200,7 +3209,7 @@ Function Set-LogsAndMetricsCollection {
                 )
                 'Sinks'      = @(
                     @{
-                        'Namespace' = 'EC2-Domain-Controller-Metrics'
+                        'Namespace' = "EC2-Domain-Controller-Metrics-$Stackname"
                         'Region'    = 'ReplaceMe'
                         'Id'        = 'CloudWatchSink'
                         'Interval'  = '60'
@@ -3210,7 +3219,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'ApplicationLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'ApplicationLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3219,7 +3228,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'SecurityLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'SecurityLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3228,7 +3237,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'SystemLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'SystemLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3237,7 +3246,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'DFSReplicationLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'DFSReplicationLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3246,7 +3255,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'DirectoryServiceLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'DirectoryServiceLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3255,7 +3264,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'DNSServerLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'DNSServerLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3264,7 +3273,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'CertificateServicesClient-Lifecycle-SystemOperationalLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'CertificateServicesClient-Lifecycle-SystemOperationalLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3273,7 +3282,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'DNSServerAuditLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'DNSServerAuditLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3282,7 +3291,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'KerberosOperationalLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'KerberosOperationalLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3291,7 +3300,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'Kerberos-Key-Distribution-CenterOperationalLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'Kerberos-Key-Distribution-CenterOperationalLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3300,7 +3309,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'NTLMOperationalLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'NTLMOperationalLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3309,7 +3318,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'Security-NetlogonOperationalLog-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'Security-NetlogonOperationalLog-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
@@ -3318,7 +3327,7 @@ Function Set-LogsAndMetricsCollection {
                         'Id'             = 'DNSLogs-CloudWatchLogsSink'
                         'SinkType'       = 'CloudWatchLogs'
                         'BufferInterval' = '60'
-                        'LogGroup'       = '{ComputerName}-Log-Group'
+                        'LogGroup'       = "{ComputerName}-$Stackname-Log-Group"
                         'LogStream'      = 'DNSLogs-Stream'
                         'Region'         = 'ReplaceMe'
                         'Format'         = 'json'
