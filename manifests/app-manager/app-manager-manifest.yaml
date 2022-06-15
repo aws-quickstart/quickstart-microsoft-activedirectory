@@ -1,0 +1,39 @@
+ssm_app_manager:
+  should_upload: true
+  documents_list:
+    - document_name: AWSQuickStarts-Microsoft-AD-SelfManaged-Existing-VPC
+      template_name: ad-1.template.yaml
+    - document_name: AWSQuickStarts-Microsoft-AD-SelfManaged
+      template_name: ad-main-1.template.yaml
+      has_nested_stacks: true
+      nested_documents:
+        - resource_name: VPCStack
+          document_name: AWSQuickStarts-AWS-VPC
+        - resource_name: ADStack
+          document_name: AWSQuickStarts-Microsoft-AD-SelfManaged-Existing-VPC
+        - resource_name: RDGWStack
+          document_name: AWSQuickStarts-Microsoft-RdGateway-Domain-Joined
+    - document_name: AWSQuickStarts-Microsoft-AD-Extend-OnPrem-Existing-VPC
+      template_name: ad-2.template.yaml
+    - document_name: AWSQuickStarts-Microsoft-AD-Extend-OnPrem
+      template_name: ad-main-2.template.yaml
+      has_nested_stacks: true
+      nested_documents:
+        - resource_name: VPCStack
+          document_name: AWSQuickStarts-AWS-VPC
+        - resource_name: ADStack
+          document_name: AWSQuickStarts-Microsoft-AD-Extend-OnPrem-Existing-VPC
+        - resource_name: RDGWStack
+          document_name: AWSQuickStarts-Microsoft-RdGateway-Existing-VPC
+    - document_name: AWSQuickStarts-AWS-Managed-Microsoft-AD-Existing-VPC
+      template_name: ad-3.template.yaml
+    - document_name: AWSQuickStarts-AWS-Managed-Microsoft-AD
+      template_name: ad-main-3.template.yaml
+      has_nested_stacks: true
+      nested_documents:
+        - resource_name: VPCStack
+          document_name: AWSQuickStarts-AWS-VPC
+        - resource_name: ADStack
+          document_name: AWSQuickStarts-AWS-Managed-Microsoft-AD-Existing-VPC
+        - resource_name: RDGWStack
+          document_name: AWSQuickStarts-Microsoft-RdGateway-Domain-Joined
