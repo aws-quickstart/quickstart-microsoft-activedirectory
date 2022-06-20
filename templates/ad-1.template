@@ -161,14 +161,14 @@ Parameters:
     Description: Amazon EC2 instance type for the first Active Directory Domain Controller instance
     Type: String
   ADServer1NetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: DC1
     Description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer1PrivateIP:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
     Default: 10.0.0.10
     Description: Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1
     Type: String
@@ -186,14 +186,14 @@ Parameters:
     Description: Amazon EC2 instance type for the second Active Directory Domain Controller instance
     Type: String
   ADServer2NetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: DC2
     Description: NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)
     MaxLength: '15'
     MinLength: '1'
     Type: String
   ADServer2PrivateIP:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
     Default: 10.0.32.10
     Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2
     Type: String
@@ -259,6 +259,7 @@ Parameters:
   DeletedObjectLifetime:
     Default: '180'
     Description: The number of days before a deleted object is removed from the Active Directory recycle bin, minimum number is 2
+    MinValue: '2'
     Type: Number
   DomainAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
@@ -268,21 +269,21 @@ Parameters:
     NoEcho: 'true'
     Type: String
   DomainAdminUser:
-    AllowedPattern: '[a-zA-Z0-9]*'
+    AllowedPattern: '^[a-zA-Z0-9]+$'
     Default: Admin
     Description: User name for the account that will be added as a Domain Administrator. This is separate from the default "Administrator" account
     MaxLength: '25'
     MinLength: '5'
     Type: String
   DomainDNSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+\..+'
+    AllowedPattern: '^[a-zA-Z0-9\-\.]+$'
     Default: example.com
     Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
     MaxLength: '255'
     MinLength: '2'
     Type: String
   DomainNetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: example
     Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
     MaxLength: '15'
@@ -300,7 +301,7 @@ Parameters:
     Type: String
     Default: 'false'
   EntCaServerNetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: ENTCA1
     Description: NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)
     MaxLength: '15'
@@ -310,7 +311,7 @@ Parameters:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
   OrCaServerNetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: ORCA1
     Description: NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)
     MaxLength: '15'
@@ -335,29 +336,31 @@ Parameters:
     Description: ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   QSS3BucketName:
-    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Default: aws-quickstart
     Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Type: String
   QSS3BucketRegion:
+    AllowedPattern: '^[a-z]+-[a-z\-]+-[0-9]{1}$'
     Default: us-east-1
     Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
     Type: String
   QSS3KeyPrefix:
-    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    AllowedPattern: '^[a-zA-Z0-9\-/]+$'
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
     Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
   S3CRLBucketName:
-    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
     Default: examplebucket
     Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   TombstoneLifetime:
     Default: '180'
     Description: The number of days before a deleted object is removed from Active Directory, minimum number is 2
+    MinValue: '2'
     Type: Number
   UseS3ForCRL:
     AllowedValues:
@@ -367,7 +370,7 @@ Parameters:
     Description: Store CA CRL(s) in an S3 bucket
     Type: String
   VPCCIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$'
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
     Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
@@ -433,82 +436,122 @@ Resources:
         description: 'Deploy AD with SSM Automation'
         parameters:
           VPCCIDR:
+            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$'
             default: '10.0.0.0/16'
             description: 'CIDR Block for the VPC'
             type: 'String'
           ADServer1NetBIOSName:
+            allowedPattern: '^[a-zA-Z0-9\-]+$'
             default: 'DC1'
             description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
+            maxChars: '15'
+            minChars: '1'
             type: 'String'
           ADServer1PrivateIP:
+            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
             default: '10.0.0.10'
             description: 'Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1'
             type: 'String'
           ADServer2NetBIOSName:
+            allowedPattern: '^[a-zA-Z0-9\-]+$'
             default: 'DC2'
             description: 'NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)'
+            maxChars: '15'
+            minChars: '1'
             type: 'String'
           ADServer2PrivateIP:
+            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
             default: '10.0.32.10'
             description: 'Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2'
             type: 'String'
           ADAdminSecParamName:
+            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{20,1995}$'
             description: 'AWS Secrets Parameter Name that has Password and User namer for the built-in administrator'
+            maxChars: '2048'
+            minChars: '20'
             type: 'String'
           ADAltUserSecParamName:
+            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{20,1995}$'
             description:
               'AWS Secrets Parameter Name for the account that will be added as Domain Administrator. This is separate from the built-in Administrator
               account'
+            maxChars: '2048'
+            minChars: '20'
             type: 'String'
           RestoreModeSecParamName:
+            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{20,1995}$'
             description: 'AWS Secrets Parameter Name for the Active Directory Restore Mode Password'
+            maxChars: '2048'
+            minChars: '20'
             type: 'String'
           DomainDNSName:
+            allowedPattern: '^[a-zA-Z0-9\-\.]+$'
             default: 'example.com'
             description: 'Fully qualified domain name (FQDN) of the forest root domain e.g. example.com'
+            maxChars: '255'
+            minChars: '2'
             type: 'String'
           DomainNetBIOSName:
+            allowedPattern: '^[a-zA-Z0-9\-]+$'
             default: 'example'
             description: 'NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE'
+            maxChars: '15'
+            minChars: '1'
             type: 'String'
           EnableAdvancedAudtingandMetrics:
+            allowedValues:
+              - 'true'
+              - 'false'
             description: Enable advanced auditing and metrics
             type: String
           CreateDefaultOUs:
+            allowedValues:
+              - 'Yes'
+              - 'No'
             default: 'No'
             description:
               'Create Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs'
             type: 'String'
           TombstoneLifetime:
+            allowedPattern: '^[\d]+$'
             default: '180'
             description: The number of days before a deleted object is removed from the directory services
+            minChars: '2'
             type: 'String'
           DeletedObjectLifetime:
+            allowedPattern: '^[\d]+$'
             default: '180'
             description: The number of days before a deleted object is removed from the directory services recycling bin
+            minChars: '2'
             type: 'String'
           QSS3BucketName:
+            allowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
             default: 'aws-quickstart'
             description:
               'S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and
               hyphens (-). It cannot start or end with a hyphen (-)'
             type: 'String'
           QSS3BucketRegion:
+            allowedPattern: '^[a-z]+-[a-z\-]+-[0-9]{1}$'
             default: 'us-east-1'
             description:
               'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value'
             type: 'String'
           QSS3KeyPrefix:
+            allowedPattern: '^[a-zA-Z0-9\-/]+$'
             default: 'quickstart-microsoft-activedirectory/'
             description:
               'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens
               (-), and forward slash (/)'
             type: 'String'
           StackName:
-            default: ''
+            allowedPattern: '^[a-zA-Z][A-Za-z0-9\-]*$'
             description: 'Stack Name Input for cfn resource signal'
+            maxChars: '128'
+            minChars: '1'
             type: 'String'
           URLSuffix:
+            allowedPattern: '^[a-zA-Z0-9\-\.]+$'
             default: 'amazonaws.com'
             description: 'AWS URL suffix'
             type: 'String'
