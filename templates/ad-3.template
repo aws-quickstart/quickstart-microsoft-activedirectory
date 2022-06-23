@@ -527,7 +527,7 @@ Resources:
         DomainNetBIOSName: !Ref DomainNetBIOSName
         EnableAdvancedAudtingandMetrics: !Ref MgmtServerEnableAdvancedAudtingandMetrics
         KeyPairName: !Ref KeyPairName
-        MgmtAmi: !Ref MgmtAmi
+        MgmtAmi: !Ref Windows2022AMISMParameter
         MgmtDataDriveSizeGiB: !Ref MgmtDataDriveSizeGiB
         MgmtServerInstanceType: !Ref MgmtServerInstanceType
         MgmtServerNetBIOSName: !Ref MgmtServerNetBIOSName
