@@ -195,6 +195,10 @@ Mappings:
       WIN2022: ami-088a9dfaf784ee366
     us-west-2:
       WIN2022: ami-0d7ded39371c2d521
+    us-gov-west-1:
+      WIN2022: ami-09d3cc33d830d76b2
+    us-gov-east-1:
+      WIN2022: ami-060e259a4848b6a1a
 
 Parameters:
   ADServer1InstanceType:
