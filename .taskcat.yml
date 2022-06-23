@@ -104,9 +104,11 @@ tests:
       VPCCIDR: 10.0.0.0/16
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
+      MgmtServer: 'false'
       MgMtServerInstanceType: t3.medium
       MgmtDataDriveSizeGiB: '2'
       MgmtServerNetBIOSName: 'Mgmt01'
+      NonWindowsDomainJoin: 'false'
       DHCPOptionSet: 'No'
     regions:
 #    - us-west-1
