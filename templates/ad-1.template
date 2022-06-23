@@ -1088,7 +1088,7 @@ Resources:
   DomainController1:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref Windows2022AMISMParameter
+      ImageId: !GetAtt Windows2022AMISMParameter.Value
       IamInstanceProfile: !Ref ADServerProfile
       InstanceType: !Ref ADServer1InstanceType
       SubnetId: !Ref PrivateSubnet1ID
@@ -1126,7 +1126,7 @@ Resources:
     DependsOn: DomainController1
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref Windows2022AMISMParameter
+      ImageId: !GetAtt Windows2022AMISMParameter.Value
       IamInstanceProfile: !Ref ADServerProfile
       InstanceType: !Ref ADServer2InstanceType
       SubnetId: !Ref PrivateSubnet2ID
