@@ -278,7 +278,7 @@ Parameters:
     AllowedValues:
       - 'true'
       - 'false'
-    Default: 'true'
+    Default: 'false'
     Description: Do you want to deploy a Management Server
     Type: String
   MgmtServerEnableAdvancedAudtingandMetrics:
