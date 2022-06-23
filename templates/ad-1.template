@@ -496,72 +496,49 @@ Resources:
         description: 'Deploy AD with SSM Automation'
         parameters:
           VPCCIDR:
-            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$'
             default: '10.0.0.0/16'
             description: 'CIDR Block for the VPC'
             type: 'String'
           ADServer1NetBIOSName:
-            allowedPattern: '^[a-zA-Z0-9\-]+$'
             default: 'DC1'
             description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
-            maxChars: '15'
-            minChars: '1'
             type: 'String'
           ADServer1PrivateIP:
-            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
             default: '10.0.0.10'
             description: 'Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1'
             type: 'String'
           ADServer2NetBIOSName:
-            allowedPattern: '^[a-zA-Z0-9\-]+$'
             default: 'DC2'
             description: 'NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)'
-            maxChars: '15'
-            minChars: '1'
             type: 'String'
           ADServer2PrivateIP:
-            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
             default: '10.0.32.10'
             description: 'Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2'
             type: 'String'
           ADAdminSecParamName:
-            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
             description: 'AWS Secrets Parameter Name that has Password and User namer for the built-in administrator'
-            maxChars: '2048'
-            minChars: '20'
             type: 'String'
           ADAltUserSecParamName:
-            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
             description:
               'AWS Secrets Parameter Name for the account that will be added as Domain Administrator. This is separate from the built-in Administrator
               account'
-            maxChars: '2048'
-            minChars: '20'
             type: 'String'
           RestoreModeSecParamName:
-            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
             description: 'AWS Secrets Parameter Name for the Active Directory Restore Mode Password'
-            maxChars: '2048'
-            minChars: '20'
             type: 'String'
           DomainDNSName:
-            allowedPattern: '^[a-zA-Z0-9\-\.]+$'
             default: 'example.com'
             description: 'Fully qualified domain name (FQDN) of the forest root domain e.g. example.com'
-            maxChars: '255'
-            minChars: '2'
             type: 'String'
           DomainNetBIOSName:
-            allowedPattern: '^[a-zA-Z0-9\-]+$'
             default: 'example'
             description: 'NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE'
-            maxChars: '15'
-            minChars: '1'
             type: 'String'
           EnableAdvancedAudtingandMetrics:
             allowedValues:
               - 'true'
               - 'false'
+            default: 'false'
             description: Enable advanced auditing and metrics
             type: String
           CreateDefaultOUs:
@@ -573,45 +550,36 @@ Resources:
               'Create Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs'
             type: 'String'
           TombstoneLifetime:
-            allowedPattern: '^[\d]+$'
             default: '180'
             description: The number of days before a deleted object is removed from the directory services
-            minChars: '2'
             type: 'String'
           DeletedObjectLifetime:
-            allowedPattern: '^[\d]+$'
             default: '180'
             description: The number of days before a deleted object is removed from the directory services recycling bin
-            minChars: '2'
             type: 'String'
           QSS3BucketName:
-            allowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
             default: 'aws-quickstart'
             description:
               'S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and
               hyphens (-). It cannot start or end with a hyphen (-)'
             type: 'String'
           QSS3BucketRegion:
-            allowedPattern: '^[a-z]+-[a-z\-]+-[0-9]{1}$'
             default: 'us-east-1'
             description:
               'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value'
             type: 'String'
           QSS3KeyPrefix:
-            allowedPattern: '^[a-zA-Z0-9\-/]+$'
             default: 'quickstart-microsoft-activedirectory/'
             description:
               'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens
               (-), and forward slash (/)'
             type: 'String'
           StackName:
-            allowedPattern: '^[a-zA-Z][A-Za-z0-9\-]*$'
             description: 'Stack Name Input for cfn resource signal'
             maxChars: '128'
             minChars: '1'
             type: 'String'
           URLSuffix:
-            allowedPattern: '^[a-zA-Z0-9\-\.]+$'
             default: 'amazonaws.com'
             description: 'AWS URL suffix'
             type: 'String'
