@@ -127,58 +127,6 @@ Metadata:
         default: VPC CIDR
       VPCID:
         default: VPC ID
-Mappings:
-  AWSAMIRegionMap:
-    AMI:
-      WIN2022: Windows_Server-2022-English-Full-Base-2022.05.25
-    af-south-1:
-      WIN2022: ami-0b07b0278ae9ce898
-    eu-north-1:
-      WIN2022: ami-05a907e9a75aa1053
-    ap-south-1:
-      WIN2022: ami-0160ed10cac10112b
-    eu-west-3:
-      WIN2022: ami-020bcfb620c9099fa
-    eu-west-2:
-      WIN2022: ami-0cfa1d293412be4a1
-    eu-south-1:
-      WIN2022: ami-02a714ee932224788
-    eu-west-1:
-      WIN2022: ami-036b3cebc6c85a337
-    ap-northeast-3:
-      WIN2022: ami-09b5a925281093c9d
-    ap-northeast-2:
-      WIN2022: ami-05f568435c23c9262
-    me-south-1:
-      WIN2022: ami-0a2be867bdb4dbe3b
-    ap-northeast-1:
-      WIN2022: ami-036226b72061670d4
-    sa-east-1:
-      WIN2022: ami-0dec1f3e1cf059415
-    ca-central-1:
-      WIN2022: ami-069d17915633e74de
-    ap-east-1:
-      WIN2022: ami-056ff2ea33643a963
-    ap-southeast-1:
-      WIN2022: ami-0d122caff064ce2fe
-    ap-southeast-2:
-      WIN2022: ami-00eb0c11b2c8b2622
-    eu-central-1:
-      WIN2022: ami-0c9c3ce7702026bab
-    ap-southeast-3:
-      WIN2022: ami-07d266c68d6d228f9
-    us-east-1:
-      WIN2022: ami-0e4eb3558ed6398c8
-    us-east-2:
-      WIN2022: ami-0faf36afaee58e7fd
-    us-west-1:
-      WIN2022: ami-088a9dfaf784ee366
-    us-west-2:
-      WIN2022: ami-0d7ded39371c2d521
-    us-gov-west-1:
-      WIN2022: ami-09d3cc33d830d76b2
-    us-gov-east-1:
-      WIN2022: ami-060e259a4848b6a1a
 Parameters:
   ADEdition:
     AllowedValues:
@@ -409,12 +357,6 @@ Conditions:
   ShouldCreateTwoTierPkiResource: !Equals [!Ref PKI, 'Two-Tier']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Resources:
-  Windows2022AMISMParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Type: String
-      Value: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", WIN2022 ]
-      Description: Windows Server 2022 AMI ID from AWSAMIRegionMap
   DHCPOptions:
     Condition: ShouldCreateDHCPOption
     Type: AWS::EC2::DHCPOptions
@@ -531,7 +473,7 @@ Resources:
         DomainNetBIOSName: !Ref DomainNetBIOSName
         EnableAdvancedAudtingandMetrics: !Ref MgmtServerEnableAdvancedAudtingandMetrics
         KeyPairName: !Ref KeyPairName
-        MgmtAmi: !Ref Windows2022AMISMParameter
+        MgmtAmi: !Ref CaSmi
         MgmtDataDriveSizeGiB: !Ref MgmtDataDriveSizeGiB
         MgmtServerInstanceType: !Ref MgmtServerInstanceType
         MgmtServerNetBIOSName: !Ref MgmtServerNetBIOSName
@@ -552,7 +494,7 @@ Resources:
         - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AMI: !Ref Windows2022AMISMParameter
+        AMI: !Ref CaAmi
         AdministratorSecret: !Ref ADAdminSecrets
         DirectoryType: AWSManaged
         DomainController1IP: !Select [0, !GetAtt MicrosoftAD.DnsIpAddresses]
@@ -584,7 +526,7 @@ Resources:
         - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
           S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        AMI: !Ref Windows2022AMISMParameter
+        AMI: !Ref CaAmi
         AdministratorSecret: !Ref ADAdminSecrets
         DirectoryType: 'AWSManaged'
         DomainController1IP: !Select [0, !GetAtt MicrosoftAD.DnsIpAddresses]
