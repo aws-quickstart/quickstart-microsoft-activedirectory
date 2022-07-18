@@ -11,6 +11,8 @@ Metadata:
     config:
       ignore_checks:
         - W9006
+        - W9901
+        - E9902
   QuickStartDocumentation:
     EntrypointName: Parameters for deploying self-managed AD into a new VPC
     Order: '1'
