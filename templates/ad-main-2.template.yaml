@@ -10,6 +10,8 @@ Metadata:
     config:
       ignore_checks:
         - W9006
+        - W9901
+        - E9902
   QuickStartDocumentation:
     EntrypointName: Parameters for extending on-premises AD into a new VPC
     Order: '3'

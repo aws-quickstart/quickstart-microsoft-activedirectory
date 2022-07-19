@@ -3,13 +3,22 @@ Description: >-
   This template creates 1 Windows Server Managment Instance in a private subnet inside a VPC. **WARNING** This template creates an Amazon EC2 Windows
   instance and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1rteoo9fs)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9006
+        - W9901
+        - E9902
+        - W9002
+        - E9101
+        - W9003
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
           default: Network Configuration
         Parameters:
           - VPCCIDR
-          - VPCID
+#          - VPCID
           - MgmtServerSubnet
           - DomainMembersSG
       - Label:
@@ -76,8 +85,8 @@ Metadata:
         default: Quick Start S3 Key Prefix
       VPCCIDR:
         default: VPC CIDR
-      VPCID:
-        default: VPC ID
+#      VPCID:
+#        default: VPC ID
 Parameters:
   AdministratorSecret:
     Description: ARN for the Administrator credentials Secret
@@ -125,6 +134,7 @@ Parameters:
   MgmtAmi:
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: AMI to use for the management instance
   MgmtDataDriveSizeGiB:
     Default: '2'
     Description: Size of the data drive in GiB
@@ -186,18 +196,18 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
-  VPCID:
-    Description: ID of the VPC (e.g., vpc-0343606e)
-    Type: AWS::EC2::VPC::Id
+#  VPCID:
+#    Description: ID of the VPC (e.g., vpc-0343606e)
+#    Type: AWS::EC2::VPC::Id
 Rules:
-  SubnetsInVPC:
-    Assertions:
-      - Assert: !EachMemberIn
-          - !ValueOfAll
-            - AWS::EC2::Subnet::Id
-            - VpcId
-          - !RefAll 'AWS::EC2::VPC::Id'
-        AssertDescription: All subnets must in the VPC
+#  SubnetsInVPC:
+#    Assertions:
+#      - Assert: !EachMemberIn
+#          - !ValueOfAll
+#            - AWS::EC2::Subnet::Id
+#            - VpcId
+#          - !RefAll 'AWS::EC2::VPC::Id'
+#        AssertDescription: All subnets must in the VPC
   NonWindowsDomainJoin:
     RuleCondition: !Equals [!Ref NonWindowsDomainJoin, 'true']
     Assertions:
