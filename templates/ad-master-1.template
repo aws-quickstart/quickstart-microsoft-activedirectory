@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  This template creates a VPC infrastructure for a multi-AZ, multi-tier deployment of a Windows based Application infrastructure. It installs 2
-  Windows Active Directory Domain Controllers into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway
+  This template creates a VPC infrastructure for a multi-AZ, multi-tier deployment of a Windows based Application infrastructure.
+  It installs 2 Windows Active Directory Domain Controllers into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway
   instances and managed NAT gateways into the public subnet for each Availability Zone. The default Domain Administrator password will be the one
   retrieved from the instance.  For adding members to the domain, ensure that they are launched into the domain member security group created by this
   template and then configure them to use the AD instances fixed private IP addresses as the DNS server. **WARNING** This template creates Amazon EC2
