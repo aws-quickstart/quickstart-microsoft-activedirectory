@@ -485,7 +485,6 @@ Resources:
         QSS3BucketRegion: !Ref QSS3BucketRegion
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         VPCCIDR: !Ref VPCCIDR
-        VPCID: !Ref VPCID
   EntCAStack:
     Condition: ShouldCreateOneTierPkiResource
     Type: AWS::CloudFormation::Stack
