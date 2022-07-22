@@ -576,7 +576,7 @@ Resources:
                   If ('{{NonWindowsDomainJoin}}'  -eq 'true' )  {
                     Write-Output "Obtaining AD Admin Credential to authorize AD actions"
                     $AltSecretAdmin = Get-SecretInfo -Domain '{{DomainNetBIOSName}}' -SecretArn '{{AdministratorSecret}}'
-                    Set-NonWindowsDomainJoin-Credentials -SecretArn '{{NonWindowsDomainJoinSecret}}' -Credential $AltSecretAdmin.Credentials
+                    Set-NonWindowsDomainJoinCredentials -SecretArn '{{NonWindowsDomainJoinSecret}}' -Credential $AltSecretAdmin.Credentials
                   }
 
                   If ('{{EnableAdvancedAudtingandMetrics}}' -eq 'true') {

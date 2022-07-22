@@ -573,7 +573,7 @@ Function Set-DnsDscConfiguration {
     
         Import-DscResource -ModuleName 'NetworkingDsc', 'DnsServerDsc'
         
-        Node ADServer1 {
+        Node $ADServer1 {
             DnsServerAddress DnsServerAddress {
                 Address        = $ADServer2PrivateIP, $ADServer1PrivateIP, '127.0.0.1'
                 InterfaceAlias = 'Primary'
@@ -605,7 +605,7 @@ Function Set-DnsDscConfiguration {
             }
         }
 
-        Node ADServer2 {
+        Node $ADServer2 {
             DnsServerAddress DnsServerAddress {
                 Address        = $ADServer1PrivateIP, $ADServer2PrivateIP, '127.0.0.1'
                 InterfaceAlias = 'Primary'
@@ -1239,7 +1239,7 @@ Function Update-PolMigTable {
     $PolMigTable.Save($PolMigTablePath)
 }
 
-Function Set-NonWindowsDomainJoin-Credentials {
+Function Set-NonWindowsDomainJoinCredentials {
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $True)][String]$SecretArn,
