@@ -1097,8 +1097,8 @@ Resources:
                 }
                 Start-SSMAutomationExecution -DocumentName '${AWSQuickstartActiveDirectoryDS}' -Parameter $Params
                 </powershell>
-            - QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Sub '${QSS3BucketName}']
-              QSS3BucketRegion: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Sub '${QSS3BucketRegion}']
+            - QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}', !Sub '${QSS3BucketName}-${AWS::Region}']
+              QSS3BucketRegion: !If [UsingDefaultBucket, !Sub '${QSS3BucketRegion}', !Sub '${AWS::Region}']
   DomainControllersSG:
     Type: AWS::EC2::SecurityGroup
     Metadata:
