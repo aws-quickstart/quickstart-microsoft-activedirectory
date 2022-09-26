@@ -45,6 +45,8 @@ Metadata:
           - ExistingDomainController2IP
           - DomainDNSName
           - DomainNetBIOSName
+          - SetupAppInsightsMonitoring
+          - AppInsightsApplicationName
       - Label:
           default: AWS Quick Start configuration
         Parameters:
@@ -64,6 +66,8 @@ Metadata:
         default: Domain Controllers Instance Type
       AdministratorSecret:
         default: Secret ARN Containing Administrator Credentials
+      AppInsightsApplicationName:
+        default: Registered Application Name
       DataDriveSizeGiB:
         default: SYSVOL and NTDS Data Drive Size
       DomainDNSName:
@@ -98,6 +102,8 @@ Metadata:
         default: Subnet 1 ID
       Subnet2ID:
         default: Subnet 2 ID
+      SetupAppInsightsMonitoring:
+        default: Setup Application Insights Monitoring
       VPCCIDR:
         default: VPC CIDR
       VPCID:
@@ -144,6 +150,12 @@ Parameters:
     Default: arn:aws:secretsmanager:us-east-1:############:secret:admin-creds-example
     Description: ARN for the Administrator credentials Secret used to join and promote domain controllers (Only used if JoinAndPromote is Yes)
     Type: String
+  AppInsightsApplicationName:
+    Description: Application name to be used with AppInsights monitoring
+    Type: String
+    Default: ''
+    MaxLength: '300'
+    AllowedPattern: '^[a-zA-Z0-9\-]*$'
   DataDriveSizeGiB:
     Default: '10'
     Description: Size of SYSVOL and NTDS data drive in GiB
@@ -228,6 +240,12 @@ Parameters:
   Subnet2ID:
     Description: ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
+  SetupAppInsightsMonitoring:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Type: String
   VPCCIDR:
     AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$'
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
@@ -257,6 +275,8 @@ Conditions:
   DoJoinAndPromote: !Equals [!Ref JoinAndPromote, 'Yes']
   DoNOTJoinAndPromote: !Equals [!Ref JoinAndPromote, 'No']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  AppInsightsEnabled: !Equals [!Ref SetupAppInsightsMonitoring, 'true']
+  UsingDefaultAppName: !Equals [!Ref AppInsightsApplicationName, '']
 Resources:
   AWSQuickstartActiveDirectoryDS:
     Condition: DoNOTJoinAndPromote
@@ -1344,6 +1364,25 @@ Resources:
                 </powershell>
             - QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Sub '${QSS3BucketName}']
               QSS3BucketRegion: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Sub '${QSS3BucketRegion}']
+  ADResourceGroup:
+    Condition: AppInsightsEnabled
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !If [UsingDefaultAppName, !Sub "ApplicationInsights-${AWS::StackName}", !Ref AppInsightsApplicationName]
+      ResourceQuery:
+        Query:
+          TagFilters:
+            - Key: 'aws:cloudformation:stack-name'
+              Values:
+                - !Sub "${AWS::StackName}"
+        Type: 'TAG_FILTERS_1_0'          
+  ApplicationInsightsAD:
+    Condition: AppInsightsEnabled
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Ref 'ADResourceGroup'
+      AutoConfigurationEnabled: true
+    DependsOn: ADResourceGroup 
 Outputs:
   DC1InstanceId:
     Value: !Ref DomainController1
