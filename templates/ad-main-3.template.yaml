@@ -43,6 +43,7 @@ Metadata:
           - DomainAdminPassword
           - NonWindowsDomainJoin
           - ADEdition
+          - SetupAppInsightsMonitoring
       - Label:
           default: Microsoft Windows Server management instance
         Parameters:
@@ -148,6 +149,8 @@ Metadata:
         default: Allowed Remote Desktop Gateway External Access CIDR
       RDGWInstanceType:
         default: Remote Desktop Gateway Instance Type
+      SetupAppInsightsMonitoring:
+        default: Setup Application Insights monitoring
       S3CRLBucketName:
         default: CA CRL S3 Bucket Name
       UseS3ForCRL:
@@ -404,6 +407,15 @@ Parameters:
     Default: t3.large
     Description: Amazon EC2 instance type for the Remote Desktop Gateway instances
     Type: String
+  SetupAppInsightsMonitoring:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    ConstraintDescription: Can include either true or false.
+    Default: 'false'
+    Description: Setup Application Insights monitoring for Active Directory resources. This parameter
+      can include either true or false.
+    Type: String
   S3CRLBucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: examplebucket
@@ -423,6 +435,7 @@ Parameters:
     Description: CIDR Block for the VPC
     Type: String
 Conditions:
+  AppInsightsEnabled: !Equals [!Ref SetupAppInsightsMonitoring, true]
   IncludeRDGW: !Not [!Equals [!Ref NumberOfRDGWHosts, '0']]
   IsTwoAz: !Equals [!Ref NumberOfAZs, '2']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
@@ -491,6 +504,7 @@ Resources:
         QSS3BucketName: !Ref QSS3BucketName
         QSS3BucketRegion: !Ref QSS3BucketRegion
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        SetupAppInsightsMonitoring: !Ref SetupAppInsightsMonitoring
         S3CRLBucketName: !Ref S3CRLBucketName
         UseS3ForCRL: !Ref UseS3ForCRL
         VPCCIDR: !Ref VPCCIDR

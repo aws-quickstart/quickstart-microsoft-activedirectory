@@ -39,6 +39,8 @@ Metadata:
           - EnableAdvancedAudtingandMetrics
           - KeyPairName
           - WINFULLBASE
+          - SetupAppInsightsMonitoring
+          - AppInsightsApplicationName
       - Label:
           default: Microsoft Active Directory Domain Services configuration
         Parameters:
@@ -83,6 +85,8 @@ Metadata:
         default: Domain Controller 2 NetBIOS Name
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
+      AppInsightsApplicationName:
+        default: Registered Application Name
       CaAmi:
         default: CA SSM Parameter Value for Latest AMI ID
       CaDataDriveSizeGiB:
@@ -135,6 +139,8 @@ Metadata:
         default: Quick Start S3 Bucket Region
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
+      SetupAppInsightsMonitoring:
+        default: Setup Application Insights Monitoring
       S3CRLBucketName:
         default: CA CRL S3 Bucket Name
       TombstoneLifetime:
@@ -199,6 +205,12 @@ Parameters:
     Default: 10.0.32.10
     Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2
     Type: String
+  AppInsightsApplicationName:
+    Description: Application name to be used with AppInsights monitoring
+    Type: String
+    Default: ''
+    MaxLength: '300'
+    AllowedPattern: '^[a-zA-Z0-9\-]*$'
   CaAmi:
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
@@ -359,6 +371,12 @@ Parameters:
     Default: examplebucket
     Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
+  SetupAppInsightsMonitoring:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Type: String
   TombstoneLifetime:
     Default: '180'
     Description: The number of days before a deleted object is removed from Active Directory, minimum number is 2
@@ -405,6 +423,8 @@ Conditions:
   ShouldCreateOneTierPkiResource: !Equals [!Ref PKI, 'One-Tier']
   ShouldCreateTwoTierPkiResource: !Equals [!Ref PKI, 'Two-Tier']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  AppInsightsEnabled: !Equals [!Ref SetupAppInsightsMonitoring, 'true']
+  UsingDefaultAppName: !Equals [!Ref AppInsightsApplicationName, '']
 Resources:
   DHCPOptions:
     Condition: ShouldCreateDHCPOption
@@ -1344,6 +1364,25 @@ Resources:
         UseS3ForCRL: !Ref UseS3ForCRL
         VPCCIDR: !Ref VPCCIDR
         VPCID: !Ref VPCID
+  ADResourceGroup:
+    Condition: AppInsightsEnabled
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !If [UsingDefaultAppName, !Sub "ApplicationInsights-${AWS::StackName}", !Ref AppInsightsApplicationName]
+      ResourceQuery:
+        Query:
+          TagFilters:
+            - Key: 'aws:cloudformation:stack-name'
+              Values:
+                - !Sub "${AWS::StackName}"
+        Type: 'TAG_FILTERS_1_0'          
+  ApplicationInsightsAD:
+    Condition: AppInsightsEnabled
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Ref ADResourceGroup
+      AutoConfigurationEnabled: true
+    DependsOn: ADResourceGroup
 Outputs:
   ADSecretsArn:
     Description: Alternate AD User Secrets ARN

@@ -32,6 +32,8 @@ Metadata:
           - DomainAdminPassword
           - NonWindowsDomainJoin
           - ADEdition
+          - AppInsightsApplicationName
+          - SetupAppInsightsMonitoring
       - Label:
           default: Microsoft Windows Server management instance
         Parameters:
@@ -66,6 +68,8 @@ Metadata:
     ParameterLabels:
       ADEdition:
         default: AWS Managed Microsoft AD Edition
+      AppInsightsApplicationName:
+        default: Application Insights Application name
       CaAmi:
         default: CA SSM Parameter Value for latest AMI ID
       CaDataDriveSizeGiB:
@@ -120,6 +124,8 @@ Metadata:
         default: Quick Start S3 bucket Region
       QSS3KeyPrefix:
         default: Quick Start S3 key prefix
+      SetupAppInsightsMonitoring:
+        default: Setup Application Insights Monitoring
       S3CRLBucketName:
         default: CA CRL S3 Bucket Name
       UseS3ForCRL:
@@ -136,6 +142,12 @@ Parameters:
     Default: Enterprise
     Description: The AWS Managed Microsoft AD Edition you wish to deploy
     Type: String
+  AppInsightsApplicationName:
+    Description: Application name to be used with AppInsights monitoring.
+    Type: String
+    Default: ''
+    MaxLength: '300'
+    AllowedPattern: '^[a-zA-Z0-9\-]*$'
   CaAmi:
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
@@ -313,6 +325,13 @@ Parameters:
     Default: examplebucket
     Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
+  SetupAppInsightsMonitoring:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: Setup Application Insights monitoring for Active directory resources. 
+    Type: String
   UseS3ForCRL:
     AllowedValues:
       - 'Yes'
@@ -357,6 +376,8 @@ Conditions:
   ShouldCreateOneTierPkiResource: !Equals [!Ref PKI, 'One-Tier']
   ShouldCreateTwoTierPkiResource: !Equals [!Ref PKI, 'Two-Tier']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  AppInsightsEnabled: !Equals [!Ref SetupAppInsightsMonitoring, 'true']
+  UsingDefaultAppName: !Equals [!Ref AppInsightsApplicationName, '']
 Resources:
   DHCPOptions:
     Condition: ShouldCreateDHCPOption
@@ -556,6 +577,25 @@ Resources:
         UseS3ForCRL: !Ref UseS3ForCRL
         VPCCIDR: !Ref VPCCIDR
         VPCID: !Ref VPCID
+  ADResourceGroup:
+    Condition: AppInsightsEnabled
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !If [UsingDefaultAppName, !Sub "ApplicationInsights-${AWS::StackName}", !Ref AppInsightsApplicationName]
+      ResourceQuery:
+        Query:
+          TagFilters:
+            - Key: 'aws:cloudformation:stack-name'
+              Values:
+                - !Sub "${AWS::StackName}"
+        Type: 'TAG_FILTERS_1_0'          
+  ApplicationInsightsAD:
+    Condition: AppInsightsEnabled
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Ref 'ADResourceGroup'
+      AutoConfigurationEnabled: true
+    DependsOn: ADResourceGroup
 Outputs:
   ADSecretsArn:
     Description: Managed AD Admin Secrets
