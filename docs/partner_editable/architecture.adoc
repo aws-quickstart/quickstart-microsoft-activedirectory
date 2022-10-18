@@ -52,9 +52,7 @@ As shown in <<architecture2>>, the AWS CloudFormation templates that automate th
 ** Managed NAT gateways to allow outbound internet access for resources in the private subnets.*
 ** RD Gateway instances in an Auto Scaling group to help secure remote access to instances in private subnets.*
 * In the private subnets:
-** Windows Server forest and domain functional level, including security groups and rules for traffic between instances.
-* AWS Systems Manager Automation documents to set up and configure AD DS and AD-integrated DNS.
-* AWS Secrets Manager to store passwords.
+** EC2 instances to act as domain controllers.
 
 [.small]#* The template that deploys the Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
