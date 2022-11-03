@@ -309,6 +309,7 @@ Parameters:
     MinLength: '1'
     Type: String
   EbsEncryptionKmsKeyId:
+    AllowedPattern: '^(arn:[^:]+:kms:[^:]+:\d{12}:(key|alias)\/[\w\-\/]+)$|^(alias\/)?[\w\-\/]+$'
     Default: alias/aws/ebs
     Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
     Type: String

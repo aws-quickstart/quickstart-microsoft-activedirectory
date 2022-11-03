@@ -328,7 +328,7 @@ Parameters:
   OrCaValidityPeriodUnits:
     Default: '10'
     Description: Validity Period in Years (Only Used For Two Tier PKI)
-    Type: String
+    Type: Number
   PKI:
     AllowedValues:
       - One-Tier

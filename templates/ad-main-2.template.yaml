@@ -339,6 +339,18 @@ Conditions:
   IncludeRDGW: !Not [!Equals [!Ref NumberOfRDGWHosts, '0']]
   IsTwoAz: !Equals [!Ref NumberOfAZs, '2']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+Rules:
+  ValidateRdgw:
+    RuleCondition: !Not
+      - !Equals
+        - !Ref NumberOfRDGWHosts
+        - '0'
+    Assertions:
+      - Assert: !Not 
+          - !Equals 
+            - !Ref RDGWCIDR
+            - ''
+        AssertDescription: if condition IncludeRDGW is true, then RDGWCIDR cannot be left empty    
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
