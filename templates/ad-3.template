@@ -139,13 +139,11 @@ Parameters:
   CaAmi:
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: String
   CaDataDriveSizeGiB:
     Default: '2'
     Description: Size of the data drive in GiB for the CA instance(s)
     Type: Number
-    MinValue: '2'
-    MaxValue: '16384'
   CaHashAlgorithm:
     AllowedValues:
       - SHA256
@@ -178,8 +176,7 @@ Parameters:
   CaValidityPeriodUnits:
     Default: '5'
     Description: Validity Period in Years
-    Type: Number
-    MinValue: '1'
+    Type: String
   DHCPOptionSet:
     AllowedValues:
       - 'Yes'
@@ -188,28 +185,28 @@ Parameters:
     Description: Do you want to create and apply a new DHCP Options Set
     Type: String
   DomainAdminPassword:
-    AllowedPattern: '(?=^.{8,32}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*'
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
     Description: Password for the Admin user account. Must be at least 8 characters containing letters, numbers and symbols
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
     Type: String
   DomainDNSName:
-    AllowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
+    AllowedPattern: '^[a-zA-Z0-9\-\.]+$'
     Default: example.com
     Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
-    MaxLength: '64'
+    MaxLength: '255'
     MinLength: '2'
     Type: String
   DomainNetBIOSName:
-    AllowedPattern: '^[a-zA-Z0-9]+$'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: example
     Description: NetBIOS name of the domain (upto 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
     Type: String
   EntCaServerNetBIOSName:
-    AllowedPattern: '^[a-zA-Z0-9]+$'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: ENTCA1
     Description: NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)
     MaxLength: '15'
@@ -221,12 +218,10 @@ Parameters:
   MgmtAmi:
     Default: '/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base'
     Description: Management Server SSM Parameter Value to grab the latest AMI ID
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: String
   MgmtDataDriveSizeGiB:
     Default: '2'
     Description: Size of the Management Server Data Drive in GiB
-    MinValue: '1' 
-    MaxValue: '16384'
     Type: Number
   MgmtServer:
     AllowedValues:
@@ -256,7 +251,7 @@ Parameters:
     Description: Amazon EC2 instance type for the Management Server
     Type: String
   MgmtServerNetBIOSName:
-    AllowedPattern: '^[a-zA-Z0-9]+$'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: MGMT1
     Description: NetBIOS name of the Management Server server (up to 15 characters)
     MaxLength: '15'
@@ -272,7 +267,7 @@ Parameters:
       The username and password will be stored in Secrets Manager and a policy to access the secret will be created.
     Type: String
   OrCaServerNetBIOSName:
-    AllowedPattern: '^[a-zA-Z0-9]+$'
+    AllowedPattern: '^[a-zA-Z0-9\-]+$'
     Default: ORCA1
     Description: NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)
     MaxLength: '15'
@@ -281,8 +276,7 @@ Parameters:
   OrCaValidityPeriodUnits:
     Default: '10'
     Description: Validity Period in Years (Only Used For Two Tier PKI)
-    MinValue: '1'
-    Type: Number
+    Type: String
   PKI:
     AllowedValues:
       - One-Tier
@@ -298,24 +292,24 @@ Parameters:
     Description: ID of subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   QSS3BucketName:
-    AllowedPattern: '^[a-z0-9]+[a-z0-9\.\-]*[a-z0-9]+$'
+    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
     Default: aws-quickstart
     Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-) It cannot start or end with a hyphen (-).
     Type: String
   QSS3BucketRegion:
-    AllowedPattern: '^[a-z]+\-[a-z\-]+\-[0-9]{1}$'
+    AllowedPattern: '^[a-z]+-[a-z\-]+-[0-9]{1}$'
     Default: us-east-1
     Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
     Type: String
   QSS3KeyPrefix:
-    AllowedPattern: '^[a-zA-Z0-9\-\/]+$'
+    AllowedPattern: '^[a-zA-Z0-9\-/]+$'
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
     Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Type: String
   S3CRLBucketName:
-    AllowedPattern: '^[a-z0-9]+[a-z0-9\.\-]*[a-z0-9]+$'
+    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
     Default: examplebucket
     Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
