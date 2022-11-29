@@ -18,7 +18,7 @@ Metadata:
           default: Network Configuration
         Parameters:
           - VPCCIDR
-#          - VPCID
+          - VPCID
           - MgmtServerSubnet
           - DomainMembersSG
       - Label:
@@ -85,13 +85,17 @@ Metadata:
         default: Quick Start S3 Key Prefix
       VPCCIDR:
         default: VPC CIDR
-#      VPCID:
-#        default: VPC ID
+      VPCID:
+        default: VPC ID
 Parameters:
   AdministratorSecret:
+    AllowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
     Description: ARN for the Administrator credentials Secret
     Type: String
+    MaxLength: '2048'
+    MinLength: '20'
   DirectoryID:
+    AllowedPattern: '^d-[0-9a-f]{10}$'
     Description: The Directory Services ID of the AWS Managed Microsoft AD Domain
     Type: String
   DomainController1IP:
@@ -103,21 +107,23 @@ Parameters:
     Description: IP of DNS server that can resolve domain (Must be accessible)
     Type: String
   DomainDNSName:
-    AllowedPattern: '^[a-zA-Z0-9\-\.]+$'
+    AllowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
     Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
-    MaxLength: '255'
+    MaxLength: '64'
     MinLength: '2'
     Type: String
   DomainMembersSG:
     Description: Security Group ID for Domain Members Security Group
-    Type: String
+    Type: AWS::EC2::SecurityGroup::Id
   DomainNetBIOSName:
-    AllowedPattern: '^[a-zA-Z0-9\-]+$'
+    AllowedPattern: '^[a-zA-Z0-9]+$'
+    Default: example
     Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
     MaxLength: '15'
     MinLength: '1'
     Type: String
   EbsEncryptionKmsKeyId:
+    AllowedPattern: '^(arn:[^:]+:kms:[^:]+:\d{12}:(key|alias)\/[\w\-\/]+)$|^(alias\/)?[\w\-\/]+$'
     Default: alias/aws/ebs
     Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
     Type: String
@@ -138,6 +144,8 @@ Parameters:
   MgmtDataDriveSizeGiB:
     Default: '2'
     Description: Size of the data drive in GiB
+    MinValue: '1' 
+    MaxValue: '16384'
     Type: Number
   MgmtServerInstanceType:
     AllowedValues:
@@ -153,7 +161,7 @@ Parameters:
     Description: Amazon EC2 instance type for the Management Server instances
     Type: String
   MgmtServerNetBIOSName:
-    AllowedPattern: '^[a-zA-Z0-9\-]+$'
+    AllowedPattern: '^[a-zA-Z0-9]+$'
     Default: MGMT01
     Description: NetBIOS name of the Management Server (up to 15 characters)
     MaxLength: '15'
@@ -170,22 +178,23 @@ Parameters:
     Type: String
     Default: 'false'
   NonWindowsDomainJoinSecret:
+    AllowedPattern: '^$|^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
     Description: ARN for the Secret that has Password and User bane for the domain join user
     Type: String
     Default: ''
   QSS3BucketName:
-    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
+    AllowedPattern: '^[a-z0-9]+[a-z0-9\.\-]*[a-z0-9]+$'
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Default: aws-quickstart
     Description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
     Type: String
   QSS3BucketRegion:
-    AllowedPattern: '^[a-z]+-[a-z\-]+-[0-9]{1}$'
+    AllowedPattern: '^[a-z]+\-[a-z\-]+\-[0-9]{1}$'
     Default: us-east-1
     Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
     Type: String
   QSS3KeyPrefix:
-    AllowedPattern: '^[a-zA-Z0-9\-/]+$'
+    AllowedPattern: '^[a-zA-Z0-9\-\/]+$'
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
     Default: quickstart-microsoft-activedirectory/
     Description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and  forward slash (/)
@@ -196,18 +205,18 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
-#  VPCID:
-#    Description: ID of the VPC (e.g., vpc-0343606e)
-#    Type: AWS::EC2::VPC::Id
+  VPCID:
+    Description: ID of the VPC (e.g., vpc-0343606e)
+    Type: AWS::EC2::VPC::Id
 Rules:
-#  SubnetsInVPC:
-#    Assertions:
-#      - Assert: !EachMemberIn
-#          - !ValueOfAll
-#            - AWS::EC2::Subnet::Id
-#            - VpcId
-#          - !RefAll 'AWS::EC2::VPC::Id'
-#        AssertDescription: All subnets must in the VPC
+  SubnetsInVPC:
+    Assertions:
+      - Assert: !EachMemberIn
+         - !ValueOfAll
+            - AWS::EC2::Subnet::Id
+            - VpcId
+         - !RefAll 'AWS::EC2::VPC::Id'
+        AssertDescription: All subnets must in the VPC
   NonWindowsDomainJoin:
     RuleCondition: !Equals [!Ref NonWindowsDomainJoin, 'true']
     Assertions:
@@ -327,22 +336,34 @@ Resources:
         description: Deploy AD with SSM Automation
         parameters:
           AdministratorSecret:
+            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
             description: AWS Secrets Parameter Name that has Password and User namer for the domain administrator
             type: String
           DirectoryID:
+            allowedPattern: '^d-[0-9a-f]{10}$'
             description: The Directory Services ID of the AWS Managed Microsoft AD Domain
             type: String
           DomainController1IP:
+            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
             description: IP of DNS server that can resolve domain (Must be accessible)
             type: String
           DomainController2IP:
+            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
             description: IP of DNS server that can resolve domain (Must be accessible)
             type: String
           DomainDNSName:
+            allowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
+            default: example.com
             description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
             type: String
+            maxChars: '64'
+            minChars: '2'
           DomainNetBIOSName:
+            allowedPattern: '^[a-zA-Z0-9]+$'
+            default: example
             description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
+            maxChars: '15'
+            minChars: '1'
             type: String
           EnableAdvancedAudtingandMetrics:
             allowedValues:
@@ -352,8 +373,11 @@ Resources:
             description: Enable advanced auditing and metrics
             type: String
           MgmtServerNetBIOSName:
+            allowedPattern: '^[a-zA-Z0-9]+$'
             description: NetBIOS name of the Management Instance server (up to 15 characters)
             type: String
+            maxChars: '15'
+            minChars: '1'
           NonWindowsDomainJoin:
             allowedValues:
               - 'true'
@@ -362,27 +386,39 @@ Resources:
             description: Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain
             type: String
           NonWindowsDomainJoinSecret:
+            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
             description: The Secrets Parameter Name that has Password and User bane for the domain join user
             type: String
+            maxChars: '2048'
+            minChars: '20'
           QSS3BucketName:
+            allowedPattern: '^[a-z0-9]+[a-z0-9\.\-]*[a-z0-9]+$'
+            default: aws-quickstart
             description: S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
             type: String
           QSS3BucketRegion:
+            allowedPattern: '^[a-z]+\-[a-z\-]+\-[0-9]{1}$'
+            default: us-east-1
             description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
             type: String
           QSS3KeyPrefix:
+            allowedPattern: '^[a-zA-Z0-9\-\/]+$'
+            default: quickstart-microsoft-activedirectory/
             description: S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
             type: String
           StackName:
+            allowedPattern: '^[a-zA-Z][a-zA-Z0-9\-]+$'
             description: Stack Name Input for cfn resource signal
             maxChars: '128'
             minChars: '1'
             type: String
           URLSuffix:
+            allowedPattern: '^[a-zA-Z0-9\-\.]+$'
             default: 'amazonaws.com'
             description: AWS URL suffix
             type: String
           VPCCIDR:
+            allowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$'
             description: CIDR Block for the VPC
             type: String
         mainSteps:
