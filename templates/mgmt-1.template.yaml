@@ -86,7 +86,7 @@ Metadata:
       VPCCIDR:
         default: VPC CIDR
   #    VPCID:
-        default: VPC ID
+  #      default: VPC ID
 Parameters:
   AdministratorSecret:
     AllowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
