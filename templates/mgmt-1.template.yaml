@@ -18,7 +18,7 @@ Metadata:
           default: Network Configuration
         Parameters:
           - VPCCIDR
-          - VPCID
+  #        - VPCID
           - MgmtServerSubnet
           - DomainMembersSG
       - Label:
@@ -85,7 +85,7 @@ Metadata:
         default: Quick Start S3 Key Prefix
       VPCCIDR:
         default: VPC CIDR
-      VPCID:
+  #    VPCID:
         default: VPC ID
 Parameters:
   AdministratorSecret:
@@ -205,18 +205,18 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
-  VPCID:
-    Description: ID of the VPC (e.g., vpc-0343606e)
-    Type: AWS::EC2::VPC::Id
+#  VPCID:
+#    Description: ID of the VPC (e.g., vpc-0343606e)
+#    Type: AWS::EC2::VPC::Id
 Rules:
-  SubnetsInVPC:
-    Assertions:
-      - Assert: !EachMemberIn
-         - !ValueOfAll
-            - AWS::EC2::Subnet::Id
-            - VpcId
-         - !RefAll 'AWS::EC2::VPC::Id'
-        AssertDescription: All subnets must in the VPC
+#  SubnetsInVPC:
+#    Assertions:
+#      - Assert: !EachMemberIn
+#         - !ValueOfAll
+#            - AWS::EC2::Subnet::Id
+#            - VpcId
+#         - !RefAll 'AWS::EC2::VPC::Id'
+#        AssertDescription: All subnets must in the VPC
   NonWindowsDomainJoin:
     RuleCondition: !Equals [!Ref NonWindowsDomainJoin, 'true']
     Assertions:

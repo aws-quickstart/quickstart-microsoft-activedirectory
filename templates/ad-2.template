@@ -276,28 +276,28 @@ Resources:
             allowedPattern: '^[a-zA-Z0-9]+$'
             default: 'DC1'
             description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
-            type: 'String'
+            type: String
             maxChars: '15'
             minChars: '1'
           ADServer2NetBIOSName:
             allowedPattern: '^[a-zA-Z0-9]+$'
             default: 'DC1'
             description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
-            type: 'String'
+            type: String
             maxChars: '15'
             minChars: '1'
           DomainDNSName:
             allowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
             default: 'example.com'
             description: 'Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com'
-            type: 'String'
+            type: String
             maxChars: '64'
             minChars: '2'
           DomainNetBIOSName:
             allowedPattern: '^[a-zA-Z0-9]+$'
             default: 'DC1'
             description: 'NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)'
-            type: 'String'
+            type: String
             maxChars: '15'
             minChars: '1'
           EnableAdvancedAudtingandMetrics:
@@ -321,26 +321,26 @@ Resources:
             description:
               'S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and
               hyphens (-). It cannot start or end with a hyphen (-)'
-            type: 'String'
+            type: String
           QSS3BucketRegion:
             allowedPattern: '^[a-z]+\-[a-z\-]+\-[0-9]{1}$'
             default: 'us-east-1'
             description:
               'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value'
-            type: 'String'
+            type: String
           QSS3KeyPrefix:
             allowedPattern:  '^[a-zA-Z0-9\-\/]+$'
             default: 'quickstart-microsoft-activedirectory/'
             description:
               'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens
               (-), and forward slash (/)'
-            type: 'String'
+            type: String
           StackName:
             allowedPattern: '^[a-zA-Z][A-Za-z0-9\-]+$'
             description: 'Stack Name Input for cfn resource signal'
             maxChars: '128'
             minChars: '1'
-            type: 'String'
+            type: String
           URLSuffix:
             allowedPattern: '^[a-zA-Z0-9\-\.]+$'
             default: 'amazonaws.com'
