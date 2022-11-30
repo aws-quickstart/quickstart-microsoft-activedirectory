@@ -386,7 +386,7 @@ Resources:
             description: Whether to create an AD user with minimum permissions that can be used by non-Windows instances to join the domain
             type: String
           NonWindowsDomainJoinSecret:
-            allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
+            allowedPattern: '^$|^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
             description: The Secrets Parameter Name that has Password and User bane for the domain join user
             type: String
             maxChars: '2048'

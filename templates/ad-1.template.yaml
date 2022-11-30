@@ -295,7 +295,7 @@ Parameters:
     MinLength: '5'
     Type: String
   DomainDNSName:
-    AllowedPattern: '^[a-zA-Z0-9\-\.]+$'
+    AllowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
     Default: example.com
     Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
     MaxLength: '64'
@@ -309,6 +309,7 @@ Parameters:
     MinLength: '1'
     Type: String
   EbsEncryptionKmsKeyId:
+    AllowedPattern: ^(arn:[^:]+:kms:[^:]+:\d{12}:(key|alias)\/[\w\-\/]+)$|^(alias\/)?[\w\-\/]+$
     Default: alias/aws/ebs
     Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
     Type: String
@@ -339,7 +340,8 @@ Parameters:
   OrCaValidityPeriodUnits:
     Default: '10'
     Description: Validity Period in Years (Only Used For Two Tier PKI)
-    Type: String
+    MinValue: '1'
+    Type: Number
   PKI:
     AllowedValues:
       - One-Tier
@@ -544,10 +546,13 @@ Resources:
             default: '180'
             description: The number of days before a deleted object is removed from the directory services
             type: String
+            minChars: '2'
+            allowedPattern: '^[/d]+$'
           DeletedObjectLifetime:
             default: '180'
             description: The number of days before a deleted object is removed from the directory services recycling bin
             type: String
+            allowedPattern: '^[\d]+$'
           QSS3BucketName:
             allowedPattern: '^[a-z0-9]+[a-z0-9\.\-]*[a-z0-9]+$'
             default: 'aws-quickstart'

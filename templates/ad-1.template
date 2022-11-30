@@ -328,7 +328,8 @@ Parameters:
   OrCaValidityPeriodUnits:
     Default: '10'
     Description: Validity Period in Years (Only Used For Two Tier PKI)
-    Type: String
+    MinValue: '1'
+    Type: Number
   PKI:
     AllowedValues:
       - One-Tier
@@ -524,6 +525,7 @@ Resources:
             default: '180'
             description: The number of days before a deleted object is removed from the directory services
             type: String
+            minChars: '2'
           DeletedObjectLifetime:
             default: '180'
             description: The number of days before a deleted object is removed from the directory services recycling bin
