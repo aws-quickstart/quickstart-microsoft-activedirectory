@@ -200,9 +200,10 @@ Parameters:
     Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2
     Type: String
   CaAmi:
+    AllowedPattern: '^([a-zA-Z0-9\/\-\_]+?)$'
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: String
   CaDataDriveSizeGiB:
     Default: '2'
     Description: Size of the data drive in GiB for the CA instance(s)

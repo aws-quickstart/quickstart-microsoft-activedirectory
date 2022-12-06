@@ -137,9 +137,10 @@ Parameters:
     Description: The AWS Managed Microsoft AD Edition you wish to deploy
     Type: String
   CaAmi:
+    AllowedPattern: '^([a-zA-Z0-9\/\-\_]+?)$'
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: String
   CaDataDriveSizeGiB:
     Default: '2'
     Description: Size of the data drive in GiB for the CA instance(s)
@@ -219,9 +220,10 @@ Parameters:
     Description: Public/private key pairs allow you to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
   MgmtAmi:
+    AllowedPattern: '^([a-zA-Z0-9\/\-\_]+?)$'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base'
     Description: Management Server SSM Parameter Value to grab the latest AMI ID
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: String
   MgmtDataDriveSizeGiB:
     Default: '2'
     Description: Size of the Management Server Data Drive in GiB
