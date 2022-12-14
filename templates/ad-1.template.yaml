@@ -235,7 +235,7 @@ Parameters:
       - '2048'
       - '4096'
     Default: '2048'
-    Description: CA(s) Cryptographic Provider Key Length.
+    Description: CA(s) Cryptographic provider key length.
     Type: String
   CaServerInstanceType:
     AllowedValues:
