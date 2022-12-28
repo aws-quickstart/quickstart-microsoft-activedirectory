@@ -346,7 +346,7 @@ Parameters:
   PKI:
     AllowedValues:
       - One-Tier
-      - Two-Tiers
+      - Two-Tier
       - 'No'
     Default: 'No'
     Description: Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure
