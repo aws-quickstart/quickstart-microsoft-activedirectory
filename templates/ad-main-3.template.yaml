@@ -56,6 +56,7 @@ Metadata:
           default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
+          - PKIEnableAdvancedAudtingandMetrics
           - CaServerInstanceType
           - CaDataDriveSizeGiB
           - OrCaServerNetBIOSName
@@ -110,7 +111,7 @@ Metadata:
       MgmtServer:
         default: Deploy Management Server
       MgmtServerEnableAdvancedAudtingandMetrics:
-        default: Advanced Auditing and Metrics
+        default: Advanced Auditing and Metrics for Management Instance 
       MgmtServerInstanceType:
         default: Management Server Instance Type
       MgmtServerNetBIOSName:
@@ -127,6 +128,8 @@ Metadata:
         default: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
       PKI:
         default: Deploy PKI Infrastructure
+      PKIEnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics for PKI Instance(s)
       PrivateSubnet1CIDR:
         default: Private Subnet 1 CIDR
       PrivateSubnet2CIDR:
@@ -332,6 +335,13 @@ Parameters:
     Default: 'No'
     Description: Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure
     Type: String
+  PKIEnableAdvancedAudtingandMetrics:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    Type: String
   PrivateSubnet1CIDR:
     AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$'
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
@@ -519,6 +529,7 @@ Resources:
         OrCaServerNetBIOSName: !Ref OrCaServerNetBIOSName
         OrCaValidityPeriodUnits: !Ref OrCaValidityPeriodUnits
         PKI: !Ref PKI
+        PKIEnableAdvancedAudtingandMetrics: !Ref PKIEnableAdvancedAudtingandMetrics
         PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
         PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
         QSS3BucketName: !Ref QSS3BucketName

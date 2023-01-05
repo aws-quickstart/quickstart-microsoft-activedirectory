@@ -55,6 +55,7 @@ Metadata:
           default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
+          - PKIEnableAdvancedAudtingandMetrics
           - CaServerInstanceType
           - CaDataDriveSizeGiB
           - CaAmi
@@ -118,7 +119,7 @@ Metadata:
       EbsEncryptionKmsKeyId:
         default: KMS Key for EBS Encryption
       EnableAdvancedAudtingandMetrics:
-        default: Advanced Auditing and Metrics
+        default: Advanced Auditing and Metrics for Domain Controllers
       EntCaServerNetBIOSName:
         default: Enterprise Root or Subordinate CA NetBIOS Name
       KeyPairName:
@@ -129,6 +130,8 @@ Metadata:
         default: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
       PKI:
         default: CA Deployment Type
+      PKIEnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics for PKI Instance(s)
       PrivateSubnet1ID:
         default: Subnet 1 ID
       PrivateSubnet2ID:
@@ -350,6 +353,13 @@ Parameters:
       - 'No'
     Default: 'No'
     Description: Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure
+    Type: String
+  PKIEnableAdvancedAudtingandMetrics:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
     Type: String
   PrivateSubnet1ID:
     Description: ID of subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
@@ -1348,6 +1358,7 @@ Resources:
         DomainDNSName: !Ref DomainDNSName
         DomainMembersSG: !Ref DomainMembersSG
         DomainNetBIOSName: !Ref DomainNetBIOSName
+        EnableAdvancedAudtingandMetrics: !Ref PKIEnableAdvancedAudtingandMetrics
         EntCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
         EntCaHashAlgorithm: !Ref CaHashAlgorithm
         EntCaKeyLength: !Ref CaKeyLength
@@ -1381,6 +1392,7 @@ Resources:
         DomainDNSName: !Ref DomainDNSName
         DomainMembersSG: !Ref DomainMembersSG
         DomainNetBIOSName: !Ref DomainNetBIOSName
+        EnableAdvancedAudtingandMetrics: !Ref PKIEnableAdvancedAudtingandMetrics
         KeyPairName: !Ref KeyPairName
         OrCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
         OrCaHashAlgorithm: !Ref CaHashAlgorithm
