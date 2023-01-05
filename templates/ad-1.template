@@ -39,6 +39,8 @@ Metadata:
           - EnableAdvancedAudtingandMetrics
           - KeyPairName
           - WINFULLBASE
+          - SetupAppInsightsMonitoring
+          - AppInsightsApplicationName
       - Label:
           default: Microsoft Active Directory Domain Services configuration
         Parameters:
@@ -53,6 +55,7 @@ Metadata:
           default: Microsoft Active Directory Certificate Services configuration
         Parameters:
           - PKI
+          - PKIEnableAdvancedAudtingandMetrics
           - CaServerInstanceType
           - CaDataDriveSizeGiB
           - CaAmi
@@ -83,6 +86,8 @@ Metadata:
         default: Domain Controller 2 NetBIOS Name
       ADServer2PrivateIP:
         default: Domain Controller 2 Private IP Address
+      AppInsightsApplicationName:
+        default: Registered Application Name
       CaAmi:
         default: CA SSM Parameter Value for Latest AMI ID
       CaDataDriveSizeGiB:
@@ -114,7 +119,7 @@ Metadata:
       EbsEncryptionKmsKeyId:
         default: KMS Key for EBS Encryption
       EnableAdvancedAudtingandMetrics:
-        default: Advanced Auditing and Metrics
+        default: Advanced Auditing and Metrics for Domain Controllers
       EntCaServerNetBIOSName:
         default: Enterprise Root or Subordinate CA NetBIOS Name
       KeyPairName:
@@ -125,6 +130,8 @@ Metadata:
         default: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
       PKI:
         default: CA Deployment Type
+      PKIEnableAdvancedAudtingandMetrics:
+        default: Advanced Auditing and Metrics for PKI Instance(s)
       PrivateSubnet1ID:
         default: Subnet 1 ID
       PrivateSubnet2ID:
@@ -135,6 +142,8 @@ Metadata:
         default: Quick Start S3 Bucket Region
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
+      SetupAppInsightsMonitoring:
+        default: Setup Application Insights Monitoring
       S3CRLBucketName:
         default: CA CRL S3 Bucket Name
       TombstoneLifetime:
@@ -199,8 +208,14 @@ Parameters:
     Default: 10.0.32.10
     Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2
     Type: String
+  AppInsightsApplicationName:
+    Description: Application name to be used with AppInsights monitoring
+    Type: String
+    Default: ''
+    MaxLength: '300'
+    AllowedPattern: '^[a-zA-Z0-9\-]*$'
   CaAmi:
-    AllowedPattern: '^([a-zA-Z0-9\/\-\_]+?)$'
+    AllowedPattern: '^[\w\/-]+$'
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
     Description: Enterprise Root CA SSM Parameter Value to grab the latest AMI ID
     Type: String
@@ -223,7 +238,7 @@ Parameters:
       - '2048'
       - '4096'
     Default: '2048'
-    Description: CA(s) Cryptographic Provider Key Length
+    Description: CA(s) Cryptographic provider key length.
     Type: String
   CaServerInstanceType:
     AllowedValues:
@@ -298,7 +313,7 @@ Parameters:
     MinLength: '1'
     Type: String
   EbsEncryptionKmsKeyId:
-    AllowedPattern: ^(arn:[^:]+:kms:[^:]+:\d{12}:(key|alias)\/[\w\-\/]+)$|^(alias\/)?[\w\-\/]+$
+    AllowedPattern: '^(arn:[^:]+:kms:[^:]+:\d{12}:(key|alias)\/[\w\-\/]+)$|^(alias\/)?[\w\-\/]+$'
     Default: alias/aws/ebs
     Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
     Type: String
@@ -339,6 +354,13 @@ Parameters:
     Default: 'No'
     Description: Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure
     Type: String
+  PKIEnableAdvancedAudtingandMetrics:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    Type: String
   PrivateSubnet1ID:
     Description: ID of subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
@@ -366,6 +388,12 @@ Parameters:
     AllowedPattern: '^[a-z0-9]+[a-z0-9\.\-]*[a-z0-9]+$'
     Default: examplebucket
     Description: S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    Type: String
+  SetupAppInsightsMonitoring:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
     Type: String
   TombstoneLifetime:
     Default: '180'
@@ -413,6 +441,8 @@ Conditions:
   ShouldCreateOneTierPkiResource: !Equals [!Ref PKI, 'One-Tier']
   ShouldCreateTwoTierPkiResource: !Equals [!Ref PKI, 'Two-Tier']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  AppInsightsEnabled: !Equals [!Ref SetupAppInsightsMonitoring, 'true']
+  UsingDefaultAppName: !Equals [!Ref AppInsightsApplicationName, '']
 Resources:
   DHCPOptions:
     Condition: ShouldCreateDHCPOption
@@ -482,7 +512,8 @@ Resources:
             minChars: '20'
           ADAltUserSecParamName:
             allowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:\d{12}:secret:[\w\/+=.@-]{1,512}$'
-            description: 'AWS Secrets Parameter Name for the account that will be added as Domain Administrator. This is separate from the built-in Administrator
+            description:
+              'AWS Secrets Parameter Name for the account that will be added as Domain Administrator. This is separate from the built-in Administrator
               account'
             type: String
             maxChars: '2048'
@@ -526,11 +557,12 @@ Resources:
             default: '180'
             description: The number of days before a deleted object is removed from the directory services
             type: String
-            minChars: '2'
+            allowedPattern: '^[\d]+$'
           DeletedObjectLifetime:
             default: '180'
             description: The number of days before a deleted object is removed from the directory services recycling bin
             type: String
+            allowedPattern: '^[\d]+$'
           QSS3BucketName:
             allowedPattern: '^[a-z0-9]+[a-z0-9\.\-]*[a-z0-9]+$'
             default: 'aws-quickstart'
@@ -1326,6 +1358,7 @@ Resources:
         DomainDNSName: !Ref DomainDNSName
         DomainMembersSG: !Ref DomainMembersSG
         DomainNetBIOSName: !Ref DomainNetBIOSName
+        EnableAdvancedAudtingandMetrics: !Ref PKIEnableAdvancedAudtingandMetrics
         EntCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
         EntCaHashAlgorithm: !Ref CaHashAlgorithm
         EntCaKeyLength: !Ref CaKeyLength
@@ -1359,6 +1392,7 @@ Resources:
         DomainDNSName: !Ref DomainDNSName
         DomainMembersSG: !Ref DomainMembersSG
         DomainNetBIOSName: !Ref DomainNetBIOSName
+        EnableAdvancedAudtingandMetrics: !Ref PKIEnableAdvancedAudtingandMetrics
         KeyPairName: !Ref KeyPairName
         OrCaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
         OrCaHashAlgorithm: !Ref CaHashAlgorithm
@@ -1381,6 +1415,25 @@ Resources:
         UseS3ForCRL: !Ref UseS3ForCRL
         VPCCIDR: !Ref VPCCIDR
         VPCID: !Ref VPCID
+  ADResourceGroup:
+    Condition: AppInsightsEnabled
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !If [UsingDefaultAppName, !Sub "ApplicationInsights-${AWS::StackName}", !Ref AppInsightsApplicationName]
+      ResourceQuery:
+        Query:
+          TagFilters:
+            - Key: 'aws:cloudformation:stack-name'
+              Values:
+                - !Sub "${AWS::StackName}"
+        Type: 'TAG_FILTERS_1_0'          
+  ApplicationInsightsAD:
+    Condition: AppInsightsEnabled
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Ref ADResourceGroup
+      AutoConfigurationEnabled: true
+    DependsOn: ADResourceGroup
 Outputs:
   ADSecretsArn:
     Description: Alternate AD User Secrets ARN
