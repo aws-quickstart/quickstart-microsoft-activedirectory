@@ -211,7 +211,7 @@ Parameters:
     NoEcho: 'true'
     Type: String
   DomainDNSName:
-    AllowedPattern: '^([a-zA-Z0-9]+[\.\-])+([a-zA-Z0-9])+$'
+    AllowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
     Default: example.com
     Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
     MaxLength: '64'
