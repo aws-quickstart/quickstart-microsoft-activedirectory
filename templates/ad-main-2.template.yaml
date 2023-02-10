@@ -192,7 +192,7 @@ Parameters:
     MaxValue: '16384'
     Type: Number
   DomainDNSName:
-    AllowedPattern: '^([a-zA-Z0-9]+[\.\-])+([a-zA-Z0-9])+$'
+    AllowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
     Default: example.com
     Description: Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com example.com
     MaxLength: '64'

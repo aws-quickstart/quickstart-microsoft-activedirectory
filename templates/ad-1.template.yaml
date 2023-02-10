@@ -299,7 +299,7 @@ Parameters:
     MinLength: '5'
     Type: String
   DomainDNSName:
-    AllowedPattern: '^([a-zA-Z0-9]+[\.\-])+([a-zA-Z0-9])+$'
+    AllowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
     Default: example.com
     Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
     MaxLength: '64'
@@ -525,7 +525,7 @@ Resources:
             maxChars: '2048'
             minChars: '20'
           DomainDNSName:
-            allowedPattern: '^([a-zA-Z0-9]+[\.\-])+([a-zA-Z0-9])+$'
+            allowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
             default: 'example.com'
             description: 'Fully qualified domain name (FQDN) of the forest root domain e.g. example.com'
             type: String
