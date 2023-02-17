@@ -911,6 +911,34 @@ Resources:
               CloudWatchOutputConfig:
                 CloudWatchOutputEnabled: true
                 CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
+          - name: configureIMDSv2dc1
+            action: 'aws:executeAwsApi'
+            onFailure: step:signalfailure
+            description: Set hop limit and configure IMDS version
+            inputs:
+              Service: ec2
+              Api: ModifyInstanceMetadataOptions
+              InstanceId: '{{dc1InstanceId.InstanceId}}'
+              HttpEndpoint: enabled
+              HttpTokens: required
+            timeoutSeconds: 300
+            isEnd: false
+            isCritical: true
+            maxAttempts: 3
+          - name: configureIMDSv2dc2
+            action: 'aws:executeAwsApi'
+            onFailure: step:signalfailure
+            description: Set hop limit and configure IMDS version
+            inputs:
+              Service: ec2
+              Api: ModifyInstanceMetadataOptions
+              InstanceId: '{{dc2InstanceId.InstanceId}}'
+              HttpEndpoint: enabled
+              HttpTokens: required
+            timeoutSeconds: 300
+            isEnd: false
+            isCritical: true
+            maxAttempts: 3
           - name: CFNSignalEnd
             action: aws:branch
             inputs:
@@ -1008,6 +1036,12 @@ Resources:
               - Effect: Allow
                 Action: cloudformation:SignalResource
                 Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
+              - Sid: ConfigureIMDS
+                Effect: Allow
+                Action:
+                 -  ec2:ModifyInstanceMetadataOptions
+                Resource: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+          PolicyName: AWS-Mgmt-Quick-Start-Policy
           PolicyName: AWS-Mgmt-Quick-Start-Policy
         - PolicyDocument:
             Version: '2012-10-17'

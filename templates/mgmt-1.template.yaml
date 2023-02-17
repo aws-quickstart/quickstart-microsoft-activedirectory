@@ -290,6 +290,12 @@ Resources:
               - Effect: Allow
                 Action: ds:CreateConditionalForwarder
                 Resource: !Sub arn:${AWS::Partition}:ds:${AWS::Region}:${AWS::AccountId}:directory/${DirectoryID}
+              - Sid: ConfigureIMDS
+                Effect: Allow
+                Action:
+                 -  ec2:ModifyInstanceMetadataOptions
+                Resource: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+          PolicyName: AWS-Mgmt-Quick-Start-Policy
           PolicyName: AWS-Mgmt-Quick-Start-Policy
         - PolicyDocument:
             Version: '2012-10-17'
@@ -622,6 +628,20 @@ Resources:
               CloudWatchOutputConfig:
                 CloudWatchOutputEnabled: true
                 CloudWatchLogGroupName: !Sub /aws/Quick_Start/${AWS::StackName}
+          - name: configureIMDSv2mgmt
+            action: 'aws:executeAwsApi'
+            onFailure: step:signalfailure
+            description: Set hop limit and configure IMDS version
+            inputs:
+              Service: ec2
+              Api: ModifyInstanceMetadataOptions
+              InstanceId: '{{mgmtInstanceId.InstanceId}}'
+              HttpEndpoint: enabled
+              HttpTokens: required
+            timeoutSeconds: 300
+            isEnd: false
+            isCritical: true
+            maxAttempts: 3
             nextStep: CFNSignalEnd
           - name: CFNSignalEnd
             action: aws:branch
