@@ -713,7 +713,7 @@ Resources:
             description: Fixed private IP for the second additional Active Directory Domain Controller located in subnet 2
             type: String
           DomainDNSName:
-            allowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
+            allowedPattern: '^([a-zA-Z0-9]+[\.\-])+([a-zA-Z0-9])+$'
             description: Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com
             maxChars: '64'
             minChars: '2'
