@@ -296,7 +296,6 @@ Resources:
                  -  ec2:ModifyInstanceMetadataOptions
                 Resource: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
           PolicyName: AWS-Mgmt-Quick-Start-Policy
-          PolicyName: AWS-Mgmt-Quick-Start-Policy
         - PolicyDocument:
             Version: '2012-10-17'
             Statement:
