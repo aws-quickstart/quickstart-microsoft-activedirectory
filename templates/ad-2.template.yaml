@@ -309,7 +309,7 @@ Resources:
             maxChars: '15'
             minChars: '1'  
           DomainDNSName:
-            allowedPattern: '^[a-zA-Z0-9]+[a-zA-Z0-9\-]*\.[a-zA-Z0-9]+$'
+            allowedPattern: '^([a-zA-Z0-9]+[\.\-])+([a-zA-Z0-9])+$'
             description: Fully qualified domain name (FQDN) of the domain you would like to join and promote to e.g. example.com
             default: 'example.com'
             type: String
