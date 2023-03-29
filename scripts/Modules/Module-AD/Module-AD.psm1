@@ -568,6 +568,10 @@ Function Set-DnsDscConfiguration {
     #==================================================
     # Main
     #==================================================
+
+    Write-Output 'Formatting Computer names as FQDN'
+    $ADServer1 = "$ADServer1NetBIOSName.$DomainDNSName"
+    $ADServer2 = "$ADServer2NetBIOSName.$DomainDNSName"
     
     Configuration DnsConfig {
     
@@ -619,10 +623,6 @@ Function Set-DnsDscConfiguration {
             }
         }
     }
-
-    Write-Output 'Formatting Computer names as FQDN'
-    $ADServer1 = "$ADServer1NetBIOSName.$DomainDNSName"
-    $ADServer2 = "$ADServer2NetBIOSName.$DomainDNSName"
 
     Write-Output 'Setting Cim Sessions for Each Host'
     Try {
