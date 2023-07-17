@@ -1,0 +1,14 @@
+==== Prepare your AWS account
+
+Before you deploy the Quick Start, make sure that your AWS account is set up properly by following these steps.
+
+.  If you don’t already have an AWS account, create one at https://aws.amazon.com by following the on-screen instructions. Part of the sign-up process involves receiving a phone call and entering a PIN using the phone keypad.
+.  Use the Region selector in the navigation bar to choose the AWS Region where you want to deploy AD DS Consider choosing the Region closest to your data center or corporate network to reduce network latency between systems running on AWS and the systems and users on your corporate network. See link:#_supported_regions[Supported Regions] earlier in this guide.
++
+.  Create an http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html[Amazon EC2 key pair^] in your preferred Region. To do this, in the navigation pane of the Amazon EC2 console, choose *Key Pairs*, *Create Key Pair*, type a name, and then choose *Create*.
++
+Amazon EC2 uses public-key cryptography to encrypt and decrypt login information. To be able to log in to your instances, you must create a key pair. With Windows instances, we use the key pair to obtain the administrator password via the Amazon EC2 console and then log in using Remote Desktop Protocol (RDP) as explained in the instructions http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair[Create a key pair using Amazon EC2^] in the _Amazon Elastic Compute Cloud User Guide_.
++
+.  If necessary, request a https://console.aws.amazon.com/support/home#/case/create?issueType=service-limit-increase[service limit increase^] for the Amazon EC2 *m4.xlarge* instance type. To do this, in the AWS Support Center, choose *Create Case*, *Service Limit Increase*, *EC2 instances*. Then, complete the fields in the limit-increase form. The current default limit is 20 instances.
++
+You might need to request an increase if you already have an existing deployment that uses this instance type and if you think you might exceed the default limit with this reference deployment. It might take a few days for the new service limit to become effective. For more information, see http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html[Amazon EC2 service quotas^].

@@ -1,0 +1,3 @@
+IMPORTANT: AWS Secrets Manager and AWS Directory Service are available only in the Regions listed in the AWS documentation: https://docs.aws.amazon.com/general/latest/gr/asm.html[AWS Secrets Manager endpoints and quotas^] and https://docs.aws.amazon.com/directoryservice/latest/admin-guide/regions.html[Region availability for AWS Directory Service^]. If you’re deploying **scenario 1** (deploy and manage your own AD DS) or **scenario 3** (deploy AD DS with AWS Directory Service)—as described in the link:#_architecture[Architecture] section of this guide—check service availability before you choose the Region to deploy the Quick Start into. Otherwise, your deployment will fail.
+
+//Full list: https://docs.aws.amazon.com/general/latest/gr/rande.html
