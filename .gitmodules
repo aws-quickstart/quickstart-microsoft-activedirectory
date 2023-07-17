@@ -10,10 +10,6 @@
 	path = submodules/quickstart-microsoft-rdgateway
 	url = ../../aws-quickstart/quickstart-microsoft-rdgateway.git
 	branch = main
-[submodule "docs/boilerplate"]
-	path = docs/boilerplate
-	url = https://github.com/aws-quickstart/quickstart-documentation-base-common.git
-	branch = main
 [submodule "submodules/quickstart-microsoft-pki"]
 	path = submodules/quickstart-microsoft-pki
 	url = https://github.com/aws-quickstart/quickstart-microsoft-pki.git
