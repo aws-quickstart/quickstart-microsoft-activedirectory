@@ -1,5 +1,0 @@
-// Include details about any licenses and how to sign up. Provide links as appropriate.
-
-This solution launches the Amazon Machine Image (AMI) for Microsoft Windows Server 2019 and includes the license for the Windows Server operating system. The AMI is updated on a regular basis with the latest service pack for the operating system, so you don't have to install any updates. The Windows Server AMI doesn't require client access licenses (CALs). It includes two Microsoft Remote Desktop Services (RDS) licenses. For details, see https://aws.amazon.com/windows/resources/licensing/[Microsoft Licensing on AWS].
-
-For more information, refer to the https://fwd.aws/rA69w?[AWS Partner Solution General Information Guide^].
