@@ -1,19 +1,4 @@
-[submodule "submodules/quickstart-aws-vpc"]
-	path = submodules/quickstart-aws-vpc
-	url = ../../aws-quickstart/quickstart-aws-vpc.git
-	branch = main
-[submodule "submodules/quickstart-microsoft-utilities"]
-	path = submodules/quickstart-microsoft-utilities
-	url = ../../aws-quickstart/quickstart-microsoft-utilities.git
-	branch = main
-[submodule "submodules/quickstart-microsoft-rdgateway"]
-	path = submodules/quickstart-microsoft-rdgateway
-	url = ../../aws-quickstart/quickstart-microsoft-rdgateway.git
-	branch = main
-[submodule "submodules/quickstart-microsoft-pki"]
-	path = submodules/quickstart-microsoft-pki
-	url = https://github.com/aws-quickstart/quickstart-microsoft-pki.git
-	branch = main
 [submodule "docs/boilerplate"]
 	path = docs/boilerplate
 	url = https://github.com/aws-ia/aws-ia-documentation-base-common.git
+	branch = main

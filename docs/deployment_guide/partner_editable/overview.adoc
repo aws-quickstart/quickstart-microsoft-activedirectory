@@ -1,10 +1,11 @@
-This guide covers the information you need to deploy the {partner-product-name} Partner Solution in the AWS Cloud.
+This guide discusses architectural considerations and configuration steps for deploying a highly available {partner-product-name} ({partner-product-short-name}) environment on the AWS Cloud. It also provides links for launching http://aws.amazon.com/cloudformation/[AWS CloudFormation^] templates that automate the deployment.
 
-// Fill in the info in <angle brackets> for use on the landing page only: 
-This Amazon Web Services (AWS) Partner Solution deploys [<product name>](<partner's marketing product page>) in the AWS Cloud so that <purpose>. This solution is for <target users> who want to <do what> so that <why>. For more information, refer to the [<product name> documentation](<URL>).
+The guide is for IT infrastructure architects and administrators who want to design and deploy a solution to launch AD DS in the AWS Cloud or extend their on-premises AD DS into the AWS Cloud.
 
-// Deploying this solution does not guarantee an organization’s compliance with any laws, certifications, policies, or other regulations. [Uncomment this statement only for solutions that relate to compliance. We'll add the corresponding reference part to the landing page and get legal approval before publishing.]
+AWS provides a comprehensive set of services and tools for deploying Microsoft Windows-based workloads on its cloud infrastructure. Microsoft AD DS and Domain Name System (DNS) are core Windows services that provide the foundation for many enterprise class Microsoft-based solutions, including Microsoft SharePoint, Microsoft Exchange, and .NET applications.
 
-// For advanced information about the product, troubleshooting, or additional functionality, refer to the https://{partner-solution-github-org}.github.io/{partner-solution-project-name}/operational/index.html[Operational Guide^].
+This solution is for organizations running workloads in the AWS Cloud to help set up secure, low-latency connectivity to AD DS and DNS services. After reading this guide, IT infrastructure personnel should have a good understanding of how to design and deploy a solution to launch AD DS in the AWS Cloud, or extend their on-premises AD DS into the AWS Cloud. The solution optionally deploys a one- or two-tier https://fwd.aws/a4Rdx[Microsoft Public Key Infrastructure^].
 
-// For information about using this Partner Solution for migrations, refer to the https://{partner-solution-github-org}.github.io/{partner-solution-project-name}/migration/index.html[Migration Guide^].
+This guide focuses on infrastructure configuration topics that require careful consideration when you are planning and deploying AD DS, domain controller instances, and DNS services in the AWS Cloud. We don't cover general Windows Server installation and software configuration tasks. For general software configuration guidance and best practices, consult the Microsoft product documentation.
+
+If you have questions about this solution, contact Premier AWS Partner https://partners.amazonaws.com/partners/001E000000NaBHNIA3/Cloudreach[Eviden^].

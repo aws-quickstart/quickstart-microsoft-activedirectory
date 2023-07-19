@@ -1,15 +1,15 @@
-:partner-solution-project-name: partner-solution-repo-name
+:partner-solution-project-name: quickstart-microsoft-activedirectory
 :partner-solution-github-org: aws-quickstart
-:partner-product-name: Full Product Name
-:partner-product-short-name: Product Name
-:partner-company-name: Example Company Name, Ltd.
-:doc-month: January
+:partner-product-name: Active Directory Domain Services
+:partner-product-short-name: AD DS
+// :partner-company-name: Example Company Name, Ltd.
+:doc-month: July
 :doc-year: 2023
-:partner-contributors: John Smith, {partner-company-name}
+// :partner-contributors: John Smith, {partner-company-name}
 // :other-contributors: Akua Mansa, Trek10
-:aws-contributors: Janine Singh, AWS IoT Partner team
-:aws-ia-contributors: Toni Jones, AWS Integration & Automation team
-:deployment_time: 15 minutes
+// :aws-contributors: Janine Singh, AWS IoT Partner team
+:aws-ia-contributors: AWS Integration & Automation team
+:deployment_time: 10 to 60 minutes
 :default_deployment_region: us-east-1
 // :private_repo:
 
