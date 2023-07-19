@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.16">
+<meta name="description" content="Active Directory Domain Services Deployment Guide on AWS">
+<meta name="keywords" content="Partner Solution, AWS, Active Directory Domain Services">
+<title>Active Directory Domain Services on AWS</title>
+<style>
+/* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+/* Uncomment @import statement to use as custom stylesheet */
+@import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700";*/
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section{display:block}
+audio,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+a{background:none}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+abbr[title]{border-bottom:1px dotted}
+b,strong{font-weight:bold}
+dfn{font-style:italic}
+hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,*::before,*::after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto;tab-size:4;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0;direction:ltr}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:0}
+p{font-family:inherit;font-weight:400;font-size:1em;line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#34478c;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0;font-size:1em}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+abbr,acronym{text-transform:uppercase;font-size:90%;color:rgba(0,0,0,.8);border-bottom:1px dotted #ddd;cursor:help}
+abbr{text-transform:none}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote cite{display:block;font-size:.9375em;color:rgba(0,0,0,.6)}
+blockquote cite::before{content:"\2014 \0020"}
+blockquote cite a,blockquote cite a:visited{color:rgba(0,0,0,.6)}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:solid 1px #dedede}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt{background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{display:table-cell;line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed;word-wrap:break-word}
+:not(pre)>code.nobreak{word-wrap:normal}
+:not(pre)>code.nowrap{white-space:nowrap}
+pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
+pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
+pre>code{display:block}
+pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin-left:auto;margin-right:auto;margin-top:0;margin-bottom:0;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{
+  border-bottom:1px solid #e7e7e9;
+  padding-bottom:.5em;
+  width: 230px;
+}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{
+  font-family: "Work Sans", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif;
+  text-decoration:none;
+  color:#ccc;
+  display: block;
+  font-size:1rem;
+  line-height: 2rem;
+}
+#toc a:hover{color:#e6e6e6}
+#toc a:active{
+  text-decoration:none;
+  color:#777;
+}
+#toctitle{
+  padding-top:0;
+  overflow:hidden;
+  background:#283e5b;
+  /* border-bottom: 4px solid #435c7c; */
+  width:320px;
+  height:154px;
+  top:0;
+  left:0;
+  color: #283e5b;
+}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background:#1c222a;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;/*! padding:1.25em 1em; */height:100%;overflow:auto;padding-right: 0px;}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{
+  font-size:1.375em;
+  background-repeat: no-repeat;
+  background-size: 160.8px 136.483px;
+  background-position: center;
+  }
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:100%;background:#1c222a;padding:1.25em}
+#footer-text{color:rgba(255,255,255,.8);line-height:1.44;/*! background: #e6e6e6; */}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+details>summary:first-of-type{cursor:pointer;display:list-item;outline:none;margin-bottom:.75em}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6)}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border-style:solid;border-width:1px;border-color:#e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;-webkit-border-radius:4px;border-radius:4px}
+.exampleblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child{margin-bottom:0}
+.sidebarblock{border-style:solid;border-width:1px;border-color:#dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;-webkit-border-radius:4px;border-radius:4px}
+.sidebarblock>:first-child{margin-top:0}
+.sidebarblock>:last-child{margin-bottom:0}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock>.content>pre{-webkit-border-radius:4px;border-radius:4px;word-wrap:break-word;overflow-x:auto;padding:1em;font-size:.8125em}
+@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
+.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class="highlight"],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
+.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;-webkit-border-radius:4px;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.prettyprint{background:#f7f7f8}
+pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
+pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
+pre.prettyprint li code[data-lang]::before{opacity:1}
+pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
+table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
+table.linenotable td.code{padding-left:.75em}
+table.linenotable td.linenos{border-right:1px solid currentColor;opacity:.35;padding-right:.5em}
+pre.pygments .lineno{border-right:1px solid currentColor;opacity:.35;display:inline-block;margin-right:.75em}
+pre.pygments .lineno::before{content:"";margin-right:-.125em}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;text-align:left;margin-right:0}
+table.tableblock{max-width:100%;border-collapse:separate}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content>:last-child{margin-bottom:-1.25em}
+td.tableblock>.content>:last-child.sidebarblock{margin-bottom:0}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>thead>tr>.tableblock,table.grid-all>tbody>tr>.tableblock{border-width:0 1px 1px 0}
+table.grid-all>tfoot>tr>.tableblock{border-width:1px 1px 0 0}
+table.grid-cols>*>tr>.tableblock{border-width:0 1px 0 0}
+table.grid-rows>thead>tr>.tableblock,table.grid-rows>tbody>tr>.tableblock{border-width:0 0 1px}
+table.grid-rows>tfoot>tr>.tableblock{border-width:1px 0 0}
+table.grid-all>*>tr>.tableblock:last-child,table.grid-cols>*>tr>.tableblock:last-child{border-right-width:0}
+table.grid-all>tbody>tr:last-child>.tableblock,table.grid-all>thead:last-child>tr>.tableblock,table.grid-rows>tbody>tr:last-child>.tableblock,table.grid-rows>thead:last-child>tr>.tableblock{border-bottom-width:0}
+table.frame-all{border-width:1px}
+table.frame-sides{border-width:0 1px}
+table.frame-topbot,table.frame-ends{border-width:1px 0}
+table.stripes-all tr,table.stripes-odd tr:nth-of-type(odd),table.stripes-even tr:nth-of-type(even),table.stripes-hover tr:hover{background:#f8f8f7}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{display:table-cell;line-height:1.6;background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+ol>li p,ul>li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+ul.checklist{margin-left:.625em}
+ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist li>p:first-child>input[type="checkbox"]:first-child{margin-right:.25em}
+ul.inline{display:-ms-flexbox;display:-webkit-box;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+.gist .file-data>table{border:0;background:#fff;width:100%;margin-bottom:0}
+.gist .file-data>table td.line-data{width:99%}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background:#00fafa}
+.black{color:#000}
+.black-background{background:#000}
+.blue{color:#0000bf}
+.blue-background{background:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background:#fa00fa}
+.gray{color:#606060}
+.gray-background{background:#7d7d7d}
+.green{color:#006000}
+.green-background{background:#007d00}
+.lime{color:#00bf00}
+.lime-background{background:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background:#7d0000}
+.navy{color:#000060}
+.navy-background{background:#00007d}
+.olive{color:#606000}
+.olive-background{background:#7d7d00}
+.purple{color:#600060}
+.purple-background{background:#7d007d}
+.red{color:#bf0000}
+.red-background{background:#fa0000}
+.silver{color:#909090}
+.silver-background{background:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";color: rgb(3, 87, 21);}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);-webkit-border-radius:100px;border-radius:100px;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,span.alt{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;-webkit-box-shadow:0 1px 4px #e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media print,amzn-kf8{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+
+/* -------------------------   QS CSS entries ---------------------------- */
+@font-face {
+  font-family: 'Amazon Ember Light';
+  src        :
+    local('Amazon Ember Light'),
+    local('AmazonEmberLight'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_lt-019e0ec3f9b521056e66e31fdcbc8323e5cd1938._V299195751_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_lt-bc9ed0fce860a46f3cb061034280c23400e6e8b6._V299195751_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Light';
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Light'),
+    local('AmazonEmberLight-Bold'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-46b91bda68161c14e554a779643ef4957431987b._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-b605252f87b8b3df5ae206596dac0938fc5888bc._V2_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Light';
+  font-style : italic;
+  src        :
+    local('Amazon Ember Light'),
+    local('AmazonEmberLight-Italic'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_ltit-96be47a559388a2b219577124589435c09a361fe._V299195751_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_ltit-b561f11b5c8be92ac17f6b713dd9d4b6e2f00c8d._V299195751_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Light';
+  font-style : italic;
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Light'),
+    local('AmazonEmberLight-BoldItalic'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_ltit-96be47a559388a2b219577124589435c09a361fe._V299195751_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_ltit-b561f11b5c8be92ac17f6b713dd9d4b6e2f00c8d._V299195751_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Regular';
+  src        :
+    local('Amazon Ember Regular'),
+    local('AmazonEmberRegular'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_rg-fd81bacb6a659a8c8c95828226b74594ab985060._V299195749_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_rg-0acf3bc8b64d470d8888d84741a19533394654c6._V299195749_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Regular';
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Regular'),
+    local('AmazonEmberRegular-Bold'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-46b91bda68161c14e554a779643ef4957431987b._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-b605252f87b8b3df5ae206596dac0938fc5888bc._V2_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Regular';
+  font-style : italic;
+  src        :
+    local('Amazon Ember Regular'),
+    local('AmazonEmberRegular-Italic'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_rgit-af980fe9c64fc17ece72cba4e3e7fdf54babeea6._V299195748_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_rgit-4fae4842b3446774d86579b9b024858a848644e8._V299195748_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Regular';
+  font-style : italic;
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Regular'),
+    local('AmazonEmberRegular-BoldItalic'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bdit-80ff7aba37dd1ff5a6b90233a19e3a780a96dc2f._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bdit-57598ce426a612be5a1d15eee08252668fca5e7a._V2_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Medium';
+  src        :
+    local('Amazon Ember Medium'),
+    local('AmazonEmberMedium'),
+    url('https://m.media-amazon.com/images/G/01/amazonservices/fonts/amazonember_md_base-webfont._V525237381_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/amazonservices/fonts/amazonember_md_base-webfont._V525237386_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Medium';
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Medium'),
+    local('AmazonEmberMedium-Bold'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-46b91bda68161c14e554a779643ef4957431987b._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-b605252f87b8b3df5ae206596dac0938fc5888bc._V2_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Medium';
+  font-style : italic;
+  src        :
+    local('Amazon Ember Medium'),
+    local('AmazonEmberMedium-Italic'),
+    url('https://m.media-amazon.com/images/G/01/agdm/fonts/amazonember/amazonember_mdit-webfont._V522331917_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/agdm/fonts/amazonember/amazonember_mdit-webfont._V522331917_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Medium';
+  font-style : italic;
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Medium'),
+    local('AmazonEmberMedium-BoldItalic'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bdit-80ff7aba37dd1ff5a6b90233a19e3a780a96dc2f._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bdit-57598ce426a612be5a1d15eee08252668fca5e7a._V2_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Heavy';
+  src        :
+    local('Amazon Ember Heavy'),
+    local('AmazonEmberHeavy'),
+    url('https://m.media-amazon.com/images/G/01/acs/fonts/amazonember_he-webfont._V278446113_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/acs/fonts/amazonember_he-webfont._V278446115_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Heavy';
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Heavy'),
+    local('AmazonEmberHeavy-Bold'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-46b91bda68161c14e554a779643ef4957431987b._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-b605252f87b8b3df5ae206596dac0938fc5888bc._V2_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Heavy';
+  font-style : italic;
+  src        :
+    local('Amazon Ember Heavy'),
+    local('AmazonEmberHeavy-Italic'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bdit-80ff7aba37dd1ff5a6b90233a19e3a780a96dc2f._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bdit-57598ce426a612be5a1d15eee08252668fca5e7a._V2_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Heavy';
+  font-style : italic;
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Heavy'),
+    local('AmazonEmberHeavy-BoldItalic'),
+    url('https://m.media-amazon.com/images/G/01/agdm/fonts/amazonember/amazonember_heit-webfont._V522331917_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/agdm/fonts/amazonember/amazonember_heit-webfont._V522331917_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Thin';
+  src        :
+    local('Amazon Ember Thin'),
+    local('AmazonEmberThin'),
+    url('https://m.media-amazon.com/images/G/01/mobile-apps/devportal2/content/alexa/prize/20160810/fonts/AmazonEmber/amazonember-thin-webfont._V282715032_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/mobile-apps/devportal2/content/alexa/prize/20160810/fonts/AmazonEmber/amazonember-thin-webfont._V282715033_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Thin';
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Thin'),
+    local('AmazonEmberThin-Bold'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-46b91bda68161c14e554a779643ef4957431987b._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bd-b605252f87b8b3df5ae206596dac0938fc5888bc._V2_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Thin';
+  font-style : italic;
+  src        :
+    local('Amazon Ember Thin'),
+    local('AmazonEmberThin-Italic'),
+    url('https://m.media-amazon.com/images/G/01/mobile-apps/devportal2/content/alexa/prize/20160810/fonts/AmazonEmber/amazonember-thinit-webfont._V282715033_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/mobile-apps/devportal2/content/alexa/prize/20160810/fonts/AmazonEmber/amazonember-thinit-webfont._V282715032_.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Amazon Ember Thin';
+  font-style : italic;
+  font-weight: 700;
+  src        :
+    local('Amazon Ember Thin'),
+    local('AmazonEmberThin-BoldItalic'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bdit-80ff7aba37dd1ff5a6b90233a19e3a780a96dc2f._V2_.woff2') format('woff2'),
+    url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIBaseCSS-amazonember_bdit-57598ce426a612be5a1d15eee08252668fca5e7a._V2_.woff') format('woff');
+}
+
+
+.tip {
+  border-top: 30px solid rgba(92, 184, 92, 0.8);
+  background: #E6F9E6;
+}
+
+.note {
+  border-top: 30px solid #6AB0DE;
+  background: #E7F2FA;
+}
+
+.warning {
+  border-top: 30px solid #F0B37E;
+  background: #FFF2DB;
+}
+
+.caution {
+  border-top: 30px solid rgba(217, 83, 79, 0.8);
+  background: #FAE2E2;
+}
+
+.important {
+  border-top: 30px solid rgba(217, 83, 79, 0.8);
+  background: #FAE2E2;
+}
+
+#content {
+  max-width: 100rem;
+  padding-left: 5rem;
+  padding-right: 5rem;
+}
+
+body {
+  font-family: "Amazon Ember Regular", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif;
+}
+
+/* added */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin        : 0.85rem 0 1.7rem 0;
+  text-rendering: optimizeLegibility;
+  color: #ec7211;
+}
+
+p {
+  margin: 1rem 0;
+}
+
+/* QS Table of Contents */
+
+#toc {
+  overflow-x: hidden !important;
+}
+
+#toc>ul li {
+  padding    : 0.3rem 0.6rem;
+  margin-top : 0;
+  line-height: 1;
+}
+
+#toc>ul li a {
+  line-height: 1.6;
+}
+
+#toc a {
+  /* TOC details */
+  font-family  : "Amazon Ember Light", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif;
+  margin-left  : -1rem;
+  margin-right : -1rem;
+  padding-left : 1rem;
+  padding-right: 1rem;
+  background   : transparent;
+  box-sizing   : border-box;
+  cursor       : pointer;
+  font-weight  : 300 !important;
+}
+
+/* image layout */
+#toc.toc2 #toctitle {
+  background-image: url("docs/boilerplate/.images/AWS-Logo.svg");
+  background-repeat: no-repeat;
+  background-size: 50%;
+  background-position: center;
+  width: auto;
+  height: 15%;
+}
+
+/* Left Navbar size */
+#toc.toc2 {
+  width: 17%;
+  min-width: 15em;
+}
+
+/* auto width for main page */
+body.toc2 {
+  padding-left: 22%;
+  padding-right: 2%;
+}
+
+/* hide left nav bar if page size is smaller than 767px */
+@media screen and (max-width: 767px) {
+  #toc {
+      display: none !important;
+  }
+  body.toc2 {
+    padding-left: 1%;
+    padding-right: 1%;
+    position: relative;
+  }
+
+  #content {
+    padding-left: 2%;
+    padding-right: 2%;
+  }
+}
+
+/* QS Tables */
+
+table.tableblock .title,
+.imageblock .title {
+  font-family  : "Amazon Ember Light", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif;
+  font-size: 1.1rem;
+  color: #34478c;
+}
+table p {
+  margin: 0rem;
+}
+
+/* Add border around hyperlink images */
+a img {
+    border: 1px solid #A4A4A4;
+}
+
+.preview_mode {
+	border-color:#e0e0dc;
+	-webkit-box-shadow:0 1px 4px #e0e0dc;
+	box-shadow:0 1px 4px #e0e0dc;
+  background:#ffffb3;
+  padding-bottom: 2rem;
+}
+.preview_mode .tableblock {
+  background:#ffffb3;
+}
+
+.watermark {
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  color:#00f;
+  cursor: default;
+  display: block;
+  font-size: 400px;
+  font-weight: 1000;
+  margin: 0;
+  opacity:0.05;
+  top: 30%;
+  position: fixed;
+  text-align: center;
+  transform: rotate(-30deg);
+  user-select: none;
+  z-index: -1;
+}
+
+.footer-text{color:rgba(255,255,255,.8);line-height:1.44;background:#1c222a;padding:1.25em;max-width:100%;margin-bottom:unset}
+p.footer-text a{color:#d7d8d8}
+
+/* This is for the 'dummy' image in the docs to help with reporting on guide views. */
+/* DO NOT MODIFY */
+.image-container img {
+  width: 1px;
+  height: 1px;
+  }
+/* END dummy image */
+
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body class="book toc2 toc-left">
+<div id="header">
+<div id="toc" class="toc2">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_overview">Overview</a></li>
+<li><a href="#_costs_and_licenses">Costs and licenses</a></li>
+<li><a href="#_architecture">Architecture</a>
+<ul class="sectlevel2">
+<li><a href="#_scenario_1_deploy_self_managed_ad">Scenario 1: Deploy self-managed AD</a></li>
+<li><a href="#_scenario_2_extend_your_on_premises_ad">Scenario 2: Extend your on-premises AD</a></li>
+<li><a href="#_scenario_3_deploy_aws_managed_microsoft_ad">Scenario 3: Deploy AWS Managed Microsoft AD</a></li>
+</ul>
+</li>
+<li><a href="#_deployment_options">Deployment options</a></li>
+<li><a href="#_plan_the_deployment">Plan the deployment</a>
+<ul class="sectlevel2">
+<li><a href="#_vpc_configuration">VPC configuration</a></li>
+<li><a href="#_security_group_ingress_traffic">Security group ingress traffic</a></li>
+<li><a href="#_help_set_up_secure_administrative_access_using_remote_desktop_gateway">Help set up secure administrative access using Remote Desktop Gateway</a></li>
+<li><a href="#_active_directory_design">Active Directory design</a></li>
+<li><a href="#_powershell_dsc_usage_in_the_ad_ds_solution">PowerShell DSC usage in the AD DS solution</a></li>
+</ul>
+</li>
+<li><a href="#_predeployment_steps">Predeployment steps</a></li>
+<li><a href="#_deployment_steps">Deployment steps</a></li>
+<li><a href="#_postdeployment_steps">Postdeployment steps</a>
+<ul class="sectlevel2">
+<li><a href="#_run_windows_updates">Run Windows Updates</a></li>
+<li><a href="#_postdeployment_steps_for_scenario_2_only">Postdeployment steps for scenario 2 only</a></li>
+</ul>
+</li>
+<li><a href="#_security">Security</a></li>
+<li><a href="#_troubleshooting">Troubleshooting</a>
+<ul class="sectlevel2">
+<li><a href="#_i_encountered_a_create_failed_error_when_i_launched_the_solution">I encountered a CREATE_FAILED error when I launched the solution</a></li>
+<li><a href="#_i_encountered_a_size_limitation_error_when_i_deployed_the_aws_cloudformation_templates">I encountered a size-limitation error when I deployed the AWS CloudFormation templates</a></li>
+<li><a href="#_the_aws_cloudformation_deployment_failed_because_the_systems_manager_automation_document_failed">The AWS CloudFormation deployment failed because the Systems Manager Automation document failed</a></li>
+</ul>
+</li>
+<li><a href="#_customer_responsibility">Customer responsibility</a></li>
+<li><a href="#_feedback">Feedback</a></li>
+<li><a href="#_notices">Notices</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<h2 id="_active_directory_domain_services_on_aws" class="discrete text-center">Active Directory Domain Services on AWS</h2>
+<h2 id="_partner_solution_deployment_guide" class="discrete text-left text-center">Partner Solution Deployment Guide</h2>
+<div class="imageblock text-center">
+<div class="content">
+<img src="https://aws-quickstart.s3.amazonaws.com/docs/deployment-guide/aws-quickstart-deployment-graphic.png" alt="QS" width="80" height="80">
+</div>
+</div>
+<div class="paragraph text-center">
+<p><strong>July 2023</strong><br>
+<em>AWS Integration &amp; Automation team</em><br></p>
+</div>
+<div class="imageblock text-left image-container">
+<div class="content">
+<img src="https://aws-quickstart.s3.amazonaws.com/quickstart-microsoft-activedirectory/docs/boilerplate/.images/aws-quickstart-graphic.png" alt="">
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Refer to the <a href="https://github.com/aws-quickstart/quickstart-microsoft-activedirectory" target="_blank" rel="noopener">GitHub repository</a> to view source files, report bugs, submit feature ideas, and post feedback about this Partner Solution. To comment on the documentation, refer to <a href="#_feedback">Feedback</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph text-left">
+<p>This Partner Solution was created by Amazon Web Services (AWS). <a href="https://aws.amazon.com/solutions/partners/" target="_blank" rel="noopener">Partner Solutions</a> are automated reference deployments that help people deploy popular technologies on AWS according to AWS best practices. If you&#8217;re unfamiliar with AWS Partner Solutions, refer to the <a href="https://fwd.aws/rA69w?" target="_blank" rel="noopener">AWS Partner Solution General Information Guide</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_overview">Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide discusses architectural considerations and configuration steps for deploying a highly available Active Directory Domain Services (AD DS) environment on the AWS Cloud. It also provides links for launching <a href="http://aws.amazon.com/cloudformation/" target="_blank" rel="noopener">AWS CloudFormation</a> templates that automate the deployment.</p>
+</div>
+<div class="paragraph">
+<p>The guide is for IT infrastructure architects and administrators who want to design and deploy a solution to launch AD DS in the AWS Cloud or extend their on-premises AD DS into the AWS Cloud.</p>
+</div>
+<div class="paragraph">
+<p>AWS provides a comprehensive set of services and tools for deploying Microsoft Windows-based workloads on its cloud infrastructure. Microsoft AD DS and Domain Name System (DNS) are core Windows services that provide the foundation for many enterprise class Microsoft-based solutions, including Microsoft SharePoint, Microsoft Exchange, and .NET applications.</p>
+</div>
+<div class="paragraph">
+<p>This solution is for organizations running workloads in the AWS Cloud to help set up secure, low-latency connectivity to AD DS and DNS services. After reading this guide, IT infrastructure personnel should have a good understanding of how to design and deploy a solution to launch AD DS in the AWS Cloud, or extend their on-premises AD DS into the AWS Cloud. The solution optionally deploys a one- or two-tier <a href="https://fwd.aws/a4Rdx" target="_blank" rel="noopener">Microsoft Public Key Infrastructure</a>.</p>
+</div>
+<div class="paragraph">
+<p>This guide focuses on infrastructure configuration topics that require careful consideration when you are planning and deploying AD DS, domain controller instances, and DNS services in the AWS Cloud. We don&#8217;t cover general Windows Server installation and software configuration tasks. For general software configuration guidance and best practices, consult the Microsoft product documentation.</p>
+</div>
+<div class="paragraph">
+<p>If you have questions about this solution, contact Premier AWS Partner <a href="https://partners.amazonaws.com/partners/001E000000NaBHNIA3/Cloudreach" target="_blank" rel="noopener">Eviden</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_costs_and_licenses">Costs and licenses</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This solution launches the Amazon Machine Image (AMI) for Microsoft Windows Server 2019 and includes the license for the Windows Server operating system. The AMI is updated on a regular basis with the latest service pack for the operating system, so you don&#8217;t have to install any updates. The Windows Server AMI doesn&#8217;t require client access licenses (CALs). It includes two Microsoft Remote Desktop Services (RDS) licenses. For details, see <a href="https://aws.amazon.com/windows/resources/licensing/">Microsoft Licensing on AWS</a>.</p>
+</div>
+<div class="paragraph">
+<p>For more information, refer to the <a href="https://fwd.aws/rA69w?" target="_blank" rel="noopener">AWS Partner Solution General Information Guide</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_architecture">Architecture</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This solution provides separate AWS CloudFormation templates to support three deployment scenarios. For each scenario, you also have the option to create a new virtual private cloud (VPC) or use your existing VPC infrastructure. Choose the scenario that best fits your needs.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Scenario 1: Deploy and manage your own AD DS installation on the Amazon EC2 instances.</strong> The AWS CloudFormation template for this scenario builds the AWS Cloud infrastructure, and sets up and configures AD DS and AD-integrated DNS on the AWS Cloud. It doesn&#8217;t include AWS Directory Service, so you handle all AD DS maintenance and monitoring tasks yourself. You can also choose to deploy the solution into your existing VPC infrastructure.</p>
+</li>
+<li>
+<p><strong>Scenario 2: Extend your on-premises AD DS to AWS on Amazon EC2 instances.</strong> The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure for AD DS, and you perform several manual steps to extend your existing network to AWS and to promote your domain controllers. As in scenario 1, you manage all AD DS tasks yourself. You can also choose to deploy the solution into your existing VPC infrastructure.</p>
+</li>
+<li>
+<p><strong>Scenario 3: Deploy AWS Directory Service for Microsoft Active Directory (AWS Managed Microsoft AD).</strong> The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure and then deploys AWS Managed Microsoft AD on the AWS Cloud. AWS Directory Service takes care of AD DS tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots. As with the first two scenarios, you can choose to deploy the solution into an existing VPC infrastructure.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For all new AD DS installations, the solution also deploys AD DS and AD-integrated DNS, and it sets up Active Directory sites and subnets.</p>
+</div>
+<div class="paragraph">
+<p>The following sections discuss the architecture for each scenario.</p>
+</div>
+<div class="sect2">
+<h3 id="_scenario_1_deploy_self_managed_ad">Scenario 1: Deploy self-managed AD</h3>
+<div class="paragraph">
+<p>Scenario 1 is based on a new installation of AD DS in the AWS Cloud without AWS Directory Service.</p>
+</div>
+<div id="architecture1" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/AD-architecture-scenario1.png" alt="Architecture scenario 1" width="75%">
+</div>
+<div class="title">Figure 1. Scenario 1—Architecture for self-managed AD DS on AWS</div>
+</div>
+<div class="paragraph">
+<p>As illustrated in <a href="#architecture1">Figure 1</a>, the AWS CloudFormation templates that automate this deployment set up the following (with an option to deploy a certificate authority in Availability Zone 1):</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A VPC configured with public and private subnets in two Availability Zones for high availability.*</p>
+</li>
+<li>
+<p>In the public subnets:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Managed network address translation (NAT) gateways to allow outbound internet access for resources in the private subnets.*</p>
+</li>
+<li>
+<p>Remote Desktop Gateway (RD Gateway) instances in an Auto Scaling group to help secure remote access to instances in private subnets.*</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>In the private subnets, a Windows Server forest and domain functional level, including security groups and rules for traffic between instances.</p>
+</li>
+<li>
+<p>AWS Systems Manager Automation documents to set up and configure AD DS and AD-integrated DNS.</p>
+</li>
+<li>
+<p>AWS Secrets Manager to store passwords.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="small">* The template that deploys the solution into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.</span></p>
+</div>
+<div class="paragraph">
+<p>In this architecture, domain controllers are deployed into two private VPC subnets in separate Availability Zones, making AD DS highly available. NAT gateways are deployed to public subnets, providing outbound internet access for instances in private subnets. Remote Desktop Gateways are deployed in an Auto Scaling group to the public subnets to help secure remote access to instances in private subnets. You can deploy an optional certificate authority in Availability Zone 1.</p>
+</div>
+<div class="paragraph">
+<p>Windows Server 2019 is used for the Remote Desktop Gateway instances and the domain controller instances. The AWS CloudFormation template deploys AWS resources, including a Systems Manager Automation document. When the second node is deployed, it triggers execution of the Automation document through Amazon EC2 user data. The automation workflow deploys the required components, finalizes the configuration to create a new AD forest, and promotes instances in two Availability Zones to Active Directory domain controllers.</p>
+</div>
+<div class="paragraph">
+<p>To deploy this stack, follow the step-by-step instructions in the Deployment Steps section. After deploying this stack, you can move on to deploying your AD DS-dependent servers into the VPC. The DNS settings for new instances will be ready via the updated DHCP options set that is associated with the VPC. You&#8217;ll also need to associate the new instances with the domain member security group that is created as part of this deployment.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_scenario_2_extend_your_on_premises_ad">Scenario 2: Extend your on-premises AD</h3>
+<div class="paragraph">
+<p>Scenario 2 is for users who want to use their existing installation of AD DS and extend their on-premises network to the VPC. The on-premises Active Directory environment has one or more domain controllers, global catalog servers, or DNS servers. In this scenario, the newly created Windows Server instances are not automatically promoted to domain controllers. You need to perform postdeployment tasks.</p>
+</div>
+<div id="architecture2" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/AD-architecture-scenario2.png" alt="Architecture scenario 2">
+</div>
+<div class="title">Figure 2. Scenario 2—Architecture for extending your on-premises AD DS to AWS</div>
+</div>
+<div class="paragraph">
+<p>As shown in <a href="#architecture2">Figure 2</a>, the AWS CloudFormation templates that automate this deployment set up the following (except for the virtual private network (VPN) gateway, VPN connection, and customer gateway, which you create manually):</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A VPC configured with public and private subnets in two Availability Zones for high availability.*</p>
+</li>
+<li>
+<p>In the public subnets:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Managed NAT gateways to allow outbound internet access for resources in the private subnets.*</p>
+</li>
+<li>
+<p>RD Gateway instances in an Auto Scaling group to help secure remote access to instances in private subnets.*</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>In the private subnets, EC2 instances to act as domain controllers.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="small">* The template that deploys the solution into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.</span></p>
+</div>
+<div class="paragraph">
+<p>Scenario 2 provides an example of using a VPC and a virtual private gateway to enable communication with your own network over an IPsec VPN tunnel. Active Directory is deployed in the customer data center, and Windows servers are deployed into two VPC subnets. After deploying the VPN connection, you can promote the Windows instances to domain controllers in the on-premises Active Directory forest, making AD DS highly available in the AWS Cloud.</p>
+</div>
+<div class="paragraph">
+<p>After you deploy the VPN connection and promote your servers to domain controllers, you can launch additional instances into the empty VPC subnets in the web, application, or database tier. These instances will have access to cloud-based domain controllers to help set up secure, low-latency directory services and DNS. All network traffic, including AD DS communication, authentication requests, and Active Directory replication, is secured either within the private subnets or across the VPN tunnel.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_scenario_3_deploy_aws_managed_microsoft_ad">Scenario 3: Deploy AWS Managed Microsoft AD</h3>
+<div class="paragraph">
+<p>Scenario 3 is similar to scenario 1, except that it includes AWS Directory Service to provision and manage AD DS on the AWS Cloud. Instead of fully managing AD DS yourself, you rely on AWS Directory Service for tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots.</p>
+</div>
+<div class="paragraph">
+<p>AWS Directory Service deploys AD DS across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. AWS Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information about AWS Directory Service, see <a href="https://aws.amazon.com/directoryservice/" target="_blank" rel="noopener">product details</a> and the <a href="http://aws.amazon.com/documentation/directory-service/" target="_blank" rel="noopener">AWS documentation</a>.</p>
+</div>
+<div id="architecture3" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/AD-architecture-scenario3.png" alt="Architecture scenario 3" width="75%">
+</div>
+<div class="title">Figure 3. Scenario 3—Architecture for deploying AD DS with AWS Directory Service</div>
+</div>
+<div class="paragraph">
+<p>As shown in <a href="#architecture3">Figure 3</a>, the AWS CloudFormation templates that automate this deployment set up the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A VPC configured with public and private subnets in two Availability Zones for high availability.*</p>
+</li>
+<li>
+<p>In the public subnets:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Managed NAT gateways to allow outbound internet access for resources in the private subnets.*</p>
+</li>
+<li>
+<p>RD Gateway instances in an Auto Scaling group to help secure remote access to instances in private subnets.*</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>In the private subnets, an optional Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.</p>
+</li>
+<li>
+<p>AWS Systems Manager Automation documents to set up and configure AD DS and AD-integrated DNS.</p>
+</li>
+<li>
+<p>AWS Secrets Manager to store passwords.</p>
+</li>
+<li>
+<p>AWS Directory Service to provision and manage AD DS in the private subnets.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="small">* The template that deploys the solution into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.</span></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_deployment_options">Deployment options</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This solution provides six deployment options (three scenarios with two options each):</p>
+</div>
+<div class="paragraph">
+<p><strong>Scenario 1:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://fwd.aws/EdwmE" target="_blank" rel="noopener">Deploy and manage your own AD DS installation in a new VPC</a>. This option builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys AD DS into this new VPC.</p>
+</li>
+<li>
+<p><a href="https://fwd.aws/eKBrm" target="_blank" rel="noopener">Deploy and manage your own AD DS installation in an existing VPC</a>. This option provisions AD DS in your existing AWS infrastructure.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Scenario 2:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://fwd.aws/AEBD7" target="_blank" rel="noopener">Extend your on-premises AD into a new VPC</a>. This option builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys two Windows EC2 instances into this new VPC.</p>
+</li>
+<li>
+<p><a href="https://fwd.aws/KGgYW" target="_blank" rel="noopener">Extend your on-premises AD into an existing VPC</a>. This option provisions two Windows EC2 instances in your existing AWS infrastructure.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Scenario 3:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://fwd.aws/EqwrE" target="_blank" rel="noopener">Deploy AD DS with AWS Directory Service on AWS in a new VPC</a>. This option builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys AWS Managed Microsoft AD into this new VPC.</p>
+</li>
+<li>
+<p><a href="https://fwd.aws/RgvXr" target="_blank" rel="noopener">Deploy AD DS with AWS Directory Service on AWS in an existing VPC</a>. This option provisions AWS Managed Microsoft AD in your existing AWS infrastructure.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The solution provides separate templates for these options. You can configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and AD DS settings.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+AWS Secrets Manager and AWS Directory Service are available only in the AWS Regions listed in the AWS documentation: <a href="https://docs.aws.amazon.com/general/latest/gr/asm.html" target="_blank" rel="noopener">AWS Secrets Manager endpoints and quotas</a> and <a href="https://docs.aws.amazon.com/directoryservice/latest/admin-guide/regions.html" target="_blank" rel="noopener">Region availability for AWS Directory Service</a>. If you&#8217;re deploying <strong>scenario 1</strong> (deploy and manage your own AD DS) or <strong>scenario 3</strong> (deploy AD DS with AWS Directory Service)—as described in the <a href="#_architecture">Architecture</a> section of this guide—check service availability before you choose the Region to deploy the solution into. Otherwise, your deployment will fail.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_plan_the_deployment">Plan the deployment</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This solution assumes that you&#8217;re familiar with Active Directory and DNS. For details, consult the Microsoft product documentation.</p>
+</div>
+<div class="paragraph">
+<p>Deploying a functional AD DS deployment in the AWS Cloud requires a good understanding of specific AWS services. In this section, we discuss key considerations for both new AD DS deployments and extensions of existing AD DC deployments to the AWS Cloud. We discuss how to use Amazon VPC to define your networks in the cloud. We also cover domain controller placement, Active Directory Sites and Services configuration, and how DNS and DHCP work in Amazon VPC.</p>
+</div>
+<div class="sect2">
+<h3 id="_vpc_configuration">VPC configuration</h3>
+<div class="paragraph">
+<p>With Amazon VPC, you can define a virtual network topology closely resembling a traditional network that you might operate on your own premises. A VPC can span multiple Availability Zones so that you can place independent infrastructure in physically separate locations. A Multi-AZ deployment provides high availability and fault tolerance. In the scenarios in this guide, we place domain controllers in two Availability Zones to provide highly available, low-latency access to AD DS services in the AWS Cloud.</p>
+</div>
+<div class="paragraph">
+<p>Each scenario is automated by two templates: one that builds a new VPC for the deployment, and the other that deploys into an existing VPC. To accommodate highly available AD DS in the AWS Cloud, the solution builds (or requires, in the case of the existing VPC template) a base VPC configuration that complies with the following AWS best practices:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Domain controllers should be placed in a minimum of two Availability Zones to provide high availability.</p>
+</li>
+<li>
+<p>Domain controllers and other non-internet facing servers should be placed in private subnets.</p>
+</li>
+<li>
+<p>Instances launched by the deployment templates provided in this guide will require internet access to connect to the AWS CloudFormation endpoint during the bootstrapping process. To support this configuration, public subnets are used to host NAT gateways for outbound internet access. Remote Desktop gateways are also deployed into the public subnets for remote administration. Other components such as reverse proxy servers can be placed into these public subnets, if needed.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This VPC architecture uses two Availability Zones, each with its own distinct public and private subnets. We recommend that you leave plenty of unallocated address space to support the growth of your environment over time and to reduce the complexity of your VPC subnet design. This solution uses a default VPC configuration that provides plenty of address space by using the minimum number of private and public subnets. By default, this solution uses the following CIDR ranges:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">VPC</th>
+<th class="tableblock halign-left valign-top">10.0.0.0/16</th>
+<th class="tableblock halign-left valign-top"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Private subnets A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>10.0.0.0/17</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Availability Zone 1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10.0.0.0/19</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Availability Zone 2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10.0.32.0/19</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Public subnets</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>10.0.128.0/18</strong></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Availability Zone 1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10.0.128.0/20</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Availability Zone 2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10.0.144.0/20</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>In addition, the solution provides spare capacity for additional subnets, to support your environment as it grows or changes over time. If you have sensitive workloads that should be completely isolated from the internet, you can create new VPC subnets using these optional address spaces. For background information and more details on this approach, see the <a href="https://fwd.aws/9VdxN" target="_blank" rel="noopener">Amazon VPC on AWS solution</a> deployment guide.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_security_group_ingress_traffic">Security group ingress traffic</h3>
+<div class="paragraph">
+<p>When launched, Amazon EC2 instances must be associated with a security group, which acts as a stateful firewall. You have complete control over the network traffic entering or leaving the security group, and you can build granular rules that are scoped by protocol, port number, and source/destination IP address or other security groups. By default, all egress traffic from the security group is permitted. However, ingress traffic must be configured to allow the appropriate traffic to reach your instances.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="https://d0.awsstatic.com/whitepapers/aws-microsoft-platform-security.pdf" target="_blank" rel="noopener">Securing the Microsoft Platform on Amazon Web Services</a> whitepaper discusses methods of securing your AWS infrastructure. Recommendations include providing isolation between application tiers by using security groups. We recommend that you tightly control ingress traffic in order to reduce the attack surface of your Amazon EC2 instances.</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;re deploying and managing your own AD DS installation, domain controllers and member servers will require several security group rules to allow traffic for services such as AD DS replication, user authentication, Windows Time services, and Distributed File System (DFS), among others. You should also consider restricting these rules to specific IP subnets that are used within your VPC.</p>
+</div>
+<div class="paragraph">
+<p>We provide an example of how to implement these rules for each application tier later in this guide as part of the AWS CloudFormation template for each scenario. For a detailed list of port mappings used by the AWS CloudFormation templates, see the <a href="#_security">Security</a> section of this guide.</p>
+</div>
+<div class="paragraph">
+<p>For a complete list of ports, see <a href="http://technet.microsoft.com/library/dd772723(v=ws.10).aspx" target="_blank" rel="noopener">Active Directory and Active Directory Domain Services Port Requirements</a> in the Microsoft TechNet library. For step-by-step guidance for implementing rules, see <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html#adding-security-group-rule" target="_blank" rel="noopener">Adding Rules to a Security Group</a> in the <em>Amazon EC2 User Guide</em>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_help_set_up_secure_administrative_access_using_remote_desktop_gateway">Help set up secure administrative access using Remote Desktop Gateway</h3>
+<div class="paragraph">
+<p>As you design your architecture for highly available AD DS, also design for highly available and secure remote access. The solution templates help with this by deploying Remote Desktop (RD) Gateway in each Availability Zone. In case of an Availability Zone outage, this architecture allows access to the resources that may have failed over to the other Availability Zone.</p>
+</div>
+<div class="paragraph">
+<p>RD Gateway uses the Remote Desktop Protocol (RDP) over HTTPS to help establish a secure, encrypted connection between remote administrators on the internet and Windows-based Amazon EC2 instances without the need for a virtual private network (VPN) connection. This configuration helps reduce the attack surface on your Windows-based Amazon EC2 instances while providing a remote administration solution for administrators.</p>
+</div>
+<div class="paragraph">
+<p>The AWS CloudFormation templates provided with this solution automatically deploy the architecture and configuration outlined in the <a href="https://fwd.aws/5VrKP">Remote Desktop Gateway solution</a>.</p>
+</div>
+<div class="paragraph">
+<p>After you&#8217;ve launched your AD infrastructure by following the deployment steps in this guide, you will initially connect to your instances by using a standard RDP TCP port 3389 connection. You can then follow the steps in the <a href="https://fwd.aws/5VrKP">Remote Desktop Gateway solution</a> to help secure future connections via HTTPS.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_active_directory_design">Active Directory design</h3>
+<div class="paragraph">
+<p>If you&#8217;re managing your own AD DS infrastructure—scenario 1 or scenario 2, as described in the <a href="#_architecture">Architecture</a> section of this guide—review the following sections for key design considerations specific to the solution. Also get familiar with the Active Directory design considerations that are discussed in the <a href="https://d1.awsstatic.com/whitepapers/adds-on-aws.pdf">Active Directory Domain Services on AWS whitepaper</a>.</p>
+</div>
+<div class="sect3">
+<h4 id="_site_topology">Site topology</h4>
+<div class="paragraph">
+<p>Because AWS Global infrastructure is built around Regions that contain multiple physically separated, isolated Availability Zones that are connected with low latency, high throughput, and highly redundant networking, this solution deploys a single AD site per Region and gives it the Region name.</p>
+</div>
+<div class="paragraph">
+<p>The following figure shows an example of site and subnet definitions for a typical AD DS architecture running within a VPC. A single Active Directory site has been named after the Region ,and subnets have been defined and associated with the AD Region site.</p>
+</div>
+<div id="knowledge1" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image5.png" alt="Sites and Services configuration" width="648">
+</div>
+<div class="title">Figure 4. Active Directory Sites and Services configuration</div>
+</div>
+<div class="paragraph">
+<p>Creating a single Active Directory site for the Region, and associating VPC subnets with that site, provides a simple and effective architecture that helps to maintain a highly available AD DS deployment.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="highly-available-directory-domain-services">Highly available directory domain services</h4>
+<div class="paragraph">
+<p>Within this solution,  two domain controllers are deployed in your AWS environment in two Availability Zones. This design provides fault tolerance and prevents a single domain controller failure from affecting the availability of the AD DS.</p>
+</div>
+<div class="paragraph">
+<p>To further support the high availability of your architecture and help mitigate the impact of a possible disaster, each domain controller in this solution is a global catalog server and an Active Directory DNS server.</p>
+</div>
+<div class="paragraph">
+<p>The AWS CloudFormation template provided for scenario 1 (deploy and manage your own AD DS, as described in the <a href="#_architecture">Architecture</a> section of this guide) builds out an Active Directory Sites and Services configuration for you automatically that supports a highly available AD DS architecture. If you plan to deploy AD DS manually, properly map subnets to the correct site to help ensure that AD DS traffic uses the best possible path.</p>
+</div>
+<div class="paragraph">
+<p>For detailed guidance on creating sites, adding global catalog servers, and creating and managing site links, see the <a href="http://technet.microsoft.com/library/cc730868.aspx" target="_blank" rel="noopener">Microsoft Active Directory Sites and Services</a> documentation.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_active_directory_dns_and_dhcp_inside_the_vpc">Active Directory DNS and DHCP inside the VPC</h4>
+<div class="paragraph">
+<p>With a VPC, Dynamic Host Configuration Protocol (DHCP) services are provided by default for your instances. DHCP scopes do not need to be managed; they are created for the VPC subnets you define when you deploy your solution. These DHCP services cannot be disabled, so you&#8217;ll need to use them rather than deploying your own DHCP server.</p>
+</div>
+<div class="paragraph">
+<p>The VPC also provides an internal DNS server. This DNS provides instances with basic name resolution services for internet access. This is crucial for access to AWS service endpoints such as AWS CloudFormation and Amazon Simple Storage Service (Amazon S3) during the bootstrapping process when you launch the solution.</p>
+</div>
+<div class="paragraph">
+<p>Amazon-provided DNS server settings will be assigned to instances launched into the VPC based on a DHCP options set. DHCP options sets are used within a VPC to define scope options, such as the domain name or the name servers that should be handed to your instances via DHCP. Amazon-provided DNS is used only for public DNS resolution.</p>
+</div>
+<div class="paragraph">
+<p>Since Amazon-provided DNS cannot be used to provide name resolution services for Active Directory, you&#8217;ll need to ensure that domain-joined Windows instances have been configured to use Active Directory DNS.</p>
+</div>
+<div class="paragraph">
+<p>As an alternative to statically assigning Active Directory DNS server settings on Windows instances, you have the option of specifying them using a custom DHCP options set. This will allow you to assign your Active Directory DNS suffix and DNS server IP addresses as the name servers within the VPC via DHCP.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The IP addresses in the domain-name-servers field are always returned in the same order. If the first DNS server in the list fails, instances should fall back to the second IP and continue to resolve host names successfully. However, during normal operations, the first DNS server listed will always handle DNS requests. To ensure that DNS queries are distributed evenly across multiple servers, statically configure DNS server settings on your instances.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For details on creating a custom DHCP options set and associating it with your VPC, see <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html#DHCPOptionSet" target="_blank" rel="noopener">Working with DHCP options sets</a> in the <em>Amazon VPC User Guide</em>.</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;re deploying <strong>scenario 1</strong> (deploy and manage your own AD DS) or <strong>scenario 3</strong> (deploy AD DS with AWS Directory Service)—as described in the <a href="#_architecture">Architecture</a> section of this guide—the AWS CloudFormation template configures the DHCP options set with the Active Directory domain controllers as the name servers. This is recommended in the AWS Directory Service documentation: <a href="http://docs.aws.amazon.com/directoryservice/latest/admin-guide/dhcp_options_set.html" target="_blank" rel="noopener">Create a DHCP options set</a>. Instances that need to join the domain will therefore automatically be able to join without requiring any changes.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="dns-settings-on-windows-server-instances">DNS settings on Windows Server instances</h4>
+<div class="paragraph">
+<p>To make sure that domain-joined Windows instances will automatically register host (A) and reverse lookup (PTR) records with Active Directory–integrated DNS, set the properties of the network connection as shown in <a href="#knowledge2">Figure 5</a>.</p>
+</div>
+<div id="knowledge2" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image6.png" alt="TCP/IP settings" width="40%">
+</div>
+<div class="title">Figure 5. Advanced TCP/IP settings on a domain-joined Windows instance</div>
+</div>
+<div class="paragraph">
+<p>The default configuration for a network connection is set to automatically register the connections address in DNS. In other words, as shown in <a href="#knowledge2">Figure 5</a>, the <strong>Register this connection&#8217;s address in DNS</strong> option is selected for you automatically. This takes care of host (A) record dynamic registration. However, if you do not also select the second option, <strong>Use this connection&#8217;s DNS suffix in DNS registration</strong>, dynamic registration of PTR records will not take place.</p>
+</div>
+<div class="paragraph">
+<p>If you have a small number of instances in the VPC, you may choose to configure the network connection manually. For larger fleets, you can push this setting out to all your Windows instances by using Active Directory Group Policy. For step-by-step instructions, see <a href="http://technet.microsoft.com/library/cc754143.aspx" target="_blank" rel="noopener">IPv4 and IPv6 Advanced DNS Tab</a> in the Microsoft TechNet Library.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_powershell_dsc_usage_in_the_ad_ds_solution">PowerShell DSC usage in the AD DS solution</h3>
+<div class="paragraph">
+<p>In this section, we will provide an overview of Windows Powershell Desired State Configuration (DSC), and we will cover how this solution uses DSC and Systems Manager to configure each domain controller. If you are new to PowerShell DSC, we highly recommend that you consult the additional resources at the end of this guide for a deeper look at the topic.</p>
+</div>
+<div class="sect3">
+<h4 id="_overview_of_powershell_dsc">Overview of PowerShell DSC</h4>
+<div class="paragraph">
+<p>Introduced in Windows Management Framework 4.0, PowerShell DSC provides a configuration management platform native to operating systems later than Windows Server 2012 R2 and Windows 8.1, as well as Linux. Because we are leveraging Windows Server 2019 in this solution, we are using Windows Mangement Framework 5.1 and PowerShell 5.1. Using lightweight commands called cmdlets, DSC allows you to express the desired state of your systems using declarative language syntax instead of configuring servers with complex imperative scripts. If you have worked with configuration management tools like Chef or Puppet, you will notice that DSC provides a familiar framework.</p>
+</div>
+<div class="paragraph">
+<p>When using DSC to apply a desired configuration for a system, you create a configuration script with PowerShell that explains what the system should look like. You use that configuration script to generate a Management Object Format (MOF) file, which is then pushed or pulled by a node to apply the desired state. PowerShell DSC uses vendor-neutral MOF files to enable cross-platform management, so the node can be either a Windows or a Linux system.</p>
+</div>
+<div id="knowledge3" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image7.png" alt="Architecture" width="563">
+</div>
+<div class="title">Figure 6. High-level PowerShell DSC architecture</div>
+</div>
+<div class="paragraph">
+<p>Windows systems that are running Windows Management Framework 4.0 or later include the Local Configuration Manager (LCM) engine, which acts as a DSC client. The LCM calls the DSC resources that are required by the configuration defined in the MOF files. These DSC resources apply the desired configuration.</p>
+</div>
+<div class="paragraph">
+<p>The following figure shows an example of a basic DSC configuration script that can be used to push a desired configuration to a computer.</p>
+</div>
+<div id="knowledge4" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image8.png" alt="Architecture" width="533">
+</div>
+<div class="title">Figure 7. Basic DSC configuration script</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Line 1</strong> – We use the Configuration keyword to define a name (MyService) for the configuration.</p>
+</li>
+<li>
+<p><strong>Line 2</strong> – The Node keyword is used to define the desired state for a server named Server1.</p>
+</li>
+<li>
+<p><strong>Lines 3 through 6</strong> – We create an instance of the Service resource called bits. Within the resource, we&#8217;re declaring that the service named bits should be in a running state.</p>
+</li>
+<li>
+<p><strong>Line 10</strong> – The configuration is executed, which generates a MOF file called Server1.mof in a folder called <strong>MyService</strong>.</p>
+</li>
+<li>
+<p><strong>Line 11</strong> – The Start-DscConfiguration cmdlet pushes the MOF file in the <strong>MyService</strong> folder to the computer Server1. When doing this interactively, it&#8217;s useful to use the -Wait and -Verbose parameters to get detailed information. In each step of the solution, we use the -Wait parameter so that we can orchestrate tasks interactively with AWS services. We use the -Verbose parameter so that execution details gets exported to Amazon CloudWatch.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="dsc-usage-in-the-ad-ds-quick-start">DSC usage in the AD DS solution</h4>
+<div class="paragraph">
+<p>As noted previously, PowerShell DSC clients can pull their configurations from a server or their configurations can be pushed to them either locally or from a remote system. In this solution, we use a local push configuration on each node. The following figure shows how we are configuring the LCM.</p>
+</div>
+<div id="knowledge5" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image9.png" alt="LCM configuration" width="547">
+</div>
+<div class="title">Figure 8. Using the Get-DscLocalConfigurationManager cmdlet to get the LCM configuration</div>
+</div>
+<div class="paragraph">
+<p>The following list describes why we chose certain settings for this solution.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>RefreshMode</strong> – We use the default value, Push Mode, to send the configuration to the LCM on each node.</p>
+</li>
+<li>
+<p><strong>ActionAfterReboot</strong> -We set this to StopConfiguration so that we can orchestrate actions between reboots through AWS services such as Systems Manager. The default value is ContinueConfiguration.</p>
+</li>
+<li>
+<p><strong>RebootNodeIfNeeded</strong> – We use the default value, false, so that we can control reboots through AWS services.</p>
+<div class="paragraph">
+<p>These settings, along with the -Wait parameter, allow the solution to use Systems Manager to orchestrate deployment workflows when starting a DSC configuration.</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The following figure shows an example script that you can use to change the configuration of the LCM to align with how you may want to leverage PowerShell DSC in your environment.</p>
+</div>
+<div id="knowledge6" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image10.png" alt="Sample script to configure the LCM" width="511">
+</div>
+<div class="title">Figure 9. Sample script to configure the LCM</div>
+</div>
+<div class="paragraph">
+<p>The script is available in this solution&#8217;s GitHub repo. Note the use of the DSCLocalConfigurationManager attribute and the Set-DscLocalConfigurationManager cmdlet to specifically configure the LCM. For more information on settings and options, see <a href="https://devblogs.microsoft.com/powershell/understanding-meta-configuration-in-windows-powershell-desired-state-configuration/" target="_blank" rel="noopener">Understanding Meta Configuration in Windows PowerShell Desired State Configuration</a>.</p>
+</div>
+<div class="paragraph">
+<p>In the GitHub repo you can also review the ConfigDC1.ps1 and ConfigDC2.ps1 scripts, which are used to generate the MOF file for each node of the solution. These scripts have been annotated for documentation purposes.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="systems-manager-usage-in-the-ad-ds-quick-start">Systems Manager usage in the AD DS solution</h4>
+<div class="paragraph">
+<p>During the deployment of this solution, Systems Manager Automation documents orchestrate the steps in the configuration of each domain controller. AWS CloudFormation deploys all AWS resources in this solution, including the EC2 instances, VPC, and Systems Manager Automation documents. Then the Systems Manager Automation documents are used to configure the EC2 instances as domain controllers.</p>
+</div>
+<div class="paragraph">
+<p>The following figure shows the workflow that the Systems Manager Automation document uses to configure the EC2 instances as domain controllers.</p>
+</div>
+<div id="knowledge7" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image11.png" alt="Systems ManagerAutomation document workflow">
+</div>
+<div class="title">Figure 10. Systems Manager Automation document workflow</div>
+</div>
+<div class="paragraph">
+<p>The solution AWS CloudFormation template deploys a stack that consists of two EC2 instances with tag values for the Name key derived from the ADServer1NetBIOSName and ADServer2NetBIOSName parameters as well as the AWSQuickStartActiveDirectoryDS Automation document. After the second instance is deployed, it will start the Automation document through <a href="https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-windows-user-data.html" target="_blank" rel="noopener">EC2 user data</a>. The process includes the following steps:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>dcsInstanceIds</strong> – This step gets the instance IDs for EC2 instances that have the Name tag set to ADServer1NetBIOSName and ADServer2NetBIOSName parameters in the solution and outputs them for subsequent steps.</p>
+</li>
+<li>
+<p><strong>dcsInstallDscModules</strong> – This step installs the xActiveDirectory DSC module and the additional required DSC modules (NetworkingDsc, <a href="https://www.powershellgallery.com/packages/ComputerManagementDsc/6.0.0.0" target="_blank" rel="noopener">ComputerManagementDsc</a>, <a href="https://www.powershellgallery.com/packages/xDnsServer/1.11.0.0" target="_blank" rel="noopener">xDnsServer</a>) from the PowerShell Gallery on the instances that were identified by their instance IDs in step 1. It also generates an encryption certificate to encrypt MOF files. This ensures that no clear text passwords are saved locally in this solution. This step uses the install-ad-modules.ps1 script that is in the <strong>scripts</strong> folder in the GitHub repo.</p>
+</li>
+<li>
+<p><strong>dcsLCMConfig</strong> – This step configures the LCM on each EC2 instance from step 1. It uses the LCM-Config.ps1 script that is in the <strong>scripts</strong> folder.</p>
+</li>
+<li>
+<p><strong>dc1InstanceId</strong> – This step gets the instance ID for the EC2 instance that has the Name tag value set to the ADServer1NetBIOSName parameter and outputs it for subsequent steps.</p>
+</li>
+<li>
+<p><strong>createDC1Mof</strong>– This step generates a local encrypted MOF file on the first domain controller in the C:\AWSQuickstart\ directory. This MOF file is used in the step 7 to configure the domain controller. It uses the ConfigDC1.ps1 script that is in the <strong>scripts</strong> folder.</p>
+</li>
+<li>
+<p><strong>configDC1</strong> – This step configures the first domain controller by using the MOF file generated in Step 6. It uses the Exit 3010 Status code to signal the Systems Manager Agent to reboot the instance when needed. The agent will reboot the instance and restart DSC configuration on this instance until the configuration of the instance matches the MOF file.</p>
+</li>
+<li>
+<p><strong>dc2InstanceId</strong> – This step gets the instance ID for the EC2 instance that has the Name tag value set to the ADServer2NetBIOSName parameter and outputs it for subsequent steps.</p>
+</li>
+<li>
+<p><strong>createDC2Mof</strong> – This step generates a local encrypted MOF File on the second domain controller in the C:\AWSQuickstart\ directory. This MOF file is used in the next step to configure the domain controller. It uses the ConfigDC1.ps1 script that is in the <strong>scripts</strong> folder.</p>
+</li>
+<li>
+<p><strong>configDC2</strong> – This step configures the second domain controller by using the MOF file generated in Step 9. It usees the Exit 3010 Status code to signal the Systems Manager Agent to reboot the instance when needed. The agent will reboot the instance and restart DSC configuration on this instance until the configuration of the instance matches the MOF file.</p>
+</li>
+<li>
+<p><strong>DnsConfig</strong> – This step ensures that both domain controllers point to AD DNS as their DNS Servers. It uses the Dns-Config.ps1 script that is in the <strong>scripts</strong> folder.</p>
+</li>
+<li>
+<p><strong>CFNSignalEnd</strong> – This branch step determines if AWS CloudFormation needs to be signaled that deployment was successful. If the StackName parameter is not null, the Automation document will move to the signalsuccess step; if the parameter is null, it will move to the sleepend step.</p>
+</li>
+<li>
+<p><strong>signalsuccess</strong> or <strong>sleepend</strong> – The signalsuccess steps signals to AWS CloudFormation that the workflow completed successfully and that stack deployment may proceed. The sleepend step is provided for re-use of the Automation document. If no AWS CloudFormation stack name is provided, the sleepend step will end the Automation document.</p>
+</li>
+<li>
+<p><strong>signalfailure</strong> – If any steps fail, the Automation document will attempt to signal failure to the AWS Cloud.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_predeployment_steps">Predeployment steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before you deploy the solution, make sure that your AWS account is set up properly by following these steps.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If you don&#8217;t already have an AWS account, create one at <a href="https://aws.amazon.com" class="bare">https://aws.amazon.com</a> by following the on-screen instructions. Part of the sign-up process involves receiving a phone call and entering a PIN using the phone keypad.</p>
+</li>
+<li>
+<p>Use the Region selector in the navigation bar to choose the AWS Region where you want to deploy AD DS. Consider choosing the Region closest to your data center or corporate network to reduce network latency between systems running on AWS and the systems and users on your corporate network.</p>
+</li>
+<li>
+<p>Create an <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html" target="_blank" rel="noopener">Amazon EC2 key pair</a> in your preferred Region. To do this, in the navigation pane of the Amazon EC2 console, choose <strong>Key Pairs</strong>, <strong>Create Key Pair</strong>, type a name, and then choose <strong>Create</strong>.</p>
+<div class="paragraph">
+<p>Amazon EC2 uses public-key cryptography to encrypt and decrypt login information. To be able to log in to your instances, you must create a key pair. With Windows instances, we use the key pair to obtain the administrator password via the Amazon EC2 console and then log in using Remote Desktop Protocol (RDP) as explained in the instructions <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair" target="_blank" rel="noopener">Create a key pair using Amazon EC2</a> in the <em>Amazon Elastic Compute Cloud User Guide</em>.</p>
+</div>
+</li>
+<li>
+<p>If necessary, request a <a href="https://console.aws.amazon.com/support/home#/case/create?issueType=service-limit-increase" target="_blank" rel="noopener">service limit increase</a> for the Amazon EC2 <strong>m4.xlarge</strong> instance type. To do this, in the AWS Support Center, choose <strong>Create Case</strong>, <strong>Service Limit Increase</strong>, <strong>EC2 instances</strong>. Then, complete the fields in the limit-increase form. The current default limit is 20 instances.</p>
+<div class="paragraph">
+<p>You might need to request an increase if you already have an existing deployment that uses this instance type and if you think you might exceed the default limit with this reference deployment. It might take a few days for the new service limit to become effective. For more information, see <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html" target="_blank" rel="noopener">Amazon EC2 service quotas</a>.</p>
+</div>
+</li>
+</ol>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+If you&#8217;re deploying AD DS into an existing VPC, make sure that your VPC has two private subnets in different Availability Zones for the workload instances and that the subnets aren&#8217;t shared. This solution doesn&#8217;t support <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html" target="_blank" rel="noopener">shared subnets</a>. These subnets require <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html" target="_blank" rel="noopener">NAT gateways</a> in their route tables to allow the instances to download packages and software without exposing them to the internet. Also make sure that the domain name option in the DHCP options is configured as explained in <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html" target="_blank" rel="noopener">DHCP options sets</a>. You provide your VPC settings when you launch the solution.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_deployment_steps">Deployment steps</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Sign in to your AWS account, and launch this Partner Solution, as described under <a href="#_deployment_options">Deployment options</a>. The AWS CloudFormation console opens with a prepopulated template.</p>
+</li>
+<li>
+<p>Choose the correct AWS Region, and then choose <strong>Next</strong>.</p>
+</li>
+<li>
+<p>On the <strong>Create stack</strong> page, keep the default setting for the template URL, and then choose <strong>Next</strong>.</p>
+</li>
+<li>
+<p>On the <strong>Specify stack details</strong> page, change the stack name if needed. Review the parameters for the template. Provide values for the parameters that require input. For all other parameters, review the default settings and customize them as necessary. When you finish reviewing and customizing the parameters, choose <strong>Next</strong>.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Unless you&#8217;re customizing the Partner Solution templates or are instructed otherwise in this guide&#8217;s <strong>Predeployment</strong> section, don&#8217;t change the default settings for the following parameters: <code>QSS3BucketName</code>, <code>QSS3BucketRegion</code>, and <code>QSS3KeyPrefix</code>. Changing the values of these parameters will modify code references that point to the Amazon Simple Storage Service (Amazon S3) bucket name and key prefix. For more information, refer to the <a href="https://fwd.aws/NwqYA?" target="_blank" rel="noopener">AWS Partner Solutions Contributor&#8217;s Guide</a>.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>On the <strong>Configure stack options</strong> page, you can <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html" target="_blank" rel="noopener">specify tags</a> (key-value pairs) for resources in your stack and <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html" target="_blank" rel="noopener">set advanced options</a>. When you finish, choose <strong>Next</strong>.</p>
+</li>
+<li>
+<p>On the <strong>Review</strong> page, review and confirm the template settings. Under <strong>Capabilities</strong>, select all of the check boxes to acknowledge that the template creates AWS Identity and Access Management (IAM)  resources that might require the ability to automatically expand macros.</p>
+</li>
+<li>
+<p>Choose <strong>Create stack</strong>. The stack takes about 10 to 60 minutes to deploy.</p>
+</li>
+<li>
+<p>Monitor the stack&#8217;s status, and when the status is <strong>CREATE_COMPLETE</strong>, the Active Directory Domain Services deployment is ready.</p>
+</li>
+<li>
+<p>To view the created resources, choose the <strong>Outputs</strong> tab.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_postdeployment_steps">Postdeployment steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After deploying this solution, do the following.</p>
+</div>
+<div class="sect2">
+<h3 id="_run_windows_updates">Run Windows Updates</h3>
+<div class="paragraph">
+<p>In order to ensure the deployed servers' operating systems and installed applications have the latest Microsoft updates, run Windows Update on each server.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create an RDP session from the Remote Desktop Gateway server to each deployed server.</p>
+</li>
+<li>
+<p>Open the <strong>Settings</strong> application.</p>
+</li>
+<li>
+<p>Open <strong>Update &amp; Security</strong>.</p>
+</li>
+<li>
+<p>Click <strong>Check for updates</strong>.</p>
+</li>
+<li>
+<p>Install any updates and reboot if necessary.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_postdeployment_steps_for_scenario_2_only">Postdeployment steps for scenario 2 only</h3>
+<div class="paragraph">
+<p>If you&#8217;re extending your on-premises AD DS to the AWS Cloud—scenario 2, as described in the <a href="#_architecture">Architecture</a> section of this guide—the solution does not promote the newly created Windows servers to domain controllers. You need to perform the following tasks manually after the stack has been successfully created:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Connect your on-premises network to the VPC using AWS Direct Connect or a VPN connection and verify that the new Windows Server instances that were created by the solution can resolve the domain DNS name.</p>
+</li>
+<li>
+<p>Promote the new Windows Server instances that were created by the solution to domain controllers in your Active Directory domain.</p>
+</li>
+<li>
+<p>Configure your on-premises Active Directory Sites and Services to include sites and subnets that represent the Availability Zones within your VPC, and place the newly promoted Domain Controllers in their associated sites.</p>
+</li>
+<li>
+<p>Ensure that instances can resolve names via AD DNS by using one of these methods:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Statically assign AD DNS servers on Windows instances.</p>
+<div class="paragraph">
+<p>—or—</p>
+</div>
+</li>
+<li>
+<p>Set the domain-name-servers field in a new DHCP options set in your VPC to include your AWS-based domain controllers hosting Active Directory DNS.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The following sections provide more information about these postdeployment tasks.</p>
+</div>
+<div class="sect3">
+<h4 id="connecting-your-on-premises-network-to-the-vpc">Connect your on-premises network to the VPC</h4>
+<div class="paragraph">
+<p>By default, instances that you launch into a virtual private cloud can&#8217;t communicate with your own network. To extend your existing AD DS into the AWS Cloud, you&#8217;ll need to extend your on-premises network to the VPC. We&#8217;ll discuss two ways to do this: by using IPsec virtual private network (VPN) tunnels or by using AWS Direct Connect.</p>
+</div>
+<div class="sect4">
+<h5 id="using-ipsec-vpn-tunnels">Use IPsec VPN tunnels</h5>
+<div class="paragraph">
+<p>The most common scenario for extending your on-premises network to your VPC is through IPsec VPN tunnels. Within the VPC, you can create a virtual private gateway that acts as a VPN concentrator on the Amazon side of the VPN tunnel. A customer gateway is the anchor on your side of that connection. The customer gateway can be a physical device or a software appliance.</p>
+</div>
+<div id="additionalinfo1" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image15.png" alt="Single VPN connection">
+</div>
+<div class="title">Figure 11. Single VPN connection from your on-premises network to your VPC</div>
+</div>
+<div class="paragraph">
+<p>Multiple VPN configuration options are available, including the ability to use multiple on-premises customer gateways and configuring redundant VPN connections to provide failover. For details, see <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_VPN.html#Examples" target="_blank" rel="noopener">VPN Configuration Examples</a> in the <em>Amazon VPC User&#8217;s Guide</em>. Details about which hardware or software appliances you can use are available in the <a href="http://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Introduction.html#DevicesTested" target="_blank" rel="noopener">Customer Gateway devices we&#8217;ve tested</a> and <a href="http://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Introduction.html#CGRequirements" target="_blank" rel="noopener">Requirements for your customer gateway</a> sections of the <em>Amazon VPC Network Administrator Guide</em>.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="using-aws-direct-connect">Use AWS Direct Connect</h5>
+<div class="paragraph">
+<p>AWS Direct Connect links your internal network to an AWS Direct Connect location over a standard 1 gigabit or 10 gigabit Ethernet fiber-optic cable. One end of the cable is connected to your router, the other to an AWS Direct Connect router. With this connection in place, you can create virtual interfaces directly to the AWS Cloud (for example, to Amazon EC2, to Amazon S3, and to Amazon VPC), bypassing internet service providers in your network path. More information about AWS Direct Connect can be found here.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="connecting-to-additional-vpcs">Connect to additional VPCs</h5>
+<div class="paragraph">
+<p>If your Active Directory environment has already been deployed to AWS via a different VPC, you can connect the other VPC to your new VPC via VPC Peering. VPC Peering allows network connectivity within the same account or across multiple accounts. See the AWS VPC Peering guide for additional information.</p>
+</div>
+<div id="additionalinfo2" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image16.png" alt="AWS Direct Connect interfaces">
+</div>
+<div class="title">Figure 12. How AWS Direct Connect interfaces with your network</div>
+</div>
+<div class="paragraph">
+<p>When you choose AWS Direct Connect to extend your on-premises network to the cloud, you should consider configuring two dedicated connections for maximum redundancy. There are different configuration choices available when you provision two dedicated connections, including active/active (BGP multipath), and active/passive (failover).</p>
+</div>
+<div class="paragraph">
+<p>In a failover configuration, only one connection link handles traffic. If that link becomes unavailable, the standby connection link becomes active. We recommend that you configure both connection links as active, because this will help ensure that network traffic is load-balanced across both connections. In an active configuration, if one connection link becomes unavailable, all traffic is routed through the other link. For implementation details, see <a href="http://docs.aws.amazon.com/directconnect/latest/UserGuide/getstarted.html" target="_blank" rel="noopener">Getting Started</a> in the <em>AWS Direct Connect User Guide</em>.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="deploying-additional-domain-controllers-in-the-aws-cloud">Deploy additional domain controllers in the AWS Cloud</h4>
+<div class="paragraph">
+<p>Although you can use AWS Direct Connect or a VPN connection to provide access to on-premises resources from the VPC, we recommend that you also add domain controllers to the AWS Cloud. Additional domain controllers provide a reliable, low-latency network connection for resources in AWS that need access to your AD DS. They can also maintain availability for AD DS in the AWS Cloud if there&#8217;s an on-premises infrastructure outage.</p>
+</div>
+<div class="paragraph">
+<p>In the architecture shown in <a href="#additionalinfo3">Figure 13</a>, a single Active Directory forest has been extended from an on-premises deployment into a VPC using a VPN connection. Within the VPC, additional domain controllers configured as global catalog and DNS servers are deployed in the existing Active Directory forest.</p>
+</div>
+<div id="additionalinfo3" class="imageblock">
+<div class="content">
+<img src="docs/deployment_guide/images/image17.png" alt="AWS Direct Connect interfaces">
+</div>
+<div class="title">Figure 13. How AWS Direct Connect interfaces with your network</div>
+</div>
+<div class="paragraph">
+<p>In this type of environment, the customer network will already be defined in Active Directory Sites and Services. For example, there will already be a site definition that corresponds to the on-premises network, along with a subnet definition for the 192.168.1.0/24 network. The next step is to configure Active Directory Sites and Services to support the network components located in the VPC.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="configuring-active-directory-sites-and-services">Configure Active Directory Sites and Services</h4>
+<div class="paragraph">
+<p>An Active Directory site should be created for the Region in AWS. The 10.0.0.0/19 and 10.0.32.0/19 CIDR blocks used by the VPC subnets should be added to Active Directory Sites and Services. The subnets can then be associated with the AD DS site definition for the Region. Additional subnets for web, application, and database tiers in the VPC can be mapped to each AWS site object. Both the on-premises site and the site in the AWS Cloud can be mapped to a site link, which can be configured to replicate at custom intervals or during a specific time of day, if needed.</p>
+</div>
+<div class="paragraph">
+<p>By properly configuring Active Directory Sites and Services, you can help ensure that the AD DS queries and authentication requests that originate from the VPC are serviced by a local domain controller in the same AWS Availability Zone. This configuration reduces network latency and minimizes traffic that may otherwise need to travel across the VPN back to the on-premises infrastructure.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="configuring-dns-resolution">Configure DNS resolution</h4>
+<div class="paragraph">
+<p>After you&#8217;ve created a VPC and established connectivity to your on-premises network by using AWS Direct Connect or a VPN connection, your next step is to launch Windows instances to act as domain controllers. In order to join the on-premises Active Directory domain and promote your Windows instances to domain controllers, you&#8217;ll need to ensure that DNS resolution is configured appropriately.</p>
+</div>
+<div class="paragraph">
+<p>As discussed previously, by default, instances launched into the VPC will be assigned an Amazon-provided DNS server, which will not provide DNS resolution for your on-premises infrastructure. To address this, you can do one of two things:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Manually assign DNS server settings on the Windows instances. This static DNS setting would initially point to the on-premises Active Directory DNS server. After promoting the instance to a domain controller, you could modify the setting to use a cloud-based Active Directory DNS server IP address to prevent subsequent DNS queries from traversing the link back to the on-premises environment.</p>
+<div class="paragraph">
+<p>—or—</p>
+</div>
+</li>
+<li>
+<p>Initially configure the VPC DHCP options set to assign your on-premises Active Directory DNS server IP address to your instances launched into the VPC. After the Windows instances have been joined to the domain and promoted to domain controllers, you can create a new DHCP options set to assign the IP address of the Active Directory DNS server instances running in AWS.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_security">Security</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>AWS provides a set of building blocks, including the Amazon EC2 and Amazon VPC services, that you can use to provision infrastructure for your applications. In this model, some security capabilities such as physical security are the responsibility of AWS and are highlighted in the <a href="https://d0.awsstatic.com/whitepapers/aws-security-best-practices.pdf" target="_blank" rel="noopener">AWS security whitepaper</a>. Other capabilities, such as controlling access to applications, are the responsibility of the application developer and the tools provided in the Microsoft platform.</p>
+</div>
+<div class="paragraph">
+<p>If you have followed the automated deployment options in this guide, the necessary security groups are configured for you by the provided AWS CloudFormation templates and are listed here for your reference.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Security group</th>
+<th class="tableblock halign-left valign-top">Associated with</th>
+<th class="tableblock halign-left valign-top">Inbound source</th>
+<th class="tableblock halign-left valign-top">Port(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DomainControllerSG</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DC1, DC2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DomainMemberSG</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">UDP53, TCP53, TCP88, UDP88, UDP123, TCP135, UDP138, TCP389, TCP445, UDP445, UDP464, TCP464, TCP636, TCP3268, TCP3269, RDP3389, TCP5985, TCP9389, TCP49152-65535, UDP49152-65535</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DomainMemberSG</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RDGW1, RDGW2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DomainMemberSG</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TCP3389, TCP5985, TCP5986</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RemoteDesktopGatewaySG</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RDGW1, RDGW2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RDGWCIDR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TCP3389, TCP443, UDP3391, ICMP-1</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Important</strong> <strong>RDP should never be opened up to the entire internet, not even temporarily or for testing purposes.</strong> For more information, see this <a href="http://aws.amazon.com/security/security-bulletins/morto-worm-spreading-via-remote-desktop-protocol/" target="_blank" rel="noopener">Amazon security bulletin</a>. Always restrict ports and source traffic to the minimum necessary to support the functionality of the application. For more about securing Remote Desktop Gateway, see the <a href="https://d0.awsstatic.com/whitepapers/aws-microsoft-platform-security.pdf" target="_blank" rel="noopener">Securing the Microsoft Platform on Amazon Web Services</a> whitepaper.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_troubleshooting">Troubleshooting</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For troubleshooting common issues, refer to the <a href="https://fwd.aws/rA69w?" target="_blank" rel="noopener">AWS Partner Solution General Information Guide</a> and <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html" target="_blank" rel="noopener">Troubleshooting CloudFormation</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_i_encountered_a_create_failed_error_when_i_launched_the_solution">I encountered a CREATE_FAILED error when I launched the solution</h3>
+<div class="paragraph">
+<p>If AWS CloudFormation fails to create the stack, relaunch the template with <strong>Rollback on failure</strong> set to <strong>Disabled</strong>. This setting is under <strong>Advanced</strong> in the AWS CloudFormation console on the <strong>Configure stack options</strong> page. With this setting, the stack&#8217;s state is retained and the instance is left running, so you can troubleshoot the issue. (For Windows, look at the log files in <code>%ProgramFiles%\Amazon\EC2ConfigService</code> and <code>C:\cfn\log</code>.)</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, you continue to incur AWS charges for this stack. Delete the stack when you finish troubleshooting.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_i_encountered_a_size_limitation_error_when_i_deployed_the_aws_cloudformation_templates">I encountered a size-limitation error when I deployed the AWS CloudFormation templates</h3>
+<div class="paragraph">
+<p>Launch the solution templates from the links in this guide or from another S3 bucket. If you deploy the templates from a local copy on your computer or from a location other than an S3 bucket, you might encounter template size limitations. For more information, see <a href="http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html" target="_blank" rel="noopener">AWS CloudFormation quotas</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_aws_cloudformation_deployment_failed_because_the_systems_manager_automation_document_failed">The AWS CloudFormation deployment failed because the Systems Manager Automation document failed</h3>
+<div class="paragraph">
+<p>Check the logs in CloudWatch. Also ensure that the deployment is targeting the correct instances. If any other EC2 instances in your environment use the same Name tag, they will be targeted and will fail during automation, which will cause the solution to fail.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_customer_responsibility">Customer responsibility</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After you deploy a Partner Solution, confirm that your resources and services are updated and configured—including any required patches—to meet your security and other needs. For more information, refer to the <a href="https://aws.amazon.com/compliance/shared-responsibility-model/" target="_blank" rel="noopener">Shared Responsibility Model</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_feedback">Feedback</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To submit feature ideas and report bugs, use the <strong>Issues</strong> section of the <a href="https://github.com/aws-quickstart/quickstart-microsoft-activedirectory" target="_blank" rel="noopener">GitHub repository</a> for this Partner Solution. To submit code, refer to the <a href="https://fwd.aws/NwqYA?" target="_blank" rel="noopener">Partner Solution Contributor&#8217;s Guide</a>. To submit feedback on this deployment guide, use the following GitHub links:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/issues/new?labels=documentation,grammar+or+spelling&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Grammar or spelling</a></p>
+</li>
+<li>
+<p><a href="https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/issues/new?labels=documentation,broken+link&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Broken link</a></p>
+</li>
+<li>
+<p><a href="https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/issues/new?labels=documentation,inaccurate+content&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Inaccurate content</a></p>
+</li>
+<li>
+<p><a href="https://github.com/aws-quickstart/quickstart-microsoft-activedirectory/issues/new?labels=documentation,display+and+design&amp;title=Deployment+guide+feedback&amp;body=Section+heading:%0ADocumentation+issue+description:%0A" target="_blank" rel="noopener">Display or design</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_notices">Notices</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This document is provided for informational purposes only. It represents current AWS product offerings and practices as of the date of issue of this document, which are subject to change without notice. Customers are responsible for making their own independent assessment of the information in this document and any use of AWS products or services, each of which is provided "as is" without warranty of any kind, whether expressed or implied. This document does not create any warranties, representations, contractual commitments, conditions, or assurances from AWS, its affiliates, suppliers, or licensors. The responsibilities and liabilities of AWS to its customers are controlled by AWS agreements, and this document is not part of, nor does it modify, any agreement between AWS and its customers.</p>
+</div>
+<div class="paragraph">
+<p>The software included with this paper is licensed under the Apache License, version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at <a href="https://aws.amazon.com/apache2.0/" target="_blank" rel="noopener">https://aws.amazon.com/apache2.0/</a> or in the accompanying "license" file. This code is distributed on an "as is" basis, without warranties or conditions of any kind, either expressed or implied. Refer to the License for specific language governing permissions and limitations.</p>
+</div>
+</div>
+</div>
+</div>
+<footer>
+    <p class="footer-text">
+        <!-- We can use document attributes: -->
+        <!-- Generated with Asciidoctor v2.0.16. -->
+        <a href="https://aws.amazon.com/privacy/">Privacy</a> | <a href="https://aws.amazon.com/terms/">Site terms</a> |
+        &copy; 2023, Amazon Web Services, Inc. or its affiliates. All rights reserved.
+    </p>
+</footer>
+</body>
+</html>
