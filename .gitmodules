@@ -2,7 +2,3 @@
 	path = docs/boilerplate
 	url = https://github.com/aws-ia/aws-ia-documentation-base-common.git
 	branch = main
-[submodule "submodules/quickstart-microsoft-pki"]
-	path = submodules/quickstart-microsoft-pki
-	url = https://github.com/aws-quickstart/quickstart-microsoft-pki.git
-	branch = main
