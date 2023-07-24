@@ -1,5 +1,0 @@
-taskcat_outputs/*
-.taskcat_overrides.yml
-.taskcat/*
-.taskcat-*.yml
-.DS_Store
