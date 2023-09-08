@@ -131,7 +131,7 @@ Resources:
                   cfnresponse.send(event, context, status, {}, object_url)
       Handler: index.handler
       Role: !GetAtt "WriteS3LambdaRole.Arn"
-      Runtime: python3.7
+      Runtime: python3.11
       Timeout: 240
 
   ######################
